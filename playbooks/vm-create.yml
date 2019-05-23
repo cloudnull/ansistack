@@ -1,0 +1,232 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+#
+# This playbook has three basic options:
+#   * vm_cleanup - if `true` clenaup old VMs and create create new ones
+#   * vm_purge - if `true` purge all VMs
+#   * vm_flags - Options to pass into libvirt (virt-install).
+#
+# This setup tool requires two networks to be enabled within libvirt: ['provisioning', 'external'].
+#
+
+- name: Create VMs on baremetal machines
+  hosts: vms
+  any_errors_fatal: true
+  gather_facts: false
+  user: root
+  vars:
+    vm_cleanup: false
+    vm_purge: false
+    vm_flags: >-
+      --graphics vnc
+      --hvm
+      --virt-type kvm
+      --memballoon virtio
+      --cpu host
+      --rng /dev/urandom
+  pre_tasks:
+    - name: Check for required hostvars
+      fail:
+        msg: >-
+          The required variable `{{ item }}` is undefined. Define the option in order to continue.
+      when:
+        - hostvars[inventory_hostname][item] is undefined
+      with_items:
+        - vm_virt_host
+        - vm_cores
+        - vm_ram
+        - vm_disk_size
+        - vm_vbmc_username
+        - vm_vbmc_password
+        - vm_vbmc_port
+      delegate_to: localhost
+
+    - name: Create in-memory vm_virt_hosts group
+      add_host:
+        name: "{{ hostvars[item]['vm_virt_host'] }}"
+        groups: vm_virt_hosts
+      with_items: "{{ groups['vms'] }}"
+      run_once: true
+
+    - name: PreFlight Checks
+      delegate_to: "{{ vm_virt_host }}"
+      block:
+        - name: Check VM
+          command: >-
+            virsh dominfo {{ inventory_hostname }}
+          failed_when: false
+          changed_when: false
+          register: vm_dominfo
+
+        - name: Check VM provisioning network
+          command: >-
+            virsh net-info provisioning
+          ignore_errors: true
+          changed_when: false
+          register: vm_netinfo_provisioning
+          run_once: true
+          delegate_to: "{{ item }}"
+          with_items: "{{ groups['vm_virt_hosts'] }}"
+
+        - name: Check VM external network
+          command: >-
+            virsh net-info external
+          ignore_errors: true
+          changed_when: false
+          register: vm_netinfo_external
+          run_once: true
+          delegate_to: "{{ item }}"
+          with_items: "{{ groups['vm_virt_hosts'] }}"
+
+        - name: Fail when required networks are missing
+          fail:
+            msg: >-
+              One of the required networks ['provisioning', 'external'] is missing on `{{ vm_virt_host }}`.
+              Please ensure the network is created and online before continuing.
+          when:
+            - (vm_netinfo_provisioning is failed) or (vm_netinfo_external is failed)
+          run_once: true
+
+    - name: Cleanup block
+      when:
+        - ((vm_cleanup | bool) and (vm_dominfo.rc == 0)) or (vm_purge | bool)
+      delegate_to: "{{ vm_virt_host }}"
+      block:
+        - name: Stop running VM
+          virt:
+            name: "{{ inventory_hostname }}"
+            command: destroy
+          ignore_errors: true
+
+        - name: Undefine running VM
+          virt:
+            name: "{{ inventory_hostname }}"
+            command: undefine
+          ignore_errors: true
+
+        - name: Clean up base image file
+          file:
+            path: "/var/lib/libvirt/images/{{ inventory_hostname }}.qcow2"
+            state: absent
+
+        - name: Remove node from vbmc
+          command: /opt/vbmc/bin/vbmc delete {{ inventory_hostname }}
+          ignore_errors: true
+
+  tasks:
+    - name: Check for purge
+      meta: end_play
+      when:
+        - vm_purge | bool
+
+    - name: Create block
+      delegate_to: "{{ vm_virt_host }}"
+      when:
+        - (vm_cleanup | bool) or
+          (vm_dominfo.rc == 1)
+      block:
+        - name: Create virt xml
+          command: >-
+            virt-install
+              --ram {{ vm_ram }}
+              --vcpus={{ vm_cores }},sockets=1,cores={{ vm_cores }}
+              --os-variant {{ vm_variant | default('rhel7') }}
+              --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
+              --network network:provisioning,model=virtio,mac={{ ('52:54:00') | random_mac }}
+              --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }}
+              --name {{ inventory_hostname }}
+              {{ vm_flags }}
+              --dry-run
+              --print-xml
+          register: vm_xml
+
+        - name: Create disk image
+          command: >-
+            qemu-img create -f qcow2 /var/lib/libvirt/images/{{ inventory_hostname }}.qcow2 {{ vm_disk_size }}G
+
+        - name: Define the VM
+          virt:
+            command: define
+            xml: "{{ vm_xml.stdout }}"
+
+        - name: Add node to vbmc
+          command: >-
+            /opt/vbmc/bin/vbmc add {{ inventory_hostname }}
+              --port {{ vm_vbmc_port }}
+              --username {{ vm_vbmc_username }}
+              --password {{ vm_vbmc_password }}
+
+        - name: Start vbmc node
+          command: /opt/vbmc/bin/vbmc start {{ inventory_hostname }}
+
+  post_tasks:
+    - name: Get VM mac addresses
+      shell: >-
+        virsh dumpxml {{ inventory_hostname }} | awk -F"'" '/mac address/ {print $2}'
+      delegate_to: "{{ vm_virt_host }}"
+      changed_when: false
+      register: vm_mac_addresses
+
+    - name: Set mac address fact
+      set_fact:
+        vm_macs: "{{ vm_mac_addresses.stdout_lines | map('quote') | list }}"
+
+    - name: Finishing block
+      delegate_to: "localhost"
+      run_once: true
+      block:
+        - name: Write instackenv file
+          copy:
+            content: |-
+              {% set nodes_list = [] %}
+              {% for node in groups['vms'] %}
+              {%  set node_info = {} %}
+              {%  set _ = node_info.__setitem__('mac', hostvars[node]['vm_macs']) %}
+              {%  set _ = node_info.__setitem__('name', hostvars[node]['inventory_hostname']) %}
+              {%  set _ = node_info.__setitem__('cpu', hostvars[node]['vm_cores']) %}
+              {%  set _ = node_info.__setitem__('memory', hostvars[node]['vm_ram']) %}
+              {%  set _ = node_info.__setitem__('disk', hostvars[node]['vm_disk_size']) %}
+              {%  set _ = node_info.__setitem__('arch', 'x86_64') %}
+              {%  set _ = node_info.__setitem__('pm_type', 'ipmi') %}
+              {%  set _ = node_info.__setitem__('pm_user', hostvars[node]['vm_vbmc_username']) %}
+              {%  set _ = node_info.__setitem__('pm_password', hostvars[node]['vm_vbmc_password']) %}
+              {%  set _ = node_info.__setitem__('pm_addr', hostvars[node]['vm_virt_host']) %}
+              {%  set _ = node_info.__setitem__('pm_port', hostvars[node]['vm_vbmc_port']) %}
+              {%  set _ = nodes_list.append(node_info) %}
+              {% endfor %}
+              {% set render_this = {'nodes': nodes_list} %}
+              {{ render_this | to_nice_yaml }}
+            dest: /tmp/generated-vm-nodes.yaml
+
+        - name: Fetch built instackenv file
+          fetch:
+            src: /tmp/generated-vm-nodes.yaml
+            dest: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+            flat: true
+
+        - name: Remove remote instackenv file
+          file:
+            path: "/tmp/generated-vm-nodes.yaml"
+            state: absent
+
+        - name: Deployment notice
+          debug:
+            msg: >-
+              VM(s) creation has completed. An instackenv file has been created for the generated nodes.
+              This file can be found here: `{{ lookup('env','HOME') }}/vm-instackenv.yaml`.

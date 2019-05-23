@@ -1,0 +1,21 @@
+vms:
+  vars:
+    ansible_become: yes
+    ansible_become_user: "root"
+    ansible_user: "root"
+    vm_vbmc_username: admin
+    vm_vbmc_password: secrete
+
+  hosts:
+    rhel8-osp15-controller1:
+      vm_virt_host: "172.16.27.68"
+      vm_cores: 6  # Number of cores
+      vm_ram: 8192  # Size in MiB
+      vm_disk_size: 96  # Size in GiB
+      vm_vbmc_port: 16020  # Each VM should have a unique port per host
+    rhel8-osp15-compute1:
+      vm_virt_host: "172.16.27.68"
+      vm_cores: 6
+      vm_ram: 8192
+      vm_disk_size: 96
+      vm_vbmc_port: 16021
