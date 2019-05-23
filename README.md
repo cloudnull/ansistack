@@ -5,6 +5,18 @@ deployments using Virtual Machines. While this is geared toward lab
 deployments there's nothing stopping these tools from being used in
 production.
 
+## Virtual Server Setup
+
+TBD
+
+## TripleO Undercloud Deployment
+
+TBD
+
+## TripleO Overcloud Deployment
+
+TBD
+
 ## Creating Virtual Machines
 
 ###### Assumptions
