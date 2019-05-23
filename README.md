@@ -42,9 +42,12 @@ playbook run.
 Upon completion of the playbooks all VMs will be offline and enrolled into
 vBMC.
 
-An instackenv file will have been fetched and stored in the home directory of
-the executing user. The file will be named `vm-instackenv.yaml`. This file
+An **instackenv** file will have been fetched and stored in the home directory
+of the executing user. The file will be named `vm-instackenv.yaml`. This file
 should be compatible with the TripleO / OSP baremetal node import
 process.
 
 > Example TripleO command: `openstack overcloud node import --introspect --provide vm-instackenv.yaml`
+
+These playbooks are idempotent and will return an **instackenv** file even if
+no new vms are created.
