@@ -7,7 +7,12 @@ production.
 
 ## Creating Virtual Machines
 
-Creating Virtual Machines is simple. To begin setup you inventory.
+###### Assumptions
+
+* VirtualBMC is already be installed and ready for use.
+* The `virt-install` command is available on the `vm_virt_host` system.
+
+###### Usage
 
 > an example inventory **(vm-inventory.yaml)** can be seen in the root of this
 repository.
