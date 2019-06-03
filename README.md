@@ -17,6 +17,12 @@ TBD
 
 TBD
 
+## Run package upgrades
+
+The `server-update.yaml` playbook will run package upgrades across the
+**all_hosts** group and uses the package module to ensure it equally
+supports most modern GNU/Linux distros.
+
 ## Creating Virtual Machines
 
 ###### Assumptions

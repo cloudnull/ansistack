@@ -1,0 +1,33 @@
+---
+
+all_systems:
+  vars:
+    ansible_become: yes
+    ansible_become_user: "root"
+    ansible_user: "root"
+
+  children:
+    all_hosts:
+      children:
+        compute_hosts:
+          children:
+            proxmox_hosts:
+              hosts:
+                compute1:
+                  ansible_host: 172.16.27.220
+                  ansible_python_interpreter: "/usr/bin/python3"
+            libvirt_hosts:
+              hosts:
+                compute2:
+                  ansible_host: 172.16.27.66
+        infra_hosts:
+          hosts:
+            plex:
+              ansible_host: 172.16.27.219
+            brix:
+              ansible_host: 172.16.27.218
+        storage_hosts:
+          hosts:
+            system:
+              ansible_host: 172.16.24.92
+              ansible_python_interpreter: "/usr/bin/python3"

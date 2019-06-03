@@ -17,25 +17,13 @@
 
 
 - name: Run updates across all hosts
-  hosts: libvirt_hosts
+  hosts: all_hosts
   any_errors_fatal: true
   gather_facts: true
   user: root
   tasks:
-    - name: Gather variables for each operating system
-      include_vars: "{{ item }}"
-      with_first_found:
-        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
-        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
-        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
-        - "{{ ansible_distribution | lower }}.yml"
-        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
-        - "{{ ansible_os_family | lower }}.yml"
-      tags:
-        - always
-
-    - name: Run package installs on all libvirt hosts
+    - name: Run package updates across the board
       package:
-        name: "{{ server_system_packages }}"
-        state: "present"
+        name: "*"
+        state: "latest"
         update_cache: "{{ ((ansible_os_family | lower) == 'debian') | ternary('yes', omit) }}"

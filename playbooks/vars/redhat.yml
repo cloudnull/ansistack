@@ -1,0 +1,8 @@
+---
+
+server_system_packages:
+  - "@virtualization"
+  - "python3-virtualenv"
+  - "nfs-utils"
+  - "ipmitool"
+  - "OpenIPMI"

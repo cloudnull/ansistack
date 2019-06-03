@@ -7,14 +7,14 @@ vms:
     vm_vbmc_password: secrete
 
   hosts:
-    controller1:
-      vm_virt_host: "172.16.27.68"
+    osp-vm-controller1:
+      vm_virt_host: "compute2"
       vm_cores: 8  # Number of cores
       vm_ram: 16384  # Size in MiB
       vm_disk_size: 96  # Size in GiB
       vm_vbmc_port: 16020  # Each VM should have a unique port per host
-    compute1:
-      vm_virt_host: "172.16.27.68"
+    osp-vm-compute1:
+      vm_virt_host: "compute2"
       vm_cores: 6
       vm_ram: 8192
       vm_disk_size: 128
