@@ -1,0 +1,41 @@
+#cloud-config
+# Customize as per your need. At least change username (vivek) and ssh-ed22519
+# key with your actual public key
+password: Password1
+chpasswd: { expire: False }
+
+# Hostname management
+preserve_hostname: False
+hostname: {{ inventory_hostname }}
+fqdn: {{ inventory_hostname }}.local
+
+# Setup Users with ssh keys so that I can log in into new machine
+users:
+  - default
+  - name: vm-user
+    groups: []
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_pwauth: True
+    ssh-authorized-keys:
+      - "{{ lookup('file', vm_pub_key) }}"
+
+# Configure where output will go
+output:
+  all: ">> /var/log/cloud-init.log"
+
+# configure interaction with ssh server
+ssh_svcname: ssh
+ssh_deletekeys: True
+ssh_genkeytypes: ['rsa', 'ecdsa']
+ssh_pwauth: True
+
+# Install your public ssh key to the first user-defined user configured
+ssh_authorized_keys:
+  - "{{ lookup('file', vm_pub_key) }}"
+
+# set timezone for VM
+timezone: UTC
+
+runcmd:
+  - systemctl restart network && systemctl restart sshd && dhclient

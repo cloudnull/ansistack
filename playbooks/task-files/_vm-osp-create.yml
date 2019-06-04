@@ -1,0 +1,98 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Create disk image
+  command: >-
+    qemu-img create -f qcow2 -o preallocation=metadata /var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2 {{ vm_disk_size }}G
+  args:
+    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2"
+  environment:
+    LIBGUESTFS_BACKEND: direct
+
+- name: Create virt xml
+  command: >-
+    virt-install
+      --ram {{ vm_ram }}
+      --vcpus={{ vm_cores }},sockets=1,cores={{ vm_cores }}
+      --os-variant {{ vm_variant | default('rhel7') }}
+      --os-type=linux
+      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
+      --network network:provisioning,model=virtio,mac={{ ('52:54:00') | random_mac }}
+      --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }}
+      --name {{ inventory_hostname }}
+      {{ vm_flags }}
+      --dry-run
+      --print-xml
+  register: vm_xml
+
+- name: Define the VM
+  virt:
+    command: define
+    xml: "{{ vm_xml.stdout }}"
+
+- name: Add node to vbmc
+  command: >-
+    /opt/vbmc/bin/vbmc add {{ inventory_hostname }}
+      --port {{ vm_vbmc_port }}
+      --username {{ vm_vbmc_username }}
+      --password {{ vm_vbmc_password }}
+  delegate_to: "{{ vm_virt_host }}"
+
+- name: Start vbmc node
+  command: /opt/vbmc/bin/vbmc start {{ inventory_hostname }}
+  delegate_to: "{{ vm_virt_host }}"
+
+- name: Get VM mac addresses
+  shell: >-
+    virsh dumpxml {{ inventory_hostname }} | awk -F"'" '/mac address/ {print $2}'
+  delegate_to: "{{ vm_virt_host }}"
+  changed_when: false
+  register: vm_mac_addresses
+
+- name: Set mac address fact
+  set_fact:
+    vm_macs: "{{ vm_mac_addresses.stdout_lines | map('quote') | list }}"
+
+- name: Finishing block
+  delegate_to: "localhost"
+  connection: local
+  run_once: true
+  block:
+    - name: Write instackenv file
+      copy:
+        content: |-
+          {% set nodes_list = [] %}
+          {% for node in groups['osp_vms'] %}
+          {%  set node_info = {} %}
+          {%  set _ = node_info.__setitem__('mac', hostvars[node]['vm_macs']) %}
+          {%  set _ = node_info.__setitem__('name', hostvars[node]['inventory_hostname']) %}
+          {%  set _ = node_info.__setitem__('cpu', hostvars[node]['vm_cores']) %}
+          {%  set _ = node_info.__setitem__('memory', hostvars[node]['vm_ram']) %}
+          {%  set _ = node_info.__setitem__('disk', hostvars[node]['vm_disk_size']) %}
+          {%  set _ = node_info.__setitem__('arch', 'x86_64') %}
+          {%  set _ = node_info.__setitem__('pm_type', 'ipmi') %}
+          {%  set _ = node_info.__setitem__('pm_user', hostvars[node]['vm_vbmc_username']) %}
+          {%  set _ = node_info.__setitem__('pm_password', hostvars[node]['vm_vbmc_password']) %}
+          {%  set _ = node_info.__setitem__('pm_addr', hostvars[node]['vm_virt_host']) %}
+          {%  set _ = node_info.__setitem__('pm_port', hostvars[node]['vm_vbmc_port']) %}
+          {%  set _ = nodes_list.append(node_info) %}
+          {% endfor %}
+          {% set render_this = {'nodes': nodes_list} %}
+          {{ render_this | to_nice_yaml }}
+        dest: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+      notify: Deployment notice

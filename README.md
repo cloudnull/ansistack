@@ -27,10 +27,23 @@ supports most modern GNU/Linux distros.
 
 ###### Assumptions
 
-* VirtualBMC is already be installed and ready for use.
+* VirtualBMC is already be installed and ready for use when using the
+  `osp_vms` group.
 * The `virt-install` command is available on the `vm_virt_host` system.
 
 ###### Usage
+
+Two different VM types can be deployed using this `vm-create.yml` playbook,
+raw and osp.
+
+* raw vms are virtual machines that are deployed using a cloud image and
+  DHCP. Think of this as a light weight nested virtualization solution
+  suitable for most applications. The instance will be setup with cloud-init
+  and networking defaults to DHCP.
+
+* osp vms are virtual machines that are deployed for the sole purpose of
+  being enrolled into an undercloud using VirtualBMC. No configuration or
+  operating system will be deployed when using the osp vm type.
 
 > an example inventory **(vm-inventory.yaml)** can be seen in the root of this
 repository.

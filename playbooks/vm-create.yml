@@ -26,20 +26,31 @@
 #
 
 - name: Create VMs on baremetal machines
-  hosts: vms
+  hosts: all_vms
   any_errors_fatal: true
   gather_facts: false
   user: root
   vars:
+    vm_start_on_create: "{{ inventory_hostname in groups['raw_vms'] }}"
     vm_cleanup: false
     vm_purge: false
     vm_flags: >-
-      --graphics vnc
+      --graphics vnc,listen=0.0.0.0
+      --controller scsi,model=virtio-scsi
+      --serial pty
+      --parallel pty
       --hvm
       --virt-type kvm
       --memballoon virtio
       --cpu host
       --rng /dev/urandom
+    vm_image_data:
+      centos7:
+        url: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+        path: /mnt/rhv/images
+        name: CentOS-7-x86_64-GenericCloud.qcow2
+    vm_pub_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
+
   handlers:
     - name: Deployment notice
       debug:
@@ -52,26 +63,47 @@
     - name: Check for required hostvars
       fail:
         msg: >-
-          The required variable `{{ item }}` is undefined. Define the option in order to continue.
+          The required variable `{{ item.name }}` is undefined. Define the option in order to continue.
       when:
-        - hostvars[inventory_hostname][item] is undefined
+        - item.condition | bool
+        - hostvars[inventory_hostname][item.name] is undefined
       with_items:
-        - vm_virt_host
-        - vm_cores
-        - vm_ram
-        - vm_disk_size
-        - vm_vbmc_username
-        - vm_vbmc_password
-        - vm_vbmc_port
+        - name: vm_virt_host
+          condition: true
+        - name: vm_cores
+          condition: true
+        - name: vm_ram
+          condition: true
+        - name: vm_disk_size
+          condition: true
+        - name: vm_vbmc_username
+          condition: "{{ inventory_hostname in groups['osp_vms'] }}"
+        - name: vm_vbmc_password
+          condition: "{{ inventory_hostname in groups['osp_vms'] }}"
+        - name: vm_vbmc_port
+          condition: "{{ inventory_hostname in groups['osp_vms'] }}"
+        - name: vm_image_name
+          condition: "{{ inventory_hostname in groups['raw_vms'] }}"
       delegate_to: localhost
       connection: local
+
+    - name: Download vm image
+      get_url:
+        url: "{{ vm_image_data[vm_image_name]['url'] }}"
+        dest: "{{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['url'] | basename }}"
+      delegate_to: "{{ vm_virt_host }}"
+      async: 1024
+      poll: 0
+      register: _image_get
+      when:
+        - inventory_hostname in groups['raw_vms']
 
     - name: Create in-memory vm_virt_hosts group
       add_host:
         name: "{{ hostvars[item]['vm_virt_host'] }}"
         groups: vm_virt_hosts
       changed_when: false
-      with_items: "{{ groups['vms'] }}"
+      with_items: "{{ groups['all_vms'] }}"
       run_once: true
 
     - name: PreFlight Checks
@@ -132,7 +164,7 @@
 
         - name: Clean up base image file
           file:
-            path: "/var/lib/libvirt/images/{{ inventory_hostname }}.qcow2"
+            path: "/var/lib/libvirt/images/{{ inventory_hostname }}"
             state: absent
 
         - name: Remove node from vbmc
@@ -151,77 +183,42 @@
         - (vm_cleanup | bool) or
           (vm_dominfo.rc == 1)
       block:
-        - name: Create virt xml
-          command: >-
-            virt-install
-              --ram {{ vm_ram }}
-              --vcpus={{ vm_cores }},sockets=1,cores={{ vm_cores }}
-              --os-variant {{ vm_variant | default('rhel7') }}
-              --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
-              --network network:provisioning,model=virtio,mac={{ ('52:54:00') | random_mac }}
-              --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }}
-              --name {{ inventory_hostname }}
-              {{ vm_flags }}
-              --dry-run
-              --print-xml
-          register: vm_xml
+        - name: Create vm directory
+          file:
+            path: "/var/lib/libvirt/images/{{ inventory_hostname }}"
+            state: directory
 
-        - name: Create disk image
-          command: >-
-            qemu-img create -f qcow2 /var/lib/libvirt/images/{{ inventory_hostname }}.qcow2 {{ vm_disk_size }}G
+        - include_tasks: task-files/_vm-raw-create.yml
+          when:
+            - inventory_hostname in groups['raw_vms']
 
-        - name: Define the VM
-          virt:
-            command: define
-            xml: "{{ vm_xml.stdout }}"
+        - name: Gather virt-host facts
+          setup:
+            gather_subset: "!facter,!ohai"
 
-        - name: Add node to vbmc
-          command: >-
-            /opt/vbmc/bin/vbmc add {{ inventory_hostname }}
-              --port {{ vm_vbmc_port }}
-              --username {{ vm_vbmc_username }}
-              --password {{ vm_vbmc_password }}
+        - include_tasks: task-files/_vm-osp-create.yml
+          when:
+            - inventory_hostname in groups['osp_vms']
 
-        - name: Start vbmc node
-          command: /opt/vbmc/bin/vbmc start {{ inventory_hostname }}
+        - name: VM start block
+          block:
+            - name: Start VM
+              virt:
+                name: "{{ inventory_hostname }}"
+                state: running
+                autostart: true
 
-  post_tasks:
-    - name: Get VM mac addresses
-      shell: >-
-        virsh dumpxml {{ inventory_hostname }} | awk -F"'" '/mac address/ {print $2}'
-      delegate_to: "{{ vm_virt_host }}"
-      changed_when: false
-      register: vm_mac_addresses
+            - name: Get IP address
+              shell: >-
+                virsh domifaddr {{ inventory_hostname }} --source agent | grep -v 'lo' | grep 'ipv4'
+              register: vm_ip
+              until: vm_ip.rc == 0
+              retries: 72
+              delay: 2
 
-    - name: Set mac address fact
-      set_fact:
-        vm_macs: "{{ vm_mac_addresses.stdout_lines | map('quote') | list }}"
-
-    - name: Finishing block
-      delegate_to: "localhost"
-      connection: local
-      run_once: true
-      block:
-        - name: Write instackenv file
-          copy:
-            content: |-
-              {% set nodes_list = [] %}
-              {% for node in groups['vms'] %}
-              {%  set node_info = {} %}
-              {%  set _ = node_info.__setitem__('mac', hostvars[node]['vm_macs']) %}
-              {%  set _ = node_info.__setitem__('name', hostvars[node]['inventory_hostname']) %}
-              {%  set _ = node_info.__setitem__('cpu', hostvars[node]['vm_cores']) %}
-              {%  set _ = node_info.__setitem__('memory', hostvars[node]['vm_ram']) %}
-              {%  set _ = node_info.__setitem__('disk', hostvars[node]['vm_disk_size']) %}
-              {%  set _ = node_info.__setitem__('arch', 'x86_64') %}
-              {%  set _ = node_info.__setitem__('pm_type', 'ipmi') %}
-              {%  set _ = node_info.__setitem__('pm_user', hostvars[node]['vm_vbmc_username']) %}
-              {%  set _ = node_info.__setitem__('pm_password', hostvars[node]['vm_vbmc_password']) %}
-              {%  set _ = node_info.__setitem__('pm_addr', hostvars[node]['vm_virt_host']) %}
-              {%  set _ = node_info.__setitem__('pm_port', hostvars[node]['vm_vbmc_port']) %}
-              {%  set _ = nodes_list.append(node_info) %}
-              {% endfor %}
-              {% set render_this = {'nodes': nodes_list} %}
-              {{ render_this | to_nice_yaml }}
-            dest: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
-          notify: Deployment notice
+            - name: Set IP fact
+              debug:
+                msg: >-
+                  VM {{ inventory_hostname }} is online. IP address {{ vm_ip.stdout.split()[3].split('/')[0] }}
+          when:
+            - vm_start_on_create | bool
