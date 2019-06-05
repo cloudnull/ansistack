@@ -49,6 +49,7 @@
         url: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
         path: /mnt/rhv/images
         name: CentOS-7-x86_64-GenericCloud.qcow2
+        access_user: 'centos'
     vm_pub_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
 
   handlers:
@@ -56,7 +57,19 @@
       debug:
         msg: >-
           VM(s) creation has completed. An instackenv file has been created for the generated nodes.
-          This file can be found here: `{{ lookup('env','HOME') }}/vm-instackenv.yaml`.
+          This file can be found here `{{ lookup('env','HOME') }}/vm-instackenv.yaml`.
+      run_once: true
+
+    - name: Display ip address
+      debug:
+        msg: >-
+          VM {{ inventory_hostname }} is online. IP address {{ vm_ip_address }}
+
+    - name: Raw deployment notice
+      debug:
+        msg: >-
+          VM(s) creation has completed. An instackenv file has been created for the generated nodes.
+          This file can be found here `{{ lookup('env','HOME') }}/vm-lab-inventory.yaml`.
       run_once: true
 
   pre_tasks:
@@ -207,6 +220,7 @@
                 name: "{{ inventory_hostname }}"
                 state: running
                 autostart: true
+              notify: Display ip address
 
             - name: Get IP address
               shell: >-
@@ -217,9 +231,49 @@
               retries: 72
               delay: 2
 
-            - name: Set IP fact
-              debug:
-                msg: >-
-                  VM {{ inventory_hostname }} is online. IP address {{ vm_ip.stdout.split()[3].split('/')[0] }}
+            - name: Set ip fact
+              set_fact:
+                vm_ip_address: "{{ vm_ip.stdout.split()[3].split('/')[0] }}"
+
+            - name: Finishing block
+              delegate_to: "localhost"
+              connection: local
+              run_once: true
+              block:
+                - name: Set inventory file path
+                  set_fact:
+                    raw_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
+
+                - name: Read existing inventory file
+                  set_fact:
+                    existing_raw_vm_inventory_file: "{{ lookup('file', raw_vm_inventory_file, errors='ignore') | default('---', True) | from_yaml }}"
+
+                - name: Write raw vm inventory file
+                  copy:
+                    content: |-
+                      {%
+                          set inventory = {
+                            'vms': {
+                              'vars': {
+                                'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'
+                              },
+                              'hosts': {}
+                            }
+                          }
+                      %}
+                      {% for node in ansible_play_batch %}
+                      {%   if node in groups['raw_vms'] %}
+                      {%
+                             set entry = {
+                               'ansible_host': hostvars[node]['vm_ip_address'],
+                               'ansible_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user']
+                             }
+                      %}
+                      {%     set _ = inventory['vms']['hosts'].__setitem__(node, entry) %}
+                      {%   endif %}
+                      {% endfor %}
+                      {{ existing_raw_vm_inventory_file | combine(inventory, recursive=True) | to_nice_yaml }}
+                    dest: "{{ raw_vm_inventory_file }}"
+                  notify: Raw deployment notice
           when:
             - vm_start_on_create | bool

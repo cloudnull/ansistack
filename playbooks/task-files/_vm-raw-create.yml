@@ -106,7 +106,11 @@
       {{ vm_flags }}
       --dry-run
       --print-xml
+      --check path_in_use=off
   register: vm_xml
+  until: vm_xml.rc == 0
+  retries: 16
+  delay: 2
 
 - name: Define the VM
   virt:
