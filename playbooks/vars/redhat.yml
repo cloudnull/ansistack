@@ -6,3 +6,9 @@ server_system_packages:
   - "nfs-utils"
   - "ipmitool"
   - "OpenIPMI"
+
+developer_system_packages:
+  - git
+  - python-virtualenv
+  - tmux
+  - vim

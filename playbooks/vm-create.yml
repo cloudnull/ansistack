@@ -211,6 +211,7 @@
             - name: Get IP address
               shell: >-
                 virsh domifaddr {{ inventory_hostname }} --source agent | grep -v 'lo' | grep 'ipv4'
+              changed_when: false
               register: vm_ip
               until: vm_ip.rc == 0
               retries: 72
