@@ -108,6 +108,7 @@
       async: 1024
       poll: 0
       register: _image_get
+      run_once: true
       when:
         - inventory_hostname in groups['raw_vms']
 
@@ -201,13 +202,13 @@
             path: "/var/lib/libvirt/images/{{ inventory_hostname }}"
             state: directory
 
-        - include_tasks: task-files/_vm-raw-create.yml
-          when:
-            - inventory_hostname in groups['raw_vms']
-
         - name: Gather virt-host facts
           setup:
             gather_subset: "!facter,!ohai"
+
+        - include_tasks: task-files/_vm-raw-create.yml
+          when:
+            - inventory_hostname in groups['raw_vms']
 
         - include_tasks: task-files/_vm-osp-create.yml
           when:

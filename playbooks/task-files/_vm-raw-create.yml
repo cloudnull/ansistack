@@ -32,6 +32,7 @@
   register: job_result
   until: job_result.finished
   retries: 96
+  run_once: true
   when:
     - inventory_hostname in groups['raw_vms']
 

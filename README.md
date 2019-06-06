@@ -5,6 +5,9 @@ deployments using Virtual Machines. While this is geared toward lab
 deployments there's nothing stopping these tools from being used in
 production.
 
+> All playbooks take user input, an example user input variable file can
+  be seen in the `local_vars.yaml` file.
+
 ## Virtual Server Setup
 
 TBD

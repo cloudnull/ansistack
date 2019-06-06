@@ -13,7 +13,7 @@ parameter_defaults:
         wal_vg: vg2
   LocalCephAnsibleFetchDirectoryBackup: /root/ceph_ansible_fetch
   CephAnsibleExtraConfig:
-    cluster_network: 172.17.24.0/22
-    public_network: 172.17.24.0/22
+    cluster_network: {{ tripleo_cidr }}
+    public_network: {{ tripleo_cidr }}
   CephPoolDefaultPgNum: 32
   CephPoolDefaultSize: 1

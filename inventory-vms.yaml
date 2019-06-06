@@ -16,17 +16,17 @@ all:
               vm_virt_host: "172.16.27.66"
               vm_cores: 8  # Number of cores
               vm_ram: 10240  # Size in MiB
-              vm_disk_size: 96  # Size in GiB
+              vm_disk_size: 72  # Size in GiB
             raw-vm-2:
               vm_virt_host: "172.16.27.66"
               vm_cores: 8  # Number of cores
               vm_ram: 10240  # Size in MiB
-              vm_disk_size: 96  # Size in GiB
+              vm_disk_size: 72  # Size in GiB
             raw-vm-3:
               vm_virt_host: "172.16.27.66"
               vm_cores: 8  # Number of cores
               vm_ram: 10240  # Size in MiB
-              vm_disk_size: 96  # Size in GiB
+              vm_disk_size: 72  # Size in GiB
         osp_vms:
           hosts:
             osp-vm-controller1:

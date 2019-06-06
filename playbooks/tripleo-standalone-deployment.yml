@@ -70,8 +70,6 @@
   any_errors_fatal: true
   gather_facts: true
   become: true
-  vars:
-    developer_patches: []
   pre_tasks:
     - name: Gather variables for each operating system
       include_vars: "{{ item }}"
@@ -169,11 +167,6 @@
         dest: /etc/sudoers.d/stack
         mode: "0440"
 
-    - name: Cleanup old delorean builds
-      file:
-        path: /home/stack/delorean/rdoinfo
-        state: "absent"
-
     - name: Install rdopkg
       pip:
         name: "{{ developer_py_venv_packages }}"
@@ -242,6 +235,11 @@
             - db-lv2
             - wal-lv2
 
+        - name: Create ceph ansible fetch directory
+          file:
+            path: /root/ceph_ansible_fetch
+            state: directory
+
         - name: Setup basic standalone deployment
           template:
             src: "standalone_ceph_parameters.yaml.j2"
@@ -251,52 +249,72 @@
       when:
         - (developer_patches | length) > 0
       vars:
-        become_user: stack
         ansible_python_interpreter: /opt/rdo/bin/python
       block:
-        - name: Create stack directories
+        - name: Create delorian directories
           file:
-            path: "/home/stack/{{ item }}"
-            state: "present"
+            path: "/opt/tripleo/{{ item }}"
+            state: "directory"
           with_items:
-            - delorean
-            - tripleo
+            - rpms
+            - repos
 
-        - name: clone tripleo-ci in stack home
+        - name: clone tripleo-ci
           git:
-            dest: "/home/stack/tripleo-ci"
-            repo: "https://git.opendev.org/openstack-infra/tripleo-ci"
+            dest: "/opt/tripleo-ci"
+            repo: "https://opendev.org/openstack/tripleo-ci"
 
         - name: install tripleo-ci dependencies
-          shell: |
-            /home/stack/tripleo-ci/scripts/tripleo.sh --delorean-setup
+          command: /opt/tripleo-ci/scripts/tripleo.sh --delorean-setup
           args:
-            creates: /home/stack/tripleo/delorean
+            creates: /opt/tripleo/delorean
           environment:
-            TRIPLEO_ROOT: /home/stack
+            TRIPLEO_ROOT: /opt/tripleo
 
         - name: Clone patched repo(s)
           git:
-            repo: https://review.opendev.org/openstack/{{ item.name }}
-            dest: /home/stack/tripleo/{{ item.name }}
-            refspec: 'refs/changes/{{ item.refs }}'
+            repo: "{{ item.url }}"
+            dest: "/opt/tripleo/repos/{{ item.url | basename }}"
+            refspec: '{{ item.refs | default(omit) }}'
+            version: "{{ item.version | default(omit) }}"
           with_items: "{{ developer_patches }}"
 
-        - name: Build rpms
-          command: >-
-            /home/stack/tripleo/tripleo-ci/scripts/tripleo.sh --delorean-build {{ item.name }}
+        - name: Force packages to rebuild
+          file:
+            path: "/opt/tripleo/delorean/{{ item.url | basename }}.created"
+            state: absent
+          with_items: "{{ developer_patches }}"
+          when:
+            - developer_rebuild_rpms | bool
 
-        - name: ensure we have RPMs to install
+        - name: Build rpms
+          shell: |-
+            export PKG_NAME="{{ item.url | basename }}"
+            source /opt/rdo/bin/activate
+            /opt/tripleo-ci/scripts/tripleo.sh --delorean-build ${PKG_NAME}
+            find /opt/tripleo/delorean/data -name '*rpm' -exec mv {} /opt/tripleo/rpms/ \;
+            touch /opt/tripleo/delorean/${PKG_NAME}.created
+          args:
+            chdir: "/opt/tripleo/repos"
+            creates: "/opt/tripleo/delorean/{{ item.url | basename }}.created"
+            executable: /bin/bash
+          with_items: "{{ developer_patches }}"
+          environment:
+            TRIPLEO_ROOT: /opt/tripleo
+
+        - name: Index all rpms
           find:
-            path: /home/stack/custom-rpms
+            path: /opt/tripleo/rpms
             patterns: '*.rpm'
             excludes: '*.src.rpm'
             recurse: yes
           register: vm_job_rpms
 
+        - debug: msg="{{ vm_job_rpms.files | map(attribute='path') | list }}"
+
         - name: Install tripleo packages
           package:
-            name: "{{ vm_job_rpms | map(attribute='path') | list }}"
+            name: "{{ vm_job_rpms.files | map(attribute='path') | list }}"
             state: latest
 
     - name: Setup basic standalone deployment
@@ -318,7 +336,7 @@
                           --output-env-file containers-prepare-parameter.yaml" C-m
         - tmux send-keys "sudo openstack tripleo deploy
                           --templates
-                          --local-ip=172.17.27.2/24
+                          --local-ip={{ tripleo_job_address }}/{{ tripleo_cidr | ipaddr('prefix') }}
                           -r /usr/share/openstack-tripleo-heat-templates/roles/Standalone.yaml
                           -e /usr/share/openstack-tripleo-heat-templates/environments/standalone/standalone-tripleo.yaml
                           -e /home/stack/containers-prepare-parameter.yaml
