@@ -15,6 +15,7 @@ developer_system_packages:
 
 developer_py_venv_packages:
   - rdopkg
+  - glances
 
 tripleo_system_packages:
   - python-tripleoclient

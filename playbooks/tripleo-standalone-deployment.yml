@@ -309,8 +309,10 @@
     - name: Run standalone command(s)
       shell: "{{ item }}"
       with_items:
-        - tmux new-session -d -s standalone || true
-        - tmux select-pane -t 0
+        - tmux new-session -d -s standalone -n standalone || true
+        - tmux new-window -n deploy -t 0 || true
+        - tmux new-window -n glances -t 1 || true
+        - tmux select-window -t 0
         - tmux send-keys "su - stack" C-m
         - tmux send-keys "openstack tripleo container image prepare default
                           --output-env-file containers-prepare-parameter.yaml" C-m
@@ -324,6 +326,9 @@
                           {{ (tripleo_ceph_enabled | bool) | ternary(tripleo_ceph_templates, '') }}
                           --output-dir /home/stack
                           --standalone" C-m
+        - tmux select-window -t 1
+        - tmux send-keys "/opt/rdo/bin/glances --disable-autodiscover --diskio-iops --diskio-show-ramfs --enable-irq" C-m
+        - tmux select-window -t 0
 
     - name: Build notice
       debug:
