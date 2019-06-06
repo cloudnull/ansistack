@@ -42,34 +42,66 @@
         line: "127.0.0.1 undercloud.{{ ansible_domain }} undercloud localhost localhost.localdomain"
         regexp: '^127\.0\.0\.1'
 
-    - name: fetch latest repo version
-      uri:
-        url: https://trunk.rdoproject.org/centos7/current/
-        return_content: yes
-      register: tripleo_packages
-
-    - name: Set package fact
-      set_fact:
-        tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python2-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
-
-    - name: install tripleo repository
-      package:
-        name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
-        state: present
-
-    - name: Enable tripleo repository (dev)
-      command: >-
-        tripleo-repos current-tripleo-dev {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
-      changed_when: false
+    - name: Centos package setup
       when:
-        - tripleo_version_dev_enabled | bool
+        - (ansible_distribution | lower) == 'centos'
+      block:
+        - name: fetch latest repo version
+          uri:
+            url: https://trunk.rdoproject.org/centos7/current/
+            return_content: yes
+          register: tripleo_packages
 
-    - name: Enable tripleo repository (stable)
-      command: >-
-        tripleo-repos -b {{ tripleo_version }} current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
-      changed_when: false
+        - name: Set package fact
+          set_fact:
+            tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python2-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
+
+        - name: install tripleo repository
+          package:
+            name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
+            state: present
+
+        - name: Enable tripleo repository (dev)
+          command: >-
+            tripleo-repos current-tripleo-dev {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
+          changed_when: false
+          when:
+            - tripleo_version_dev_enabled | bool
+
+        - name: Enable tripleo repository (stable)
+          command: >-
+            tripleo-repos -b {{ tripleo_version }} current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
+          args:
+            creates: "/etc/yum.repos.d/{{ tripleo_version }}-stable.repo"
+          changed_when: false
+          when:
+            - not (tripleo_version_dev_enabled | bool)
+
+    - name: Fedora package setup
       when:
-        - not (tripleo_version_dev_enabled | bool)
+        - (ansible_distribution | lower) == 'fedora'
+      block:
+        - name: fetch latest repo version
+          uri:
+            url: https://trunk.rdoproject.org/fedora/current/
+            return_content: yes
+          register: tripleo_packages
+
+        - name: Set package fact
+          set_fact:
+            tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python3-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
+
+        - name: install tripleo repository
+          package:
+            name: "https://trunk.rdoproject.org/fedora/current/{{ tripleo_package_fact }}"
+            state: present
+
+        - name: Enable tripleo repository (fedora)
+          command: >-
+            tripleo-repos -d fedora current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
+          args:
+            creates: /etc/yum.repos.d/fedora-stable.repo
+          changed_when: false
 
     - name: Install tripleo packages
       package:
