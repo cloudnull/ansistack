@@ -9,6 +9,35 @@ production.
 
 TBD
 
+## TripleO Standalone Deployment
+
+Standalone deployments are simple test driven deployments that rapidly
+deploys an run the overcloud on a single node. This playbook assumes
+raw VMs have already been created using the `vm-create.yml` playbook.
+
+To run the standalone deployment capability two arguments are required;
+`vm_job_target` and `vm_job_user`. These arguments denote the node
+name where the deployment will be executed, and the username used to
+login to the target node.
+
+``` shell
+ansible-playbook -i inventory-vms.yaml \
+                 playbooks/tripleo-standalone-deployment.yml \
+                 -e vm_job_target=raw-vm-3 \
+                 -e vm_job_user=centos
+```
+
+Other options exist which can aide in deployment setup and
+troubleshooting, common options to include in the playbook run are
+`tripleo_version_dev_enabled` and `tripleo_ceph_enabled`.
+
+* `tripleo_version_dev_enabled` is a Boolean option which enables or disable
+  developer mode, which sets the tripleo repos to use the latest development
+  packages. If this option is set to **false** the option `tripleo_version`
+  can be used to set the desired deployment version.
+* `tripleo_ceph_enabled` is a Boolean option which will setup standalone
+  ceph within the deployment.
+
 ## TripleO Undercloud Deployment
 
 TBD
@@ -66,9 +95,9 @@ and allow for VMs to attach to them.
 
 ###### This playbook has three basic options
 
- * vm_cleanup - if `true` clenaup old VMs and create create new ones
- * vm_purge - if `true` purge all VMs
- * vm_flags - Options to pass into libvirt (virt-install).
+* vm_cleanup - if `true` clenaup old VMs and create create new ones
+* vm_purge - if `true` purge all VMs
+* vm_flags - Options to pass into libvirt (virt-install).
 
 All of these options are made for convienance and are not required for a basic
 playbook run.
