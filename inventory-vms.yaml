@@ -1,40 +1,43 @@
-all_vms:
+all:
   vars:
-    ansible_become: yes
-    ansible_become_user: "root"
-    ansible_user: "root"
     ansible_ssh_common_args: -o StrictHostKeyChecking=no
-    vm_vbmc_username: admin
-    vm_vbmc_password: secrete
   children:
-    raw_vms:
-      hosts:
-        raw-vm-1:
-          vm_virt_host: "172.16.27.66"
-          vm_cores: 8  # Number of cores
-          vm_ram: 10240  # Size in MiB
-          vm_disk_size: 96  # Size in GiB
-        raw-vm-2:
-          vm_virt_host: "172.16.27.66"
-          vm_cores: 8  # Number of cores
-          vm_ram: 10240  # Size in MiB
-          vm_disk_size: 96  # Size in GiB
-        raw-vm-3:
-          vm_virt_host: "172.16.27.66"
-          vm_cores: 8  # Number of cores
-          vm_ram: 10240  # Size in MiB
-          vm_disk_size: 96  # Size in GiB
-    osp_vms:
-      hosts:
-        osp-vm-controller1:
-          vm_virt_host: "172.16.27.66"
-          vm_cores: 8
-          vm_ram: 16384
-          vm_disk_size: 96
-          vm_vbmc_port: 16020
-        osp-vm-compute1:
-          vm_virt_host: "172.16.27.66"
-          vm_cores: 6
-          vm_ram: 8192
-          vm_disk_size: 128
-          vm_vbmc_port: 16021
+    all_vms:
+      vars:
+        ansible_become: yes
+        ansible_become_user: "root"
+        ansible_user: "root"
+        vm_vbmc_username: admin
+        vm_vbmc_password: secrete
+      children:
+        raw_vms:
+          hosts:
+            raw-vm-1:
+              vm_virt_host: "172.16.27.66"
+              vm_cores: 8  # Number of cores
+              vm_ram: 10240  # Size in MiB
+              vm_disk_size: 96  # Size in GiB
+            raw-vm-2:
+              vm_virt_host: "172.16.27.66"
+              vm_cores: 8  # Number of cores
+              vm_ram: 10240  # Size in MiB
+              vm_disk_size: 96  # Size in GiB
+            raw-vm-3:
+              vm_virt_host: "172.16.27.66"
+              vm_cores: 8  # Number of cores
+              vm_ram: 10240  # Size in MiB
+              vm_disk_size: 96  # Size in GiB
+        osp_vms:
+          hosts:
+            osp-vm-controller1:
+              vm_virt_host: "172.16.27.66"
+              vm_cores: 8
+              vm_ram: 16384
+              vm_disk_size: 96
+              vm_vbmc_port: 16020
+            osp-vm-compute1:
+              vm_virt_host: "172.16.27.66"
+              vm_cores: 6
+              vm_ram: 8192
+              vm_disk_size: 128
+              vm_vbmc_port: 16021

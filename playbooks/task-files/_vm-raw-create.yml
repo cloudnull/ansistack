@@ -35,51 +35,24 @@
   when:
     - inventory_hostname in groups['raw_vms']
 
-- name: Check for existing vm image
-  stat:
-    path: "/var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2"
-  register: image_stat
-
-- name: Unarchive block
-  block:
-    - name: Create temp image file (from archive)
-      unarchive:
-        src: "{{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['url'] | basename }}"
-        dest: "/var/lib/libvirt/images/{{ inventory_hostname }}"
-        remote_src: true
-
-    - name: Move temp image
-      command: >-
-        mv /var/lib/libvirt/images/{{ inventory_hostname }}/{{ vm_image_data[vm_image_name]['name'] }}
-        /var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2
-  when:
-    - (vm_image_data[vm_image_name]['url'] | basename).split('.')[-1] in ['zip', 'xz', 'tar', 'gz']
-    - not (image_stat.stat.exists | bool)
-
-- name: Create temp image file (from copy)
-  copy:
-    src: "{{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['name'] }}"
-    dest: "/var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2"
-    remote_src: true
-  when:
-    - not ((vm_image_data[vm_image_name]['url'] | basename).split('.')[-1] in ['zip', 'xz', 'tar', 'gz'])
-    - not (image_stat.stat.exists | bool)
-
 - name: Create disk image
   command: >-
-    qemu-img convert -f {{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['name'] }} /var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2
+    qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
   args:
-    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2"
+    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
   register: image_convert
   environment:
     LIBGUESTFS_BACKEND: direct
 
 - name: Resize virt image
   command: >-
-    qemu-img
-    resize
-    /var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2
-    {{ vm_disk_size }}G
+    virt-resize
+    --expand /dev/sda1
+    --align-first=auto
+    {{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['name'] }}
+    /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2
+  environment:
+    LIBGUESTFS_BACKEND: direct
   when:
     - image_convert is changed
 
@@ -97,7 +70,7 @@
       --vcpus={{ vm_cores }},sockets=1,cores={{ vm_cores }}
       --os-variant {{ vm_variant | default('rhel7') }}
       --os-type=linux
-      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
+      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
       --disk /var/lib/libvirt/images/{{ inventory_hostname }}/cidata.iso,device=cdrom
       --import
       --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }}

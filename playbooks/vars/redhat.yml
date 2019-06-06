@@ -13,11 +13,22 @@ developer_system_packages:
   - tmux
   - vim
 
-# Name of the cuurent development release
-tripleo_version_dev_enabled: true
-tripleo_version: stein
-# Typically used to include things like ceph when configuring the repositories.
-tripleo_version_extras: ""
+developer_py_venv_packages:
+  - rdopkg
 
 tripleo_system_packages:
   - python-tripleoclient
+
+tripleo_system_ceph_packages:
+  - ceph-ansible
+  - util-linux
+  - lvm2
+
+# Name of the cuurent development release
+tripleo_version_dev_enabled: true
+tripleo_version: stein
+tripleo_ceph_enabled: false
+tripleo_loopback_ceph_size: 10
+tripleo_ceph_templates: >-
+  -e /home/stack/standalone_ceph_parameters.yaml
+  -e /usr/share/openstack-tripleo-heat-templates/environments/ceph-ansible/ceph-ansible.yaml

@@ -138,14 +138,14 @@
 
     - name: Enable tripleo repository (dev)
       command: >-
-        tripleo-repos current-tripleo-dev
+        tripleo-repos current-tripleo-dev {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
       changed_when: false
       when:
         - tripleo_version_dev_enabled | bool
 
     - name: Enable tripleo repository (stable)
       command: >-
-        tripleo-repos -b {{ tripleo_version }} current {{ tripleo_version_extras }}
+        tripleo-repos -b {{ tripleo_version }} current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
       changed_when: false
       when:
         - not (tripleo_version_dev_enabled | bool)
@@ -154,6 +154,13 @@
       package:
         name: "{{ tripleo_system_packages }}"
         state: present
+
+    - name: Install tripleo ceph packages
+      package:
+        name: "{{ tripleo_system_ceph_packages }}"
+        state: present
+      when:
+        - tripleo_ceph_enabled | bool
 
     - name: Ensure stack can sudo
       copy:
@@ -169,9 +176,76 @@
 
     - name: Install rdopkg
       pip:
-        name: rdopkg
+        name: "{{ developer_py_venv_packages }}"
         virtualenv: "/opt/rdo"
         virtualenv_site_packages: yes
+
+    - name: Setup standalone ceph
+      when:
+        - tripleo_ceph_enabled | bool
+      block:
+        - name: Create a sparse file
+          command: truncate -s {{ tripleo_loopback_ceph_size }}G /srv/loop-ceph.img
+          args:
+            creates: "/srv/loop-ceph.img"
+
+        - name: Setup loopback service
+          template:
+            src: "loop-ceph.service.j2"
+            dest: "/etc/systemd/system/loop-ceph.service"
+
+        - name: Start ceph lo device
+          systemd:
+            state: started
+            daemon_reload: true
+            name: loop-ceph.service
+
+        - name: Get loopback device
+          shell: "losetup -l | awk '/loop-ceph.img/ {print $1}'"
+          changed_when: false
+          register: ceph_losetup
+          tags:
+            - skip_ansible_lint
+
+        - name: Make LVM physical volume on the ceph device
+          command: "pvcreate {{ ceph_losetup.stdout }}"
+          args:
+            creates: "/srv/loop-ceph.pvcreate"
+          tags:
+            - skip_ansible_lint
+            - cinder-lvm-pv
+
+        - name: Touch ceph marker
+          file:
+            path: /srv/loop-ceph.pvcreate
+            state: touch
+
+        - name: Run pvscan
+          command: "pvscan"
+          changed_when: false
+          tags:
+            - cinder-lvm-pv
+
+        - name: Create ceph vg
+          lvg:
+            vg: vg2
+            pvs: "{{ ceph_losetup.stdout }}"
+
+        - name: Create ceph logical volumes
+          lvol:
+            vg: vg2
+            lv: "{{ item }}"
+            size: "597"
+            force: true
+          with_items:
+            - data-lv2
+            - db-lv2
+            - wal-lv2
+
+        - name: Setup basic standalone deployment
+          template:
+            src: "standalone_ceph_parameters.yaml.j2"
+            dest: "/home/stack/standalone_ceph_parameters.yaml"
 
     - name: Install developer patches
       when:
@@ -227,13 +301,10 @@
 
     - name: Setup basic standalone deployment
       template:
-        dest: "{{ item.dest }}"
-        src: "{{ item.src }}"
+        src: "standalone_parameters.yaml.j2"
+        dest: "/home/stack/standalone_parameters.yaml"
         owner: stack
         group: stack
-      with_items:
-        - src: standalone_parameters.yaml.j2
-          dest: /home/stack/standalone_parameters.yaml
 
     - name: Run standalone command(s)
       shell: "{{ item }}"
@@ -245,11 +316,12 @@
                           --output-env-file containers-prepare-parameter.yaml" C-m
         - tmux send-keys "sudo openstack tripleo deploy
                           --templates
-                          --local-ip=192.168.24.2/24
+                          --local-ip=172.17.27.2/24
                           -r /usr/share/openstack-tripleo-heat-templates/roles/Standalone.yaml
                           -e /usr/share/openstack-tripleo-heat-templates/environments/standalone/standalone-tripleo.yaml
                           -e /home/stack/containers-prepare-parameter.yaml
                           -e /home/stack/standalone_parameters.yaml
+                          {{ (tripleo_ceph_enabled | bool) | ternary(tripleo_ceph_templates, '') }}
                           --output-dir /home/stack
                           --standalone" C-m
 

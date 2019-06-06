@@ -18,9 +18,9 @@
 
 - name: Create disk image
   command: >-
-    qemu-img create -f qcow2 -o preallocation=metadata /var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2 {{ vm_disk_size }}G
+    qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
   args:
-    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2"
+    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
   environment:
     LIBGUESTFS_BACKEND: direct
 
@@ -31,7 +31,7 @@
       --vcpus={{ vm_cores }},sockets=1,cores={{ vm_cores }}
       --os-variant {{ vm_variant | default('rhel7') }}
       --os-type=linux
-      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/{{ inventory_hostname }}.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
+      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
       --network network:provisioning,model=virtio,mac={{ ('52:54:00') | random_mac }}
       --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }}
       --name {{ inventory_hostname }}
