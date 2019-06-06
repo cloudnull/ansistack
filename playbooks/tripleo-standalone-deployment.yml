@@ -136,12 +136,21 @@
         name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
         state: present
 
-    - name: enable tripleo_version repository
+    - name: Enable tripleo repository (dev)
       command: >-
-        tripleo-repos {{ tripleo_version }}
+        tripleo-repos current-tripleo-dev
       changed_when: false
+      when:
+        - tripleo_version_dev_enabled | bool
 
-    - name: Install developer packages
+    - name: Enable tripleo repository (stable)
+      command: >-
+        tripleo-repos -b {{ tripleo_version }} current {{ tripleo_version_extras }}
+      changed_when: false
+      when:
+        - not (tripleo_version_dev_enabled | bool)
+
+    - name: Install tripleo packages
       package:
         name: "{{ tripleo_system_packages }}"
         state: present
@@ -247,6 +256,6 @@
     - name: Build notice
       debug:
         msg: >-
-          Stack creation has started. Connect to the system {{ ansible_host }} as {{ vm_job_user }} and
-          change user to `stack`. When ready, you can monitor the installation
-          progress via the `standalone` tmux session.
+          Stack creation has started. Connect to the system `{{ ansible_host }}` as `{{ vm_job_user }}` and
+          change user to `stack`. When ready, you can monitor the installation progress via the `standalone`
+          tmux session.

@@ -13,7 +13,11 @@ developer_system_packages:
   - tmux
   - vim
 
-tripleo_version: current-tripleo-dev
+# Name of the cuurent development release
+tripleo_version_dev_enabled: true
+tripleo_version: stein
+# Typically used to include things like ceph when configuring the repositories.
+tripleo_version_extras: ""
 
 tripleo_system_packages:
   - python-tripleoclient
