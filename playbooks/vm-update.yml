@@ -1,0 +1,58 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Run updates
+  hosts: "targets"
+  any_errors_fatal: true
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Gather variables for each operating system
+      include_vars: "{{ item }}"
+      with_first_found:
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+        - "{{ ansible_os_family | lower }}.yml"
+      tags:
+        - always
+
+    - name: Run package updates
+      package:
+        name: "*"
+        state: "latest"
+        update_cache: "{{ ((ansible_os_family | lower) == 'debian') | ternary('yes', omit) }}"
+      register: package_updates
+
+    - name: Install developer packages
+      package:
+        name: "{{ developer_system_packages }}"
+        state: present
+
+    - name: Generate a keypair
+      openssh_keypair:
+        path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+      become: true
+
+    - name: Reboot target
+      reboot:
+        reboot_timeout: 3600
+      when:
+        - package_updates is changed

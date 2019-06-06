@@ -1,0 +1,97 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Run tripleo setup
+  hosts: "targets"
+  any_errors_fatal: true
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Install developer patches
+      when:
+        - (developer_patches | length) > 0
+      vars:
+        ansible_python_interpreter: /opt/rdo/bin/python
+      block:
+        - name: Create delorian directories
+          file:
+            path: "/opt/tripleo/{{ item }}"
+            state: "directory"
+          with_items:
+            - rpms
+            - repos
+
+        - name: clone tripleo-ci
+          git:
+            dest: "/opt/tripleo-ci"
+            repo: "https://opendev.org/openstack/tripleo-ci"
+
+        - name: install tripleo-ci dependencies
+          command: /opt/tripleo-ci/scripts/tripleo.sh --delorean-setup
+          args:
+            creates: /opt/tripleo/delorean
+          environment:
+            TRIPLEO_ROOT: /opt/tripleo
+
+        - name: Clone patched repo(s)
+          git:
+            repo: "{{ item.url }}"
+            dest: "/opt/tripleo/repos/{{ item.url | basename }}"
+            refspec: '{{ item.refs | default(omit) }}'
+            version: "{{ item.version | default(omit) }}"
+          with_items: "{{ developer_patches }}"
+
+        - name: Force packages to rebuild
+          file:
+            path: "/opt/tripleo/delorean/{{ item.url | basename }}.created"
+            state: absent
+          with_items: "{{ developer_patches }}"
+          when:
+            - developer_rebuild_rpms | bool
+
+        - name: Build rpms
+          shell: |-
+            export PKG_NAME="{{ item.url | basename }}"
+            source /opt/rdo/bin/activate
+            /opt/tripleo-ci/scripts/tripleo.sh --delorean-build ${PKG_NAME}
+            find /opt/tripleo/delorean/data -name '*rpm' -exec mv {} /opt/tripleo/rpms/ \;
+            touch /opt/tripleo/delorean/${PKG_NAME}.created
+          args:
+            chdir: "/opt/tripleo/repos"
+            creates: "/opt/tripleo/delorean/{{ item.url | basename }}.created"
+            executable: /bin/bash
+          with_items: "{{ developer_patches }}"
+          environment:
+            TRIPLEO_ROOT: /opt/tripleo
+
+        - name: Index all rpms
+          find:
+            path: /opt/tripleo/rpms
+            patterns: '*.rpm'
+            excludes: '*.src.rpm'
+            recurse: yes
+          register: vm_job_rpms
+
+        - name: Display all custom built rpm(s)
+          debug:
+            msg: "{{ vm_job_rpms.files | map(attribute='path') | list }}"
+
+        - name: Install tripleo packages
+          package:
+            name: "{{ vm_job_rpms.files | map(attribute='path') | list }}"
+            state: latest

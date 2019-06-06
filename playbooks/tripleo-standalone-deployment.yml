@@ -21,6 +21,8 @@
   any_errors_fatal: true
   gather_facts: true
   user: root
+  tags:
+    - always
   tasks:
     - name: Check for required hostvars
       fail:
@@ -59,10 +61,18 @@
     - name: Create in-memory vm_target group
       add_host:
         name: "{{ vm_job_target }}"
-        groups: vm_target
+        groups: targets,vm_target
         ansible_host: "{{ vm_ip }}"
         ansible_user: "{{ vm_job_user }}"
       changed_when: false
+
+
+# These playbooks use the "targets" group to control deployment nodes.
+# All of these playbooks will control flow using user input variables.
+- import_playbook: vm-update.yml
+- import_playbook: tripleo-setup.yml
+- import_playbook: tripleo-standalone-setup-ceph.yml
+- import_playbook: tripleo-developer-packages.yml
 
 
 - name: Run updates
@@ -70,253 +80,7 @@
   any_errors_fatal: true
   gather_facts: true
   become: true
-  pre_tasks:
-    - name: Gather variables for each operating system
-      include_vars: "{{ item }}"
-      with_first_found:
-        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
-        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
-        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
-        - "{{ ansible_distribution | lower }}.yml"
-        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
-        - "{{ ansible_os_family | lower }}.yml"
-      tags:
-        - always
-
-    - name: Run package updates
-      package:
-        name: "*"
-        state: "latest"
-        update_cache: "{{ ((ansible_os_family | lower) == 'debian') | ternary('yes', omit) }}"
-      register: package_updates
-
-    - name: Install developer packages
-      package:
-        name: "{{ developer_system_packages }}"
-        state: present
-
-    - name: Generate a keypair
-      openssh_keypair:
-        path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
-      become: true
-
-    - name: Reboot target
-      reboot:
-        reboot_timeout: 3600
-      when:
-        - package_updates is changed
   tasks:
-    - name: Create the stack user
-      user:
-        name: stack
-        generate_ssh_key: yes
-        ssh_key_bits: 2048
-        ssh_key_file: .ssh/id_rsa
-
-    - name: set hostname properly
-      lineinfile:
-        dest: /etc/hosts
-        line: "127.0.0.1 undercloud.{{ ansible_domain }} undercloud localhost localhost.localdomain"
-        regexp: '^127\.0\.0\.1'
-
-    - name: fetch latest repo version
-      uri:
-        url: https://trunk.rdoproject.org/centos7/current/
-        return_content: yes
-      register: tripleo_packages
-
-    - name: Set package fact
-      set_fact:
-        tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python2-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
-
-    - name: install tripleo repository
-      package:
-        name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
-        state: present
-
-    - name: Enable tripleo repository (dev)
-      command: >-
-        tripleo-repos current-tripleo-dev {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
-      changed_when: false
-      when:
-        - tripleo_version_dev_enabled | bool
-
-    - name: Enable tripleo repository (stable)
-      command: >-
-        tripleo-repos -b {{ tripleo_version }} current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
-      changed_when: false
-      when:
-        - not (tripleo_version_dev_enabled | bool)
-
-    - name: Install tripleo packages
-      package:
-        name: "{{ tripleo_system_packages }}"
-        state: present
-
-    - name: Install tripleo ceph packages
-      package:
-        name: "{{ tripleo_system_ceph_packages }}"
-        state: present
-      when:
-        - tripleo_ceph_enabled | bool
-
-    - name: Ensure stack can sudo
-      copy:
-        content: |-
-          stack ALL=(root) NOPASSWD:ALL
-        dest: /etc/sudoers.d/stack
-        mode: "0440"
-
-    - name: Install rdopkg
-      pip:
-        name: "{{ developer_py_venv_packages }}"
-        virtualenv: "/opt/rdo"
-        virtualenv_site_packages: yes
-
-    - name: Setup standalone ceph
-      when:
-        - tripleo_ceph_enabled | bool
-      block:
-        - name: Create a sparse file
-          command: truncate -s {{ tripleo_loopback_ceph_size }}G /srv/loop-ceph.img
-          args:
-            creates: "/srv/loop-ceph.img"
-
-        - name: Setup loopback service
-          template:
-            src: "loop-ceph.service.j2"
-            dest: "/etc/systemd/system/loop-ceph.service"
-
-        - name: Start ceph lo device
-          systemd:
-            state: started
-            daemon_reload: true
-            name: loop-ceph.service
-
-        - name: Get loopback device
-          shell: "losetup -l | awk '/loop-ceph.img/ {print $1}'"
-          changed_when: false
-          register: ceph_losetup
-          tags:
-            - skip_ansible_lint
-
-        - name: Make LVM physical volume on the ceph device
-          command: "pvcreate {{ ceph_losetup.stdout }}"
-          args:
-            creates: "/srv/loop-ceph.pvcreate"
-          tags:
-            - skip_ansible_lint
-            - cinder-lvm-pv
-
-        - name: Touch ceph marker
-          file:
-            path: /srv/loop-ceph.pvcreate
-            state: touch
-
-        - name: Run pvscan
-          command: "pvscan"
-          changed_when: false
-          tags:
-            - cinder-lvm-pv
-
-        - name: Create ceph vg
-          lvg:
-            vg: vg2
-            pvs: "{{ ceph_losetup.stdout }}"
-
-        - name: Create ceph logical volumes
-          lvol:
-            vg: vg2
-            lv: "{{ item }}"
-            size: "597"
-            force: true
-          with_items:
-            - data-lv2
-            - db-lv2
-            - wal-lv2
-
-        - name: Create ceph ansible fetch directory
-          file:
-            path: /root/ceph_ansible_fetch
-            state: directory
-
-        - name: Setup basic standalone deployment
-          template:
-            src: "standalone_ceph_parameters.yaml.j2"
-            dest: "/home/stack/standalone_ceph_parameters.yaml"
-
-    - name: Install developer patches
-      when:
-        - (developer_patches | length) > 0
-      vars:
-        ansible_python_interpreter: /opt/rdo/bin/python
-      block:
-        - name: Create delorian directories
-          file:
-            path: "/opt/tripleo/{{ item }}"
-            state: "directory"
-          with_items:
-            - rpms
-            - repos
-
-        - name: clone tripleo-ci
-          git:
-            dest: "/opt/tripleo-ci"
-            repo: "https://opendev.org/openstack/tripleo-ci"
-
-        - name: install tripleo-ci dependencies
-          command: /opt/tripleo-ci/scripts/tripleo.sh --delorean-setup
-          args:
-            creates: /opt/tripleo/delorean
-          environment:
-            TRIPLEO_ROOT: /opt/tripleo
-
-        - name: Clone patched repo(s)
-          git:
-            repo: "{{ item.url }}"
-            dest: "/opt/tripleo/repos/{{ item.url | basename }}"
-            refspec: '{{ item.refs | default(omit) }}'
-            version: "{{ item.version | default(omit) }}"
-          with_items: "{{ developer_patches }}"
-
-        - name: Force packages to rebuild
-          file:
-            path: "/opt/tripleo/delorean/{{ item.url | basename }}.created"
-            state: absent
-          with_items: "{{ developer_patches }}"
-          when:
-            - developer_rebuild_rpms | bool
-
-        - name: Build rpms
-          shell: |-
-            export PKG_NAME="{{ item.url | basename }}"
-            source /opt/rdo/bin/activate
-            /opt/tripleo-ci/scripts/tripleo.sh --delorean-build ${PKG_NAME}
-            find /opt/tripleo/delorean/data -name '*rpm' -exec mv {} /opt/tripleo/rpms/ \;
-            touch /opt/tripleo/delorean/${PKG_NAME}.created
-          args:
-            chdir: "/opt/tripleo/repos"
-            creates: "/opt/tripleo/delorean/{{ item.url | basename }}.created"
-            executable: /bin/bash
-          with_items: "{{ developer_patches }}"
-          environment:
-            TRIPLEO_ROOT: /opt/tripleo
-
-        - name: Index all rpms
-          find:
-            path: /opt/tripleo/rpms
-            patterns: '*.rpm'
-            excludes: '*.src.rpm'
-            recurse: yes
-          register: vm_job_rpms
-
-        - debug: msg="{{ vm_job_rpms.files | map(attribute='path') | list }}"
-
-        - name: Install tripleo packages
-          package:
-            name: "{{ vm_job_rpms.files | map(attribute='path') | list }}"
-            state: latest
-
     - name: Setup basic standalone deployment
       template:
         src: "standalone_parameters.yaml.j2"

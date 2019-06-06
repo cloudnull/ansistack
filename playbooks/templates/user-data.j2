@@ -37,5 +37,14 @@ ssh_authorized_keys:
 # set timezone for VM
 timezone: UTC
 
+packages:
+  - qemu-guest-agent
+
 runcmd:
-  - systemctl restart network && systemctl restart sshd && dhclient
+  - systemctl enable network
+  - systemctl restart network
+  - systemctl enable sshd
+  - systemctl restart sshd
+  - dhclient
+  - systemctl enable qemu-guest-agent
+  - systemctl restart qemu-guest-agent

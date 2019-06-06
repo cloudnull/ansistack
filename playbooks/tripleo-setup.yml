@@ -1,0 +1,77 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Run tripleo setup
+  hosts: "targets"
+  any_errors_fatal: true
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Create the stack user
+      user:
+        name: stack
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: .ssh/id_rsa
+
+    - name: Ensure stack can sudo
+      copy:
+        content: |-
+          stack ALL=(root) NOPASSWD:ALL
+        dest: /etc/sudoers.d/stack
+        mode: "0440"
+
+    - name: set hostname properly
+      lineinfile:
+        dest: /etc/hosts
+        line: "127.0.0.1 undercloud.{{ ansible_domain }} undercloud localhost localhost.localdomain"
+        regexp: '^127\.0\.0\.1'
+
+    - name: fetch latest repo version
+      uri:
+        url: https://trunk.rdoproject.org/centos7/current/
+        return_content: yes
+      register: tripleo_packages
+
+    - name: Set package fact
+      set_fact:
+        tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python2-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
+
+    - name: install tripleo repository
+      package:
+        name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
+        state: present
+
+    - name: Enable tripleo repository (dev)
+      command: >-
+        tripleo-repos current-tripleo-dev {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
+      changed_when: false
+      when:
+        - tripleo_version_dev_enabled | bool
+
+    - name: Enable tripleo repository (stable)
+      command: >-
+        tripleo-repos -b {{ tripleo_version }} current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
+      changed_when: false
+      when:
+        - not (tripleo_version_dev_enabled | bool)
+
+    - name: Install tripleo packages
+      package:
+        name: "{{ tripleo_system_packages }}"
+        state: present

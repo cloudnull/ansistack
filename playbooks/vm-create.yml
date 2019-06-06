@@ -50,6 +50,22 @@
         path: /mnt/rhv/images
         name: CentOS-7-x86_64-GenericCloud.qcow2
         access_user: 'centos'
+        cloud_init_packages:
+          - qemu-guest-agent
+      fedora28:
+        url: https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2
+        path: /mnt/rhv/images
+        name: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
+        access_user: 'fedora'
+        cloud_init_packages:
+          - qemu-guest-agent
+      fedora30:
+        url: https://download.fedoraproject.org/pub/fedora/linux/releases/30/Cloud/x86_64/images/Fedora-Cloud-Base-30-1.2.x86_64.qcow2
+        path: /mnt/rhv/images
+        name: Fedora-Cloud-Base-30-1.2.x86_64.qcow2
+        access_user: 'fedora'
+        cloud_init_packages:
+          - qemu-guest-agent
     vm_pub_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
 
   handlers:
@@ -230,7 +246,7 @@
               register: vm_ip
               until: vm_ip.rc == 0
               retries: 72
-              delay: 2
+              delay: 5
 
             - name: Set ip fact
               set_fact:
