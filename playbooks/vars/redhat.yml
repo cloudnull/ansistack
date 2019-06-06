@@ -12,3 +12,8 @@ developer_system_packages:
   - python-virtualenv
   - tmux
   - vim
+
+tripleo_version: current-tripleo-dev
+
+tripleo_system_packages:
+  - python-tripleoclient

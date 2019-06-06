@@ -3,6 +3,7 @@ all_vms:
     ansible_become: yes
     ansible_become_user: "root"
     ansible_user: "root"
+    ansible_ssh_common_args: -o StrictHostKeyChecking=no
     vm_vbmc_username: admin
     vm_vbmc_password: secrete
   children:

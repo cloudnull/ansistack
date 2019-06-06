@@ -1,0 +1,252 @@
+# Ansible cloud tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Group vm job target node
+  hosts: localhost
+  connection: local
+  any_errors_fatal: true
+  gather_facts: true
+  user: root
+  tasks:
+    - name: Check for required hostvars
+      fail:
+        msg: >-
+          The required variable `vm_job_target` is undefined. Define the option in order to continue.
+      when:
+        - vm_job_target is undefined
+
+    - name: Check for required hostvars
+      fail:
+        msg: >-
+          The required variable `vm_job_user` is undefined. Define the option in order to continue.
+      when:
+        - vm_job_user is undefined
+
+    - name: Create in-memory vm_virt_hosts group
+      add_host:
+        name: "{{ hostvars[vm_job_target]['vm_virt_host'] }}"
+        groups: vm_virt_host
+      changed_when: false
+
+    - name: Get IP address
+      shell: >-
+        virsh domifaddr {{ vm_job_target }} --source agent | grep -v 'lo' | grep 'ipv4'
+      register: _vm_ip
+      changed_when: false
+      until: _vm_ip.rc == 0
+      retries: 72
+      delay: 2
+      delegate_to: "{{ hostvars[vm_job_target]['vm_virt_host'] }}"
+
+    - name: Set vm ip information
+      set_fact:
+        vm_ip: "{{ _vm_ip.stdout.split()[3].split('/')[0] }}"
+
+    - name: Create in-memory vm_target group
+      add_host:
+        name: "{{ vm_job_target }}"
+        groups: vm_target
+        ansible_host: "{{ vm_ip }}"
+        ansible_user: "{{ vm_job_user }}"
+      changed_when: false
+
+
+- name: Run updates
+  hosts: "vm_target"
+  any_errors_fatal: true
+  gather_facts: true
+  become: true
+  vars:
+    developer_patches: []
+  pre_tasks:
+    - name: Gather variables for each operating system
+      include_vars: "{{ item }}"
+      with_first_found:
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+        - "{{ ansible_os_family | lower }}.yml"
+      tags:
+        - always
+
+    - name: Run package updates
+      package:
+        name: "*"
+        state: "latest"
+        update_cache: "{{ ((ansible_os_family | lower) == 'debian') | ternary('yes', omit) }}"
+      register: package_updates
+
+    - name: Install developer packages
+      package:
+        name: "{{ developer_system_packages }}"
+        state: present
+
+    - name: Generate a keypair
+      openssh_keypair:
+        path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+      become: true
+
+    - name: Reboot target
+      reboot:
+        reboot_timeout: 3600
+      when:
+        - package_updates is changed
+  tasks:
+    - name: Create the stack user
+      user:
+        name: stack
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: .ssh/id_rsa
+
+    - name: set hostname properly
+      lineinfile:
+        dest: /etc/hosts
+        line: "127.0.0.1 undercloud.{{ ansible_domain }} undercloud localhost localhost.localdomain"
+        regexp: '^127\.0\.0\.1'
+
+    - name: fetch latest repo version
+      uri:
+        url: https://trunk.rdoproject.org/centos7/current/
+        return_content: yes
+      register: tripleo_packages
+
+    - name: Set package fact
+      set_fact:
+        tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python2-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
+
+    - name: install tripleo repository
+      package:
+        name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
+        state: present
+
+    - name: enable tripleo_version repository
+      command: >-
+        tripleo-repos {{ tripleo_version }}
+      changed_when: false
+
+    - name: Install developer packages
+      package:
+        name: "{{ tripleo_system_packages }}"
+        state: present
+
+    - name: Ensure stack can sudo
+      copy:
+        content: |-
+          stack ALL=(root) NOPASSWD:ALL
+        dest: /etc/sudoers.d/stack
+        mode: "0440"
+
+    - name: Cleanup old delorean builds
+      file:
+        path: /home/stack/delorean/rdoinfo
+        state: "absent"
+
+    - name: Install rdopkg
+      pip:
+        name: rdopkg
+        virtualenv: "/opt/rdo"
+        virtualenv_site_packages: yes
+
+    - name: Install developer patches
+      when:
+        - (developer_patches | length) > 0
+      vars:
+        become_user: stack
+        ansible_python_interpreter: /opt/rdo/bin/python
+      block:
+        - name: Create stack directories
+          file:
+            path: "/home/stack/{{ item }}"
+            state: "present"
+          with_items:
+            - delorean
+            - tripleo
+
+        - name: clone tripleo-ci in stack home
+          git:
+            dest: "/home/stack/tripleo-ci"
+            repo: "https://git.opendev.org/openstack-infra/tripleo-ci"
+
+        - name: install tripleo-ci dependencies
+          shell: |
+            /home/stack/tripleo-ci/scripts/tripleo.sh --delorean-setup
+          args:
+            creates: /home/stack/tripleo/delorean
+          environment:
+            TRIPLEO_ROOT: /home/stack
+
+        - name: Clone patched repo(s)
+          git:
+            repo: https://review.opendev.org/openstack/{{ item.name }}
+            dest: /home/stack/tripleo/{{ item.name }}
+            refspec: 'refs/changes/{{ item.refs }}'
+          with_items: "{{ developer_patches }}"
+
+        - name: Build rpms
+          command: >-
+            /home/stack/tripleo/tripleo-ci/scripts/tripleo.sh --delorean-build {{ item.name }}
+
+        - name: ensure we have RPMs to install
+          find:
+            path: /home/stack/custom-rpms
+            patterns: '*.rpm'
+            excludes: '*.src.rpm'
+            recurse: yes
+          register: vm_job_rpms
+
+        - name: Install tripleo packages
+          package:
+            name: "{{ vm_job_rpms | map(attribute='path') | list }}"
+            state: latest
+
+    - name: Setup basic standalone deployment
+      template:
+        dest: "{{ item.dest }}"
+        src: "{{ item.src }}"
+        owner: stack
+        group: stack
+      with_items:
+        - src: standalone_parameters.yaml.j2
+          dest: /home/stack/standalone_parameters.yaml
+
+    - name: Run standalone command(s)
+      shell: "{{ item }}"
+      with_items:
+        - tmux new-session -d -s standalone || true
+        - tmux select-pane -t 0
+        - tmux send-keys "su - stack" C-m
+        - tmux send-keys "openstack tripleo container image prepare default
+                          --output-env-file containers-prepare-parameter.yaml" C-m
+        - tmux send-keys "sudo openstack tripleo deploy
+                          --templates
+                          --local-ip=192.168.24.2/24
+                          -r /usr/share/openstack-tripleo-heat-templates/roles/Standalone.yaml
+                          -e /usr/share/openstack-tripleo-heat-templates/environments/standalone/standalone-tripleo.yaml
+                          -e /home/stack/containers-prepare-parameter.yaml
+                          -e /home/stack/standalone_parameters.yaml
+                          --output-dir /home/stack
+                          --standalone" C-m
+
+    - name: Build notice
+      debug:
+        msg: >-
+          Stack creation has started. Connect to the system {{ ansible_host }} as {{ vm_job_user }} and
+          change user to `stack`. When ready, you can monitor the installation
+          progress via the `standalone` tmux session.
