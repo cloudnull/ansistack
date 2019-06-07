@@ -16,7 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-- name: Run updates across all hosts
+- name: Install packages on the compute host
   hosts: libvirt_hosts
   any_errors_fatal: true
   gather_facts: true

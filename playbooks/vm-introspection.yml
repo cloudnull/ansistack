@@ -27,16 +27,15 @@
     - name: Check for required hostvars
       fail:
         msg: >-
-          The required variable `vm_job_target` is undefined. Define the option in order to continue.
+          The required variable `{{ item.name }}` is undefined. Define the option in order to continue.
       when:
-        - vm_job_target is undefined
-
-    - name: Check for required hostvars
-      fail:
-        msg: >-
-          The required variable `vm_job_user` is undefined. Define the option in order to continue.
-      when:
-        - vm_job_user is undefined
+        - item.condition | bool
+        - hostvars[inventory_hostname][item.name] is undefined
+      with_items:
+        - name: vm_job_target
+          condition: true
+        - name: vm_job_user
+          condition: true
 
     - name: Create in-memory vm_virt_hosts group
       add_host:

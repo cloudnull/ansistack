@@ -1,14 +1,10 @@
 ---
 
-# Basic job information.
-vm_image_name: centos7
-
 # When true existing targets will be destroyed and rebuilt when encountered.
 vm_cleanup: true
 
-# Enabling this on cent7 will deploy tripleo using the latest development
-# packages. YMMV.
-tripleo_version_dev_enabled: false
+# Enable ceph within the deployment
+tripleo_ceph_enabled: true
 
 # Example patches to apply to an environment.
 # NOTICE(cloudnull): One patch is a gerrit review, the other is an external

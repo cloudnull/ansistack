@@ -16,7 +16,14 @@ developer_py_venv_packages:
 #
 developer_patches: []
 
+# Force developer packages to rebuild
 developer_rebuild_rpms: false
+
+# Name of the cuurent development release
+tripleo_version_dev_enabled: true
+
+# Enable ceph support on the deployment
+tripleo_ceph_enabled: false
 
 ## VM options
 vm_start_on_create: "{{ inventory_hostname in groups['raw_vms'] }}"
@@ -58,4 +65,5 @@ vm_image_data:
     cloud_init_packages:
       - qemu-guest-agent
 
+# Set the vm job user, by default this obtained from the image details
 vm_job_user: "{{ vm_image_data[vm_image_name]['access_user'] }}"
