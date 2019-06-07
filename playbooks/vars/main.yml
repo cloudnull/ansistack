@@ -21,9 +21,18 @@ developer_rebuild_rpms: false
 
 # Name of the cuurent development release
 tripleo_version_dev_enabled: true
+tripleo_version: stein
 
 # Enable ceph support on the deployment
 tripleo_ceph_enabled: false
+tripleo_loopback_ceph_size: 10
+tripleo_ceph_templates: >-
+  -e /home/stack/standalone_ceph_parameters.yaml
+  -e /usr/share/openstack-tripleo-heat-templates/environments/ceph-ansible/ceph-ansible.yaml
+
+# Basic stand alone network information
+tripleo_cidr: "192.168.24.0/24"
+tripleo_job_address: "192.168.24.2"
 
 ## VM options
 vm_start_on_create: "{{ inventory_hostname in groups['raw_vms'] }}"

@@ -225,11 +225,18 @@
                   set_fact:
                     raw_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
 
+                - name: Check for inventory file
+                  stat:
+                    path: "{{ raw_vm_inventory_file }}"
+                  register: vm_inv_file
+
                 - name: Read existing inventory file
                   set_fact:
-                    existing_raw_vm_inventory_file: "{{ lookup('file', raw_vm_inventory_file, errors='ignore') | default('---', True) | from_yaml }}"
+                    existing_raw_vm_inventory_file: "{{ lookup('file', raw_vm_inventory_file) | default('---') | from_yaml }}"
+                  when:
+                    - vm_inv_file.stat.exists | bool
 
-                - name: Write raw vm inventory file
+                - name: Write new inventory file
                   copy:
                     content: |-
                       {%
@@ -253,7 +260,7 @@
                       {%     set _ = inventory['vms']['hosts'].__setitem__(node, entry) %}
                       {%   endif %}
                       {% endfor %}
-                      {{ existing_raw_vm_inventory_file | combine(inventory, recursive=True) | to_nice_yaml }}
+                      {{ (existing_raw_vm_inventory_file | default({})) | combine(inventory, recursive=True) | to_nice_yaml }}
                     dest: "{{ raw_vm_inventory_file }}"
                   notify: Raw deployment notice
           when:
