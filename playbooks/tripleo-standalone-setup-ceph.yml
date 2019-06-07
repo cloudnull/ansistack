@@ -21,6 +21,8 @@
   any_errors_fatal: true
   gather_facts: true
   become: true
+  vars_files:
+    - vars/main.yml
   tasks:
     - name: Ceph block
       when:
@@ -30,12 +32,6 @@
           package:
             name: "{{ tripleo_system_ceph_packages }}"
             state: present
-
-        - name: Install rdopkg
-          pip:
-            name: "{{ developer_py_venv_packages }}"
-            virtualenv: "/opt/rdo"
-            virtualenv_site_packages: yes
 
         - name: Create a sparse file
           command: truncate -s {{ tripleo_loopback_ceph_size }}G /srv/loop-ceph.img

@@ -21,7 +21,16 @@
   any_errors_fatal: true
   gather_facts: true
   become: true
+  vars_files:
+    - vars/main.yml
   tasks:
+    - name: Install rdopkg
+      pip:
+        name: "{{ developer_py_venv_packages }}"
+        virtualenv: "/opt/rdo"
+        virtualenv_site_packages: yes
+        virtualenv_python: "{{ ((ansible_distribution | lower) != 'centos') | ternary('python3', omit) }}"
+
     - name: Install developer patches
       when:
         - (developer_patches | length) > 0
@@ -64,6 +73,13 @@
           when:
             - developer_rebuild_rpms | bool
 
+        - name: Download the centos gpg key
+          get_url:
+            url: http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-7
+            dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+          when:
+            - (ansible_distribution | lower) != 'centos'
+
         - name: Build rpms
           shell: |-
             export PKG_NAME="{{ item.url | basename }}"
@@ -91,7 +107,7 @@
           debug:
             msg: "{{ vm_job_rpms.files | map(attribute='path') | list }}"
 
-        - name: Install tripleo packages
+        - name: Install developer tripleo packages
           package:
             name: "{{ vm_job_rpms.files | map(attribute='path') | list }}"
             state: latest

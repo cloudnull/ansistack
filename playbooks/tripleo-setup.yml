@@ -21,6 +21,8 @@
   any_errors_fatal: true
   gather_facts: true
   become: true
+  vars_files:
+    - vars/main.yml
   tasks:
     - name: Create the stack user
       user:
@@ -56,7 +58,7 @@
           set_fact:
             tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python2-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
 
-        - name: install tripleo repository
+        - name: install tripleo repository (centos)
           package:
             name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
             state: present
@@ -77,6 +79,11 @@
           when:
             - not (tripleo_version_dev_enabled | bool)
 
+        - name: Install tripleo packages (py2)
+          package:
+            name: "python-tripleoclient"
+            state: present
+
     - name: Fedora package setup
       when:
         - (ansible_distribution | lower) == 'fedora'
@@ -91,7 +98,7 @@
           set_fact:
             tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python3-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
 
-        - name: install tripleo repository
+        - name: install tripleo repository (fedora)
           package:
             name: "https://trunk.rdoproject.org/fedora/current/{{ tripleo_package_fact }}"
             state: present
@@ -103,7 +110,7 @@
             creates: /etc/yum.repos.d/fedora-stable.repo
           changed_when: false
 
-    - name: Install tripleo packages
-      package:
-        name: "{{ tripleo_system_packages }}"
-        state: present
+        - name: Install tripleo packages (py3)
+          package:
+            name: "python3-tripleoclient"
+            state: present

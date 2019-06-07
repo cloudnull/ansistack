@@ -30,44 +30,8 @@
   any_errors_fatal: true
   gather_facts: false
   user: root
-  vars:
-    vm_start_on_create: "{{ inventory_hostname in groups['raw_vms'] }}"
-    vm_cleanup: false
-    vm_purge: false
-    vm_flags: >-
-      --graphics vnc,listen=0.0.0.0
-      --controller scsi,model=virtio-scsi
-      --serial pty
-      --parallel pty
-      --hvm
-      --virt-type kvm
-      --memballoon virtio
-      --cpu host
-      --rng /dev/urandom
-    vm_image_data:
-      centos7:
-        url: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
-        path: /mnt/rhv/images
-        name: CentOS-7-x86_64-GenericCloud.qcow2
-        access_user: 'centos'
-        cloud_init_packages:
-          - qemu-guest-agent
-      fedora28:
-        url: https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2
-        path: /mnt/rhv/images
-        name: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
-        access_user: 'fedora'
-        cloud_init_packages:
-          - qemu-guest-agent
-      fedora30:
-        url: https://download.fedoraproject.org/pub/fedora/linux/releases/30/Cloud/x86_64/images/Fedora-Cloud-Base-30-1.2.x86_64.qcow2
-        path: /mnt/rhv/images
-        name: Fedora-Cloud-Base-30-1.2.x86_64.qcow2
-        access_user: 'fedora'
-        cloud_init_packages:
-          - qemu-guest-agent
-    vm_pub_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
-
+  vars_files:
+    - vars/main.yml
   handlers:
     - name: Deployment notice
       debug:
@@ -136,7 +100,7 @@
       with_items: "{{ groups['all_vms'] }}"
       run_once: true
 
-    - name: PreFlight Checks
+    - name: Pre-flight Checks
       delegate_to: "{{ vm_virt_host }}"
       block:
         - name: Check VM

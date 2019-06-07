@@ -1,0 +1,59 @@
+---
+
+developer_py_venv_packages:
+  - rdopkg
+  - glances
+
+# list of hashes which point to patches to pull from online sources
+#
+#  developer_patches:
+#    - url: "https://review.opendev.org/openstack/tripleo-common"
+#      refspec: "refs/changes/96/662496/5"
+#    - url: "https://review.opendev.org/openstack/tripleo-heat-templates"
+#      refspec: "refs/changes/80/662580/1"
+#    - url: "https://github.com/openstack/tripleo-ansible"
+#      version: "master"
+#
+developer_patches: []
+
+developer_rebuild_rpms: false
+
+## VM options
+vm_start_on_create: "{{ inventory_hostname in groups['raw_vms'] }}"
+vm_pub_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
+vm_cleanup: false
+vm_purge: false
+vm_flags: >-
+  --graphics vnc,listen=0.0.0.0
+  --controller scsi,model=virtio-scsi
+  --serial pty
+  --parallel pty
+  --hvm
+  --virt-type kvm
+  --memballoon virtio
+  --cpu host
+  --rng /dev/urandom
+
+# Images to pull from for local builds
+vm_image_data:
+  centos7:
+    url: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+    path: /mnt/rhv/images
+    name: CentOS-7-x86_64-GenericCloud.qcow2
+    access_user: 'centos'
+    cloud_init_packages:
+      - qemu-guest-agent
+  fedora28:
+    url: https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2
+    path: /mnt/rhv/images
+    name: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
+    access_user: 'fedora'
+    cloud_init_packages:
+      - qemu-guest-agent
+  fedora30:
+    url: https://download.fedoraproject.org/pub/fedora/linux/releases/30/Cloud/x86_64/images/Fedora-Cloud-Base-30-1.2.x86_64.qcow2
+    path: /mnt/rhv/images
+    name: Fedora-Cloud-Base-30-1.2.x86_64.qcow2
+    access_user: 'fedora'
+    cloud_init_packages:
+      - qemu-guest-agent

@@ -21,6 +21,8 @@
   any_errors_fatal: true
   gather_facts: true
   user: root
+  vars_files:
+    - vars/main.yml
   tasks:
     - name: Gather variables for each operating system
       include_vars: "{{ item }}"

@@ -15,14 +15,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-- name: Group vm job target node
+- name: Inspect target VM on compute host
   hosts: localhost
   connection: local
   any_errors_fatal: true
   gather_facts: true
   user: root
-  tags:
-    - always
+  vars_files:
+    - vars/main.yml
   tasks:
     - name: Check for required hostvars
       fail:
@@ -44,19 +44,31 @@
         groups: vm_virt_host
       changed_when: false
 
-    - name: Get IP address
-      shell: >-
-        virsh domifaddr {{ vm_job_target }} --source agent | grep -v 'lo' | grep 'ipv4'
-      register: _vm_ip
-      changed_when: false
-      until: _vm_ip.rc == 0
-      retries: 72
-      delay: 2
+    - name: VM data block
       delegate_to: "{{ hostvars[vm_job_target]['vm_virt_host'] }}"
+      block:
+        - name: Start vm if needed
+          virt:
+            name: "{{ vm_job_target }}"
+            state: running
+
+        - name: Get IP address
+          shell: >-
+            virsh domifaddr {{ vm_job_target }} --source agent | grep -v 'lo' | grep 'ipv4'
+          register: _vm_ip
+          changed_when: false
+          until: _vm_ip.rc == 0
+          retries: 72
+          delay: 2
 
     - name: Set vm ip information
       set_fact:
         vm_ip: "{{ _vm_ip.stdout.split()[3].split('/')[0] }}"
+
+    - name: Display vm ip
+      debug:
+        msg: >-
+          The target VM has an ip address of `{{ vm_ip }}`.
 
     - name: Create in-memory vm_target group
       add_host:
@@ -65,3 +77,13 @@
         ansible_host: "{{ vm_ip }}"
         ansible_user: "{{ vm_job_user }}"
       changed_when: false
+
+- name: Gather node facts
+  hosts: "targets"
+  gather_facts: true
+  tasks:
+    - name: Set py3 interpreter fact
+      set_fact:
+        ansible_python_interpreter: "/usr/bin/python3"
+      when:
+        - (ansible_distribution | lower) != 'centos'
