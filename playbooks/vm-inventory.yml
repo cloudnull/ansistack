@@ -1,0 +1,134 @@
+---
+# Ansible cloud tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Inspect target virtual machines
+  hosts: raw_vms
+  any_errors_fatal: true
+  gather_facts: false
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Set inventory file path
+      set_fact:
+        vm_job_user: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['access_user'] }}"
+
+    - name: Set inventory file path
+      set_fact:
+        vm_job_target: "{{ inventory_hostname }}"
+
+    - name: VM start block
+      delegate_to: "{{ vm_virt_host }}"
+      vars:
+        ansible_user: root
+      block:
+        - name: Start VM
+          virt:
+            name: "{{ inventory_hostname }}"
+            state: running
+            autostart: true
+          notify: Display ip address
+
+        - name: Get IP address
+          shell: >-
+            virsh domifaddr {{ inventory_hostname }} --source agent | grep -v 'lo' | grep 'ipv4'
+          changed_when: false
+          register: vm_ip
+          until: vm_ip.rc == 0
+          retries: 72
+          delay: 5
+
+        - name: Set ip fact
+          set_fact:
+            vm_ip_address: "{{ vm_ip.stdout.split()[3].split('/')[0] }}"
+
+    - name: Gather vm facts
+      setup:
+        gather_subset: "!facter,!ohai"
+      delegate_to: "{{ vm_ip_address }}"
+      vars:
+        ansible_user: "{{ vm_job_user }}"
+        ansible_python_interpreter: "/usr/bin/python"
+
+
+- name: Create local virtual machines inventory
+  hosts: localhost
+  connection: local
+  any_errors_fatal: true
+  gather_facts: false
+  user: root
+  vars_files:
+    - vars/main.yml
+  handlers:
+    - name: Raw deployment notice
+      debug:
+        msg: >-
+          VM(s) creation has completed. An instackenv file has been created for the generated nodes.
+          This file can be found here `{{ lookup('env','HOME') }}/vm-lab-inventory.yaml`.
+      run_once: true
+  tasks:
+    - name: Finishing block
+      run_once: true
+      block:
+        - name: Set inventory file path
+          set_fact:
+            raw_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
+
+        - name: Check for inventory file
+          stat:
+            path: "{{ raw_vm_inventory_file }}"
+          register: vm_inv_file
+
+        - name: Read existing inventory file
+          set_fact:
+            existing_raw_vm_inventory_file: "{{ lookup('file', raw_vm_inventory_file) | default('---') | from_yaml }}"
+          when:
+            - vm_inv_file.stat.exists | bool
+
+        - name: Write new inventory file
+          copy:
+            content: |-
+              {%
+                  set inventory = {
+                    'vms': {
+                      'vars': {
+                        'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'
+                      },
+                      'hosts': {}
+                    }
+                  }
+              %}
+              {% for node in groups['raw_vms'] %}
+              {%
+                   set entry = {
+                     'ansible_host': hostvars[node]['vm_ip_address'],
+                     'ansible_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
+                     'vm_job_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
+                     'vm_job_target': node
+                   }
+              %}
+              {%     set _ = inventory['vms']['hosts'].__setitem__(node, entry) %}
+              {% endfor %}
+              {{ (existing_raw_vm_inventory_file | default({})) | combine(inventory, recursive=True) | to_nice_yaml }}
+            dest: "{{ raw_vm_inventory_file }}"
+          notify: Raw deployment notice
+
+    - name: Display vm ip
+      debug:
+        msg: >-
+          The target VM has an ip address of `{{ hostvars[item]['vm_ip_address'] }}`.
+      with_items: "{{ groups['raw_vms'] }}"

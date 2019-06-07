@@ -1,3 +1,4 @@
+---
 # Ansible cloud tools for lab based deployments
 # Copyright (C) 2019  Kevin Carter
 #
@@ -17,7 +18,6 @@
 
 - name: Inspect target virtual machines
   hosts: localhost
-  connection: local
   any_errors_fatal: true
   gather_facts: true
   user: root
@@ -36,6 +36,7 @@
           condition: true
         - name: vm_job_user
           condition: true
+      connection: local
 
     - name: Create in-memory vm_virt_hosts group
       add_host:
@@ -76,13 +77,3 @@
         ansible_host: "{{ vm_ip }}"
         ansible_user: "{{ vm_job_user }}"
       changed_when: false
-
-- name: Gather node facts
-  hosts: "targets"
-  gather_facts: true
-  tasks:
-    - name: Set py3 interpreter fact
-      set_fact:
-        ansible_python_interpreter: "/usr/bin/python3"
-      when:
-        - (ansible_distribution | lower) != 'centos'

@@ -3,6 +3,9 @@
 # When true existing targets will be destroyed and rebuilt when encountered.
 vm_cleanup: true
 
+# Set the base image used for raw vms
+vm_image_name: centos7
+
 # Enable ceph within the deployment
 tripleo_ceph_enabled: true
 

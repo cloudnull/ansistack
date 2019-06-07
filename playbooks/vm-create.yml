@@ -175,7 +175,7 @@
       delegate_to: "{{ vm_virt_host }}"
       when:
         - (vm_cleanup | bool) or
-          (vm_dominfo.rc == 1)
+          (vm_dominfo.rc != 0)
       block:
         - name: Create vm directory
           file:
@@ -194,74 +194,6 @@
           when:
             - inventory_hostname in groups['osp_vms']
 
-        - name: VM start block
-          block:
-            - name: Start VM
-              virt:
-                name: "{{ inventory_hostname }}"
-                state: running
-                autostart: true
-              notify: Display ip address
 
-            - name: Get IP address
-              shell: >-
-                virsh domifaddr {{ inventory_hostname }} --source agent | grep -v 'lo' | grep 'ipv4'
-              changed_when: false
-              register: vm_ip
-              until: vm_ip.rc == 0
-              retries: 72
-              delay: 5
-
-            - name: Set ip fact
-              set_fact:
-                vm_ip_address: "{{ vm_ip.stdout.split()[3].split('/')[0] }}"
-
-            - name: Finishing block
-              delegate_to: "localhost"
-              connection: local
-              run_once: true
-              block:
-                - name: Set inventory file path
-                  set_fact:
-                    raw_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
-
-                - name: Check for inventory file
-                  stat:
-                    path: "{{ raw_vm_inventory_file }}"
-                  register: vm_inv_file
-
-                - name: Read existing inventory file
-                  set_fact:
-                    existing_raw_vm_inventory_file: "{{ lookup('file', raw_vm_inventory_file) | default('---') | from_yaml }}"
-                  when:
-                    - vm_inv_file.stat.exists | bool
-
-                - name: Write new inventory file
-                  copy:
-                    content: |-
-                      {%
-                          set inventory = {
-                            'vms': {
-                              'vars': {
-                                'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'
-                              },
-                              'hosts': {}
-                            }
-                          }
-                      %}
-                      {% for node in ansible_play_batch %}
-                      {%   if node in groups['raw_vms'] %}
-                      {%
-                             set entry = {
-                               'ansible_host': hostvars[node]['vm_ip_address'],
-                               'ansible_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user']
-                             }
-                      %}
-                      {%     set _ = inventory['vms']['hosts'].__setitem__(node, entry) %}
-                      {%   endif %}
-                      {% endfor %}
-                      {{ (existing_raw_vm_inventory_file | default({})) | combine(inventory, recursive=True) | to_nice_yaml }}
-                    dest: "{{ raw_vm_inventory_file }}"
-                  notify: Raw deployment notice
-          when:
-            - vm_start_on_create | bool
+# Generate a local inventory
+- import_playbook: vm-inventory.yml
