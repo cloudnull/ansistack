@@ -26,8 +26,7 @@ login to the target node.
 ``` shell
 ansible-playbook -i inventory-vms.yaml \
                  playbooks/tripleo-standalone-deployment.yml \
-                 -e vm_job_target=raw-vm-3 \
-                 -e vm_job_user=centos
+                 -e vm_job_target=raw-vm-3
 ```
 
 Other options exist which can aide in deployment setup and

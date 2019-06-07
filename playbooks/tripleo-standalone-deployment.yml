@@ -28,7 +28,7 @@
 - import_playbook: tripleo-developer-packages.yml
 
 
-- name: Run updates
+- name: Run tripleo standalone deployment
   hosts: "vm_target"
   any_errors_fatal: true
   gather_facts: true

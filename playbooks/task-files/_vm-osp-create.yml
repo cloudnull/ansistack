@@ -18,11 +18,21 @@
 
 - name: Create disk image
   command: >-
-    qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
+    qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ item }}/root-disk.qcow2 {{ vm_disk_size }}G
   args:
-    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
+    creates: "/var/lib/libvirt/images/{{ item }}/root-disk.qcow2"
+  when:
+    - item in groups['osp_vms']
+  with_items: "{{ ansible_play_batch }}"
   environment:
     LIBGUESTFS_BACKEND: direct
+  run_once: true
+
+- name: Undefine running VM
+  virt:
+    name: "{{ inventory_hostname }}"
+    command: undefine
+  failed_when: false
 
 - name: Create virt xml
   command: >-

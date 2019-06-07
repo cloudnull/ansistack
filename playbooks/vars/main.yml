@@ -57,3 +57,5 @@ vm_image_data:
     access_user: 'fedora'
     cloud_init_packages:
       - qemu-guest-agent
+
+vm_job_user: "{{ vm_image_data[vm_image_name]['access_user'] }}"

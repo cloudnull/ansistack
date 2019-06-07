@@ -16,7 +16,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-- name: Run tripleo setup
+- name: Run tripleo developer setup
   hosts: "targets"
   any_errors_fatal: true
   gather_facts: true

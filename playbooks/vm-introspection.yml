@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-- name: Inspect target VM on compute host
+- name: Inspect target virtual machines
   hosts: localhost
   connection: local
   any_errors_fatal: true
