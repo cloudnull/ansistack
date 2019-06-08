@@ -32,6 +32,9 @@
   user: root
   vars_files:
     - vars/main.yml
+  vars:
+    ansible_python_interpreter: "/usr/bin/python"
+
   handlers:
     - name: Deployment notice
       debug:
@@ -39,11 +42,6 @@
           VM(s) creation has completed. An instackenv file has been created for the generated nodes.
           This file can be found here `{{ lookup('env','HOME') }}/vm-instackenv.yaml`.
       run_once: true
-
-    - name: Display ip address
-      debug:
-        msg: >-
-          VM {{ inventory_hostname }} is online. IP address {{ vm_ip_address }}
 
     - name: Raw deployment notice
       debug:

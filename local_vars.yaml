@@ -12,8 +12,12 @@ tripleo_ceph_enabled: true
 # Example patches to apply to an environment.
 # NOTICE(cloudnull): One patch is a gerrit review, the other is an external
 #                    repo from github.
+# developer_patches:
+#   - url: "https://review.opendev.org/openstack/tripleo-common"
+#     refspec: "refs/changes/96/662496/5"
+#   - url: "https://github.com/openstack/tripleo-ansible"
+#     version: "master"
+
 developer_patches:
-  - url: "https://review.opendev.org/openstack/tripleo-common"
-    refspec: "refs/changes/96/662496/5"
   - url: "https://github.com/openstack/tripleo-ansible"
     version: "master"

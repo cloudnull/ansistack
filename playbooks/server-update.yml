@@ -23,6 +23,9 @@
   user: root
   vars_files:
     - vars/main.yml
+  vars:
+    ansible_python_interpreter: "/usr/bin/python"
+
   tasks:
     - name: Run package updates across the board
       package:

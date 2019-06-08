@@ -23,6 +23,9 @@
   become: true
   vars_files:
     - vars/main.yml
+  vars:
+    ansible_python_interpreter: "/usr/bin/python"
+
   tasks:
     - name: Install rdopkg
       pip:
@@ -106,6 +109,22 @@
         - name: Display all custom built rpm(s)
           debug:
             msg: "{{ vm_job_rpms.files | map(attribute='path') | list }}"
+
+        - name: Ensure local facts directory exists
+          file:
+            dest: "/etc/ansible/facts.d"
+            state: directory
+            group: "root"
+            owner: "root"
+            mode:  "0755"
+            recurse: no
+
+        - name: Set local facts
+          ini_file:
+            dest: "/etc/ansible/facts.d/tripleo.fact"
+            section: "lab"
+            option: "tripleo_developer_packages"
+            value: "{{ vm_job_rpms.files | map(attribute='path') | list }}"
 
         - name: Install developer tripleo packages
           package:

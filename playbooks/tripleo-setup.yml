@@ -21,6 +21,8 @@
   any_errors_fatal: true
   gather_facts: true
   become: true
+  vars:
+    ansible_python_interpreter: "/usr/bin/python"
   vars_files:
     - vars/main.yml
   tasks:
@@ -114,3 +116,22 @@
           package:
             name: "python3-tripleoclient"
             state: present
+
+    - name: Ensure local facts directory exists
+      file:
+        dest: "/etc/ansible/facts.d"
+        state: directory
+        group: "root"
+        owner: "root"
+        mode:  "0755"
+        recurse: no
+
+    - name: Set local facts
+      ini_file:
+        dest: "/etc/ansible/facts.d/tripleo.fact"
+        section: "lab"
+        option: "{{ item }}"
+        value: "{{ hostvars[inventory_hostname][item] }}"
+      with_items:
+        - tripleo_ceph_enabled
+        - tripleo_package_fact

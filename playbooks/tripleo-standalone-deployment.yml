@@ -35,6 +35,9 @@
   become: true
   vars_files:
     - vars/main.yml
+  vars:
+    ansible_python_interpreter: "/usr/bin/python"
+
   tasks:
     - name: Setup basic standalone deployment
       template:

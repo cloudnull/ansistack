@@ -22,6 +22,15 @@
   gather_facts: false
   vars_files:
     - vars/main.yml
+  vars:
+    ansible_python_interpreter: "/usr/bin/python"
+
+  handlers:
+    - name: Display ip address
+      debug:
+        msg: >-
+          VM {{ inventory_hostname }} is online. IP address {{ vm_ip_address }}
+
   tasks:
     - name: Set inventory file path
       set_fact:
@@ -56,13 +65,36 @@
           set_fact:
             vm_ip_address: "{{ vm_ip.stdout.split()[3].split('/')[0] }}"
 
-    - name: Gather vm facts
-      setup:
-        gather_subset: "!facter,!ohai"
+    - name: Fact block
       delegate_to: "{{ vm_ip_address }}"
       vars:
         ansible_user: "{{ vm_job_user }}"
         ansible_python_interpreter: "/usr/bin/python"
+      block:
+        - name: Gather vm facts
+          setup:
+            gather_subset: "!facter,!ohai"
+
+        - name: Ensure local facts directory exists
+          file:
+            dest: "/etc/ansible/facts.d"
+            state: directory
+            group: "root"
+            owner: "root"
+            mode:  "0755"
+            recurse: no
+          become: true
+
+        - name: Set local facts
+          ini_file:
+            dest: "/etc/ansible/facts.d/tripleo.fact"
+            section: "lab"
+            option: "{{ item }}"
+            value: "{{ hostvars[inventory_hostname][item] }}"
+          with_items:
+            - vm_job_target
+            - vm_job_user
+          become: true
 
 
 - name: Create local virtual machines inventory
@@ -73,6 +105,9 @@
   user: root
   vars_files:
     - vars/main.yml
+  vars:
+    ansible_python_interpreter: "/usr/bin/python"
+
   handlers:
     - name: Raw deployment notice
       debug:
@@ -87,6 +122,7 @@
         - name: Set inventory file path
           set_fact:
             raw_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
+            limit_group: "{{ (((ansible_limit | default('')).split(':')) | default(groups['raw_vms'])) }}"
 
         - name: Check for inventory file
           stat:
@@ -98,6 +134,8 @@
             existing_raw_vm_inventory_file: "{{ lookup('file', raw_vm_inventory_file) | default('---') | from_yaml }}"
           when:
             - vm_inv_file.stat.exists | bool
+
+        - debug: var=limit_group
 
         - name: Write new inventory file
           copy:
@@ -112,16 +150,18 @@
                     }
                   }
               %}
-              {% for node in groups['raw_vms'] %}
+              {% for node in limit_group %}
+              {%   if node in groups['raw_vms'] %}
               {%
-                   set entry = {
-                     'ansible_host': hostvars[node]['vm_ip_address'],
-                     'ansible_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
-                     'vm_job_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
-                     'vm_job_target': node
-                   }
+                     set entry = {
+                       'ansible_host': hostvars[node]['vm_ip_address'],
+                       'ansible_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
+                       'vm_job_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
+                       'vm_job_target': node
+                     }
               %}
               {%     set _ = inventory['vms']['hosts'].__setitem__(node, entry) %}
+              {%   endif %}
               {% endfor %}
               {{ (existing_raw_vm_inventory_file | default({})) | combine(inventory, recursive=True) | to_nice_yaml }}
             dest: "{{ raw_vm_inventory_file }}"
@@ -131,4 +171,6 @@
       debug:
         msg: >-
           The target VM has an ip address of `{{ hostvars[item]['vm_ip_address'] }}`.
-      with_items: "{{ groups['raw_vms'] }}"
+      when:
+        - item in groups['raw_vms']
+      with_items: "{{ limit_group }}"
