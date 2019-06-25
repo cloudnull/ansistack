@@ -17,15 +17,12 @@
 
 
 - name: Run updates across all hosts
-  hosts: all_hosts
+  hosts: all_hosts:all_nodes
   any_errors_fatal: true
   gather_facts: true
   user: root
   vars_files:
     - vars/main.yml
-  vars:
-    ansible_python_interpreter: "/usr/bin/python"
-
   tasks:
     - name: Run package updates across the board
       package:

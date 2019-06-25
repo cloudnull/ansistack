@@ -16,18 +16,53 @@ all_machines:
                 compute1:
                   ansible_host: 172.16.27.220
                   ansible_python_interpreter: "/usr/bin/python3"
+              children:
+                vms:
+                  hosts:
+                    ep:
+                      ansible_host: 172.16.27.44
+                containers:
+                  hosts:
+                    plex_indexer:
+                      ansible_host: 172.16.27.227
+
             libvirt_hosts:
               hosts:
                 compute2:
-                  ansible_host: 172.16.27.66
+                  ansible_host: 172.16.27.67
+                  ansible_python_interpreter: "/usr/bin/python3"
+
+                compute3:
+                  ansible_host: 172.16.27.25
+                  ansible_python_interpreter: "/usr/bin/python3"
+
         infra_hosts:
           hosts:
             plex:
               ansible_host: 172.16.27.219
+              ansible_python_interpreter: "/usr/bin/python3"
+
             brix:
               ansible_host: 172.16.27.218
+              ansible_python_interpreter: "/usr/bin/python"
+          children:
+            containers:
+              hosts:
+                irc:
+                  ansible_host: 172.16.27.52
+                  ansible_python_interpreter: "/usr/bin/python3"
+                unifi:
+                  ansible_host: 172.16.27.141
+                  ansible_python_interpreter: "/usr/bin/python3"
+
         storage_hosts:
           hosts:
             system:
               ansible_host: 172.16.24.92
               ansible_python_interpreter: "/usr/bin/python3"
+          containers:
+            hosts:
+              sabnzb:
+                ansible_host: 172.16.27.244
+              transmission:
+                ansible_host: 172.16.27.49

@@ -23,9 +23,6 @@
   user: root
   vars_files:
     - vars/main.yml
-  vars:
-    ansible_python_interpreter: "/usr/bin/python"
-
   tasks:
     - name: Gather variables for each operating system
       include_vars: "{{ item }}"
