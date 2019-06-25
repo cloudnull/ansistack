@@ -1,7 +1,7 @@
 ---
 
 # When true existing targets will be destroyed and rebuilt when encountered.
-vm_cleanup: true
+vm_cleanup: false
 
 # Set the base image used for raw vms
 vm_image_name: centos7

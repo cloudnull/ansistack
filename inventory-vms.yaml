@@ -13,31 +13,59 @@ all:
         raw_vms:
           hosts:
             raw-vm-1:
-              vm_virt_host: "172.16.27.66"
+              vm_virt_host: "172.16.27.67"
               vm_cores: 8  # Number of cores
               vm_ram: 10240  # Size in MiB
               vm_disk_size: 72  # Size in GiB
             raw-vm-2:
-              vm_virt_host: "172.16.27.66"
+              vm_virt_host: "172.16.27.67"
               vm_cores: 8  # Number of cores
               vm_ram: 10240  # Size in MiB
               vm_disk_size: 72  # Size in GiB
             raw-vm-3:
-              vm_virt_host: "172.16.27.66"
+              vm_virt_host: "172.16.27.67"
+              vm_cores: 8  # Number of cores
+              vm_ram: 10240  # Size in MiB
+              vm_disk_size: 72  # Size in GiB
+            raw-vm-4:
+              vm_virt_host: "172.16.27.67"
+              vm_cores: 8  # Number of cores
+              vm_ram: 10240  # Size in MiB
+              vm_disk_size: 72  # Size in GiB
+            raw-vm-5:
+              vm_virt_host: "172.16.27.67"
               vm_cores: 8  # Number of cores
               vm_ram: 10240  # Size in MiB
               vm_disk_size: 72  # Size in GiB
         osp_vms:
           hosts:
             osp-vm-controller1:
-              vm_virt_host: "172.16.27.66"
+              vm_virt_host: "172.16.27.67"
               vm_cores: 8
               vm_ram: 16384
               vm_disk_size: 96
               vm_vbmc_port: 16020
+            osp-vm-controller2:
+              vm_virt_host: "172.16.27.67"
+              vm_cores: 8
+              vm_ram: 16384
+              vm_disk_size: 96
+              vm_vbmc_port: 16021
+            osp-vm-controller3:
+              vm_virt_host: "172.16.27.67"
+              vm_cores: 8
+              vm_ram: 16384
+              vm_disk_size: 96
+              vm_vbmc_port: 16022
             osp-vm-compute1:
-              vm_virt_host: "172.16.27.66"
+              vm_virt_host: "172.16.27.67"
               vm_cores: 6
               vm_ram: 8192
-              vm_disk_size: 128
-              vm_vbmc_port: 16021
+              vm_disk_size: 96
+              vm_vbmc_port: 16030
+            osp-vm-compute2:
+              vm_virt_host: "172.16.27.67"
+              vm_cores: 6
+              vm_ram: 8192
+              vm_disk_size: 96
+              vm_vbmc_port: 16031

@@ -19,7 +19,7 @@ all_machines:
               children:
                 vms:
                   hosts:
-                    ep:
+                    router:
                       ansible_host: 172.16.27.44
                 containers:
                   hosts:

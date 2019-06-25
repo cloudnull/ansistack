@@ -102,7 +102,6 @@
   connection: local
   any_errors_fatal: true
   gather_facts: false
-  user: root
   vars_files:
     - vars/main.yml
   vars:
@@ -122,7 +121,15 @@
         - name: Set inventory file path
           set_fact:
             raw_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
-            limit_group: "{{ (((ansible_limit | default('')).split(':')) | default(groups['raw_vms'])) }}"
+            _limit_group: "{{ (((ansible_limit | default('')) | length) > 0) | ternary(((ansible_limit | default('')).split(':')), groups['raw_vms']) }}"
+
+        - name: Set limit group
+          set_fact:
+            limit_group: "{{ _limit_group | difference(['localhost']) }}"
+
+        - name: Show limit group
+          debug:
+            msg: "{{ limit_group }}"
 
         - name: Check for inventory file
           stat:
@@ -134,8 +141,6 @@
             existing_raw_vm_inventory_file: "{{ lookup('file', raw_vm_inventory_file) | default('---') | from_yaml }}"
           when:
             - vm_inv_file.stat.exists | bool
-
-        - debug: var=limit_group
 
         - name: Write new inventory file
           copy:
@@ -174,3 +179,4 @@
       when:
         - item in groups['raw_vms']
       with_items: "{{ limit_group }}"
+      run_once: true
