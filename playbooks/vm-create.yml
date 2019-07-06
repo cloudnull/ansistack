@@ -32,8 +32,6 @@
   user: root
   vars_files:
     - vars/main.yml
-  vars:
-    ansible_python_interpreter: "/usr/bin/python"
 
   handlers:
     - name: Deployment notice
@@ -78,18 +76,6 @@
       delegate_to: localhost
       connection: local
 
-    - name: Download vm image
-      get_url:
-        url: "{{ vm_image_data[vm_image_name]['url'] }}"
-        dest: "{{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['url'] | basename }}"
-      delegate_to: "{{ vm_virt_host }}"
-      async: 1024
-      poll: 0
-      register: _image_get
-      run_once: true
-      when:
-        - inventory_hostname in groups['raw_vms']
-
     - name: Create in-memory vm_virt_hosts group
       add_host:
         name: "{{ hostvars[item]['vm_virt_host'] }}"
@@ -97,6 +83,22 @@
       changed_when: false
       with_items: "{{ groups['all_vms'] }}"
       run_once: true
+
+    - name: Download vm image
+      get_url:
+        url: "{{ vm_image_data[vm_image_name]['url'] }}"
+        dest: "{{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['url'] | basename }}"
+      delegate_to: "{{ item }}"
+      async: 1024
+      poll: 0
+      register: _image_get
+      run_once: true
+      loop: "{{ (vm_image_shared_storage | bool) | ternary([groups['vm_virt_hosts'][0]], groups['vm_virt_hosts']) }}"
+      loop_control:
+        label: "{{ item }}"
+      when:
+        - not ((vm_purge | default(false)) | bool)
+        - inventory_hostname in groups['raw_vms']
 
     - name: Pre-flight Checks
       delegate_to: "{{ vm_virt_host }}"
@@ -128,13 +130,30 @@
           delegate_to: "{{ item }}"
           with_items: "{{ groups['vm_virt_hosts'] }}"
 
-        - name: Fail when required networks are missing
+        - name: Fail when provisioning network is missing
           fail:
             msg: >-
-              One of the required networks ['provisioning', 'external'] is missing on `{{ vm_virt_host }}`.
+              One of the required networks ['provisioning'] is missing on `{{ item.item }}`.
               Please ensure the network is created and online before continuing.
           when:
-            - (vm_netinfo_provisioning is failed) or (vm_netinfo_external is failed)
+            - (item.failed | bool)
+          loop: "{{ vm_netinfo_provisioning['results'] }}"
+          loop_control:
+            label: "{{ item.item }}"
+          delegate_to: "{{ item.item }}"
+          run_once: true
+
+        - name: Fail when external network is missing
+          fail:
+            msg: >-
+              One of the required networks ['external'] is missing on `{{ item.item }}`.
+              Please ensure the network is created and online before continuing.
+          when:
+            - (item.failed | bool)
+          loop: "{{ vm_netinfo_external['results'] }}"
+          loop_control:
+            label: "{{ item.item }}"
+          delegate_to: "{{ item.item }}"
           run_once: true
 
     - name: Cleanup block
@@ -184,14 +203,16 @@
           setup:
             gather_subset: "!facter,!ohai"
 
-        - include_tasks: task-files/_vm-raw-create.yml
-          when:
-            - inventory_hostname in groups['raw_vms']
-
         - include_tasks: task-files/_vm-osp-create.yml
           when:
             - inventory_hostname in groups['osp_vms']
 
+        - include_tasks: task-files/_vm-raw-create.yml
+          when:
+            - inventory_hostname in groups['raw_vms']
+
 
 # Generate a local inventory
 - import_playbook: vm-inventory.yml
+  when:
+    - not ((vm_purge | default(false)) | bool)

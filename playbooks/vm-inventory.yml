@@ -22,8 +22,6 @@
   gather_facts: false
   vars_files:
     - vars/main.yml
-  vars:
-    ansible_python_interpreter: "/usr/bin/python"
 
   handlers:
     - name: Display ip address
@@ -64,12 +62,14 @@
         - name: Set ip fact
           set_fact:
             vm_ip_address: "{{ vm_ip.stdout.split()[3].split('/')[0] }}"
+          vars:
+            ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['python_interpreter'] }}"
 
     - name: Fact block
       delegate_to: "{{ vm_ip_address }}"
       vars:
         ansible_user: "{{ vm_job_user }}"
-        ansible_python_interpreter: "/usr/bin/python"
+        ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['python_interpreter'] }}"
       block:
         - name: Gather vm facts
           setup:
@@ -104,8 +104,6 @@
   gather_facts: false
   vars_files:
     - vars/main.yml
-  vars:
-    ansible_python_interpreter: "/usr/bin/python"
 
   handlers:
     - name: Raw deployment notice
@@ -161,8 +159,10 @@
                      set entry = {
                        'ansible_host': hostvars[node]['vm_ip_address'],
                        'ansible_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
+                       'ansible_python_interpreter': vm_image_data[hostvars[node]['vm_image_name']]['python_interpreter'],
                        'vm_job_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
-                       'vm_job_target': node
+                       'vm_job_target': node,
+                       'vm_virt_host': hostvars[node]['vm_virt_host']
                      }
               %}
               {%     set _ = inventory['vms']['hosts'].__setitem__(node, entry) %}

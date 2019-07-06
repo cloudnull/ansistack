@@ -41,3 +41,58 @@
         name: "{{ server_system_packages }}"
         state: "present"
         update_cache: "{{ ((ansible_os_family | lower) == 'debian') | ternary('yes', omit) }}"
+
+    - name: Enable and start
+      systemd:
+        name: "{{ server_libvirt_service_name }}"
+        state: started
+        daemon_reload: true
+        enabled: true
+
+    - name: Remove the default virt network
+      virt_net:
+        name: "default"
+        state: absent
+
+    - name: Define virt network(s)
+      virt_net:
+        name: "provisioning"
+        state: present
+        xml: "{{ lookup('template', 'virt-' ~ item ~'-net.xml.j2') }}"
+      loop:
+        - external
+        - provisioning
+
+    - name: Set virt network(s) to active
+      virt_net:
+        name: "{{ item }}"
+        state: active
+      loop:
+        - external
+        - provisioning
+
+    - name: Set virt network(s) to autostart
+      virt_net:
+        name: "{{ item }}"
+        autostart: true
+      loop:
+        - external
+        - provisioning
+
+    - name: Install vbmc
+      pip:
+        name: virtualbmc
+        virtualenv: /opt/vbmc
+        virtualenv_site_packages: true
+
+    - name: Create vbmcd service
+      template:
+        src: vbmcd.service
+        dest: /etc/systemd/system/vbmcd.service
+
+    - name: Enable and start vbmcd
+      systemd:
+        name: vbmcd.service
+        state: started
+        daemon_reload: true
+        enabled: true

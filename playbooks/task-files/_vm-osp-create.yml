@@ -18,12 +18,9 @@
 
 - name: Create disk image
   command: >-
-    qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ item }}/root-disk.qcow2 {{ vm_disk_size }}G
+    qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
   args:
-    creates: "/var/lib/libvirt/images/{{ item }}/root-disk.qcow2"
-  when:
-    - item in groups['osp_vms']
-  with_items: "{{ ansible_play_batch }}"
+    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
   environment:
     LIBGUESTFS_BACKEND: direct
   run_once: true
@@ -61,18 +58,22 @@
 
 - name: Add node to vbmc
   command: >-
-    /opt/vbmc/bin/vbmc add {{ item }}
+    /opt/vbmc/bin/vbmc add {{ inventory_hostname }}
       --port {{ vm_vbmc_port }}
       --username {{ vm_vbmc_username }}
       --password {{ vm_vbmc_password }}
-  delegate_to: "{{ vm_virt_host }}"
-  with_items: "{{ ansible_play_batch }}"
+  register: vbmc_add
+  until: vbmc_add is success
+  retries: 32
+  delay: 2
   run_once: true
 
 - name: Start vbmc node
-  command: /opt/vbmc/bin/vbmc start {{ item }}
-  delegate_to: "{{ vm_virt_host }}"
-  with_items: "{{ ansible_play_batch }}"
+  command: /opt/vbmc/bin/vbmc start {{ inventory_hostname }}
+  register: start_vbmc_add
+  until: start_vbmc_add is success
+  retries: 32
+  delay: 2
   run_once: true
 
 - name: Get VM mac addresses

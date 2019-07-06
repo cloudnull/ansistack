@@ -3,8 +3,7 @@
 # When true existing targets will be destroyed and rebuilt when encountered.
 vm_cleanup: false
 
-# Set the base image used for raw vms
-vm_image_name: centos7
+vm_image_shared_storage: true
 
 # Enable ceph within the deployment
 tripleo_ceph_enabled: true
@@ -21,3 +20,6 @@ tripleo_ceph_enabled: true
 developer_patches:
   - url: "https://github.com/openstack/tripleo-ansible"
     version: "master"
+
+server_provisioning_device: BOND0-VLAN10
+server_external_device: bond0

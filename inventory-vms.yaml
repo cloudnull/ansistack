@@ -1,71 +1,98 @@
 all:
   vars:
-    ansible_ssh_common_args: -o StrictHostKeyChecking=no
+    ansible_python_interpreter: "/usr/bin/python3"
+    ansible_ssh_common_args: >-
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+      -o Compression=no
+      -o TCPKeepAlive=yes
+      -o VerifyHostKeyDNS=no
+      -o ForwardX11=no
+      -o ForwardAgent=no
   children:
     all_vms:
       vars:
-        ansible_become: yes
+        ansible_become: true
         ansible_become_user: "root"
         ansible_user: "root"
         vm_vbmc_username: admin
         vm_vbmc_password: secrete
       children:
         raw_vms:
-          hosts:
-            raw-vm-1:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 8  # Number of cores
-              vm_ram: 10240  # Size in MiB
-              vm_disk_size: 72  # Size in GiB
-            raw-vm-2:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 8  # Number of cores
-              vm_ram: 10240  # Size in MiB
-              vm_disk_size: 72  # Size in GiB
-            raw-vm-3:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 8  # Number of cores
-              vm_ram: 10240  # Size in MiB
-              vm_disk_size: 72  # Size in GiB
-            raw-vm-4:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 8  # Number of cores
-              vm_ram: 10240  # Size in MiB
-              vm_disk_size: 72  # Size in GiB
-            raw-vm-5:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 8  # Number of cores
-              vm_ram: 10240  # Size in MiB
-              vm_disk_size: 72  # Size in GiB
+          children:
+            raw_compute_hosts:
+              children:
+                raw_compute2:
+                  vars:
+                    vm_virt_host: "172.16.27.67"
+                    vm_cores: 8  # Number of cores
+                    vm_ram: 10240  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                    vm_image_name: centos7  # Set the base image used for raw vms
+                  hosts:
+                    compute2-vm-1: {}
+                    compute2-vm-2: {}
+                    compute2-vm-3: {}
+                    compute2-vm-4: {}
+                    compute2-vm-5:
+                      vm_image_name: fedora28
+                raw_compute1:
+                  vars:
+                    vm_virt_host: "172.16.27.211"
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 10240  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                    vm_image_name: fedora28  # Set the base image used for raw vms
+                  hosts:
+                    compute1-vm-1: {}
+                    compute1-vm-2: {}
+                    compute1-vm-3: {}
+                    compute1-vm-4: {}
+                    compute1-vm-5:
+                      vm_image_name: centos7
         osp_vms:
-          hosts:
-            osp-vm-controller1:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 8
-              vm_ram: 16384
-              vm_disk_size: 96
-              vm_vbmc_port: 16020
-            osp-vm-controller2:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 8
-              vm_ram: 16384
-              vm_disk_size: 96
-              vm_vbmc_port: 16021
-            osp-vm-controller3:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 8
-              vm_ram: 16384
-              vm_disk_size: 96
-              vm_vbmc_port: 16022
-            osp-vm-compute1:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 6
-              vm_ram: 8192
-              vm_disk_size: 96
-              vm_vbmc_port: 16030
-            osp-vm-compute2:
-              vm_virt_host: "172.16.27.67"
-              vm_cores: 6
-              vm_ram: 8192
-              vm_disk_size: 96
-              vm_vbmc_port: 16031
+          children:
+            osp_compute_hosts:
+              children:
+                osp_compute2:
+                  vars:
+                    vm_virt_host: "172.16.27.67"
+                    vm_cores: 8
+                    vm_ram: 16384
+                    vm_disk_size: 96
+                  hosts:
+                    osp-compute2-vm-controller1:
+                      vm_vbmc_port: 16020
+                    osp-compute2-vm-controller2:
+                      vm_vbmc_port: 16021
+                    osp-compute2-vm-controller3:
+                      vm_vbmc_port: 16022
+                    osp-compute2-vm-compute1:
+                      vm_cores: 4
+                      vm_ram: 4096
+                      vm_vbmc_port: 16030
+                    osp-compute2-vm-compute2:
+                      vm_cores: 4
+                      vm_ram: 4096
+                      vm_vbmc_port: 16031
+                osp_compute1:
+                  vars:
+                    vm_virt_host: "172.16.27.211"
+                    vm_cores: 8
+                    vm_ram: 16384
+                    vm_disk_size: 96
+                  hosts:
+                    osp-compute1-vm-controller1:
+                      vm_vbmc_port: 16020
+                    osp-compute1-vm-controller2:
+                      vm_vbmc_port: 16021
+                    osp-compute1-vm-controller3:
+                      vm_vbmc_port: 16022
+                    osp-compute1-vm-compute1:
+                      vm_cores: 4
+                      vm_ram: 4096
+                      vm_vbmc_port: 16030
+                    osp-compute1-vm-compute2:
+                      vm_cores: 4
+                      vm_ram: 4096
+                      vm_vbmc_port: 16031

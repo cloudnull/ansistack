@@ -5,7 +5,14 @@ all_machines:
     ansible_become: yes
     ansible_become_user: "root"
     ansible_user: "root"
-
+    ansible_ssh_extra_args: >-
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+      -o Compression=no
+      -o TCPKeepAlive=yes
+      -o VerifyHostKeyDNS=no
+      -o ForwardX11=no
+      -o ForwardAgent=no
   children:
     all_hosts:
       children:
@@ -13,27 +20,29 @@ all_machines:
           children:
             proxmox_hosts:
               hosts:
-                compute1:
-                  ansible_host: 172.16.27.220
+                compute3:
+                  ansible_host: 172.16.27.25
                   ansible_python_interpreter: "/usr/bin/python3"
               children:
                 vms:
                   hosts:
                     router:
                       ansible_host: 172.16.27.44
+                      ansible_python_interpreter: "/usr/bin/python"
                 containers:
                   hosts:
                     plex_indexer:
                       ansible_host: 172.16.27.227
+                      ansible_python_interpreter: "/usr/bin/python3"
 
             libvirt_hosts:
               hosts:
-                compute2:
-                  ansible_host: 172.16.27.67
+                compute1:
+                  ansible_host: 172.16.27.220
                   ansible_python_interpreter: "/usr/bin/python3"
 
-                compute3:
-                  ansible_host: 172.16.27.25
+                compute2:
+                  ansible_host: 172.16.27.67
                   ansible_python_interpreter: "/usr/bin/python3"
 
         infra_hosts:
@@ -60,9 +69,12 @@ all_machines:
             system:
               ansible_host: 172.16.24.92
               ansible_python_interpreter: "/usr/bin/python3"
-          containers:
-            hosts:
-              sabnzb:
-                ansible_host: 172.16.27.244
-              transmission:
-                ansible_host: 172.16.27.49
+          children:
+            containers:
+              hosts:
+                sabnzb:
+                  ansible_host: 172.16.27.244
+                  ansible_python_interpreter: "/usr/bin/python3"
+                transmission:
+                  ansible_host: 172.16.27.49
+                  ansible_python_interpreter: "/usr/bin/python3"
