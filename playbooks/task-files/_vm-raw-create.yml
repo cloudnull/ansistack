@@ -25,18 +25,18 @@
   template:
     src: user-data.j2
     dest: "/var/lib/libvirt/images/{{ inventory_hostname }}/user-data"
+  vars:
+    vm_packages: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['cloud_init_packages'] }}"
 
 - name: 'Check on image get async task'
   async_status:
     jid: "{{ item.ansible_job_id }}"
   register: job_result
   until: job_result.finished
-  retries: 96
+  retries: 192
   run_once: true
   loop: "{{ _image_get['results'] }}"
-  delegate_to: "{{ item.item }}"
-  loop_control:
-    label: "{{ item.item }}"
+  delegate_to: "{{ hostvars[item.item]['vm_virt_host'] }}"
   when:
     item.changed | bool
 

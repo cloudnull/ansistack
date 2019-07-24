@@ -1,0 +1,14 @@
+---
+
+server_system_packages: []
+
+server_libvirt_service_name: libvirt-bin
+
+developer_system_packages:
+  - gcc
+  - git
+  - tmux
+  - vim
+  - virtualenv
+
+tripleo_system_ceph_packages: []

@@ -71,6 +71,6 @@
     - name: Build notice
       debug:
         msg: >-
-          Stack creation has started. Connect to the system `{{ ansible_host }}` as `{{ vm_job_user }}` and
-          change user to `stack`. When ready, you can monitor the installation progress via the `standalone`
-          tmux session.
+          Stack creation has started. Connect to the system `{{ ansible_host }}`
+          as `{{ vm_job_user }}` and change user to `stack`. When ready, you
+          can monitor the installation progress via the `standalone` tmux session.

@@ -81,24 +81,34 @@
         name: "{{ hostvars[item]['vm_virt_host'] }}"
         groups: vm_virt_hosts
       changed_when: false
-      with_items: "{{ groups['all_vms'] }}"
+      when:
+        - hostvars[item]['vm_virt_host'] is defined
+      loop: "{{ ansible_play_hosts }}"
       run_once: true
+
+    - name: "Check for image"
+      stat:
+        path: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['path'] }}/{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['url'] | basename }}"
+      delegate_to: "{{ hostvars[inventory_hostname]['vm_virt_host'] }}"
+      register: image_stat
 
     - name: Download vm image
       get_url:
-        url: "{{ vm_image_data[vm_image_name]['url'] }}"
-        dest: "{{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['url'] | basename }}"
-      delegate_to: "{{ item }}"
+        url: "{{ vm_image_data[hostvars[item]['vm_image_name']]['url'] }}"
+        dest: "{{ vm_image_data[hostvars[item]['vm_image_name']]['path'] }}/{{ vm_image_data[hostvars[item]['vm_image_name']]['url'] | basename }}"
+      delegate_to: "{{ hostvars[item]['vm_virt_host'] }}"
       async: 1024
       poll: 0
       register: _image_get
       run_once: true
-      loop: "{{ (vm_image_shared_storage | bool) | ternary([groups['vm_virt_hosts'][0]], groups['vm_virt_hosts']) }}"
+      loop: "{{ ansible_play_hosts }}"
       loop_control:
-        label: "{{ item }}"
+        label: "{{ item }} + {{ hostvars[item]['vm_image_name'] }}"
       when:
-        - not ((vm_purge | default(false)) | bool)
-        - inventory_hostname in groups['raw_vms']
+        - (((not ((vm_purge | default(false)) | bool)) and
+           (inventory_hostname in groups['raw_vms'])) or
+           (vm_image_get | bool))
+        - not (hostvars[item]['image_stat']['stat']['exists'] | bool)
 
     - name: Pre-flight Checks
       delegate_to: "{{ vm_virt_host }}"
@@ -216,3 +226,5 @@
 - import_playbook: vm-inventory.yml
   when:
     - not ((vm_purge | default(false)) | bool)
+
+- import_playbook: vm-update.yml

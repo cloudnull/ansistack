@@ -38,16 +38,19 @@ all:
                       vm_image_name: fedora28
                 raw_compute1:
                   vars:
-                    vm_virt_host: "172.16.27.211"
+                    vm_virt_host: "172.16.27.210"
                     vm_cores: 6  # Number of cores
                     vm_ram: 10240  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
-                    vm_image_name: fedora28  # Set the base image used for raw vms
                   hosts:
-                    compute1-vm-1: {}
-                    compute1-vm-2: {}
-                    compute1-vm-3: {}
-                    compute1-vm-4: {}
+                    compute1-vm-1:
+                      vm_image_name: fedora28
+                    compute1-vm-2:
+                      vm_image_name: fedora30
+                    compute1-vm-3:
+                      vm_image_name: ubuntu1604
+                    compute1-vm-4:
+                      vm_image_name: centos7
                     compute1-vm-5:
                       vm_image_name: centos7
         osp_vms:
@@ -77,7 +80,7 @@ all:
                       vm_vbmc_port: 16031
                 osp_compute1:
                   vars:
-                    vm_virt_host: "172.16.27.211"
+                    vm_virt_host: "172.16.27.210"
                     vm_cores: 8
                     vm_ram: 16384
                     vm_disk_size: 96

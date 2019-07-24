@@ -96,6 +96,12 @@
             - vm_job_user
           become: true
 
+        - name: Set limit vm group
+          set_fact:
+            vm_limit_group: "{{ ansible_play_hosts_all }}"
+          delegate_to: localhost
+          delegate_facts: true
+
 
 - name: Create local virtual machines inventory
   hosts: localhost
@@ -113,21 +119,16 @@
           This file can be found here `{{ lookup('env','HOME') }}/vm-lab-inventory.yaml`.
       run_once: true
   tasks:
+    - name: Show limit group
+      debug:
+        msg: "{{ vm_limit_group }}"
+
     - name: Finishing block
       run_once: true
       block:
         - name: Set inventory file path
           set_fact:
             raw_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
-            _limit_group: "{{ (((ansible_limit | default('')) | length) > 0) | ternary(((ansible_limit | default('')).split(':')), groups['raw_vms']) }}"
-
-        - name: Set limit group
-          set_fact:
-            limit_group: "{{ _limit_group | difference(['localhost']) }}"
-
-        - name: Show limit group
-          debug:
-            msg: "{{ limit_group }}"
 
         - name: Check for inventory file
           stat:
@@ -153,7 +154,7 @@
                     }
                   }
               %}
-              {% for node in limit_group %}
+              {% for node in vm_limit_group %}
               {%   if node in groups['raw_vms'] %}
               {%
                      set entry = {
@@ -172,11 +173,24 @@
             dest: "{{ raw_vm_inventory_file }}"
           notify: Raw deployment notice
 
+    - name: Create in-memory update targets
+      add_host:
+        name: "{{ item }}"
+        ansible_host: "{{ hostvars[item]['vm_ip_address'] }}"
+        ansible_user: "{{ vm_image_data[hostvars[item]['vm_image_name']]['access_user'] }}"
+        ansible_python_interpreter: "{{ vm_image_data[hostvars[item]['vm_image_name']]['python_interpreter'] }}"
+        groups: targets
+      changed_when: false
+      with_items: "{{ vm_limit_group }}"
+      run_once: true
+
     - name: Display vm ip
       debug:
         msg: >-
           The target VM has an ip address of `{{ hostvars[item]['vm_ip_address'] }}`.
+          The OS image is `{{ hostvars[item]['vm_image_name'] }}`.
+          The access user is `{{ vm_image_data[hostvars[item]['vm_image_name']]['access_user'] }}`
       when:
         - item in groups['raw_vms']
-      with_items: "{{ limit_group }}"
+      with_items: "{{ vm_limit_group }}"
       run_once: true
