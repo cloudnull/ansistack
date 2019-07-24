@@ -48,7 +48,7 @@ all:
                     compute1-vm-2:
                       vm_image_name: fedora30
                     compute1-vm-3:
-                      vm_image_name: ubuntu1604
+                      vm_image_name: rhel8
                     compute1-vm-4:
                       vm_image_name: centos7
                     compute1-vm-5:

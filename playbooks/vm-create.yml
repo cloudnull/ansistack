@@ -88,14 +88,24 @@
 
     - name: "Check for image"
       stat:
-        path: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['path'] }}/{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['url'] | basename }}"
+        path: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['path'] }}/{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['name'] }}"
       delegate_to: "{{ hostvars[inventory_hostname]['vm_virt_host'] }}"
       register: image_stat
+
+    - name: Check for rhel image used in vm
+      fail:
+        msg: >-
+          RHEL image has been selected and the option `redhat_cloud_image_url` is undefined.
+          Check your options and try again.
+      when:
+        - hostvars[inventory_hostname]['vm_image_name'] | regex_search('(rhel)')
+        - redhat_cloud_image_url is undefined
+        - not (image_stat.stat.exists | bool)
 
     - name: Download vm image
       get_url:
         url: "{{ vm_image_data[hostvars[item]['vm_image_name']]['url'] }}"
-        dest: "{{ vm_image_data[hostvars[item]['vm_image_name']]['path'] }}/{{ vm_image_data[hostvars[item]['vm_image_name']]['url'] | basename }}"
+        dest: "{{ vm_image_data[hostvars[item]['vm_image_name']]['path'] }}/{{ vm_image_data[hostvars[item]['vm_image_name']]['name'] }}"
       delegate_to: "{{ hostvars[item]['vm_virt_host'] }}"
       async: 1024
       poll: 0

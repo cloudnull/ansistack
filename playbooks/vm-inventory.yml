@@ -67,6 +67,8 @@
 
     - name: Fact block
       delegate_to: "{{ vm_ip_address }}"
+      when:
+        - not (hostvars[inventory_hostname]['vm_image_name'] | regex_search('(rhel)'))
       vars:
         ansible_user: "{{ vm_job_user }}"
         ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['python_interpreter'] }}"
@@ -96,11 +98,11 @@
             - vm_job_user
           become: true
 
-        - name: Set limit vm group
-          set_fact:
-            vm_limit_group: "{{ ansible_play_hosts_all }}"
-          delegate_to: localhost
-          delegate_facts: true
+    - name: Set limit vm group
+      set_fact:
+        vm_limit_group: "{{ ansible_play_hosts_all }}"
+      delegate_to: localhost
+      delegate_facts: true
 
 
 - name: Create local virtual machines inventory
@@ -181,6 +183,8 @@
         ansible_python_interpreter: "{{ vm_image_data[hostvars[item]['vm_image_name']]['python_interpreter'] }}"
         groups: targets
       changed_when: false
+      when:
+        - not (hostvars[item]['vm_image_name'] | regex_search('(rhel)'))
       with_items: "{{ vm_limit_group }}"
       run_once: true
 
