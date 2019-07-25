@@ -76,6 +76,10 @@
         - name: Gather vm facts
           setup:
             gather_subset: "!facter,!ohai"
+          register: gather_facts
+          until: gather_facts is success
+          retries: 3
+          delay: 5
 
         - name: Ensure local facts directory exists
           file:
