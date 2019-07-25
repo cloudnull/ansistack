@@ -181,7 +181,7 @@
         ansible_host: "{{ hostvars[item]['vm_ip_address'] }}"
         ansible_user: "{{ vm_image_data[hostvars[item]['vm_image_name']]['access_user'] }}"
         ansible_python_interpreter: "{{ vm_image_data[hostvars[item]['vm_image_name']]['python_interpreter'] }}"
-        groups: targets
+        groups: update_targets
       changed_when: false
       when:
         - not (hostvars[item]['vm_image_name'] | regex_search('(rhel)'))

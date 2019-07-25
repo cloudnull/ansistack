@@ -34,8 +34,7 @@ all:
                     compute2-vm-2: {}
                     compute2-vm-3: {}
                     compute2-vm-4: {}
-                    compute2-vm-5:
-                      vm_image_name: fedora28
+                    compute2-vm-5: {}
                 raw_compute1:
                   vars:
                     vm_virt_host: "172.16.27.210"
@@ -46,12 +45,16 @@ all:
                     compute1-vm-1:
                       vm_image_name: fedora28
                     compute1-vm-2:
-                      vm_image_name: fedora30
+                      vm_image_name: fedora28
                     compute1-vm-3:
-                      vm_image_name: rhel8
+                      vm_image_name: fedora28
                     compute1-vm-4:
                       vm_image_name: centos7
                     compute1-vm-5:
+                      vm_image_name: centos7
+                    compute1-vm-6:
+                      vm_image_name: centos7
+                    compute1-vm-7:
                       vm_image_name: centos7
         osp_vms:
           children:
