@@ -18,8 +18,8 @@ tripleo_ceph_enabled: true
 #     version: "master"
 
 developer_patches:
-  - url: "https://github.com/openstack/tripleo-ansible"
-    version: "master"
+  - url: "https://review.opendev.org/openstack/tripleo-heat-templates"
+    refspec: "refs/changes/11/672611/2"
 
 server_provisioning_device: BOND0-VLAN10
 server_external_device: bond0

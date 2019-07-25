@@ -35,8 +35,6 @@
       with_items:
         - name: vm_job_target
           condition: true
-        - name: vm_job_user
-          condition: true
       connection: local
 
     - name: Create in-memory vm_virt_hosts group
@@ -62,9 +60,10 @@
           retries: 72
           delay: 2
 
-    - name: Set vm ip information
+    - name: Set vm information
       set_fact:
         vm_ip: "{{ _vm_ip.stdout.split()[3].split('/')[0] }}"
+        vm_image_info: "{{ vm_image_data[hostvars[vm_job_target]['vm_image_name']] }}"
 
     - name: Display vm ip
       debug:
@@ -76,5 +75,6 @@
         name: "{{ vm_job_target }}"
         groups: targets,vm_target
         ansible_host: "{{ vm_ip }}"
-        ansible_user: "{{ vm_job_user }}"
+        ansible_user: "{{ vm_image_info['access_user'] }}"
+        ansible_python_interpreter: "{{ vm_image_info['python_interpreter'] }}"
       changed_when: false

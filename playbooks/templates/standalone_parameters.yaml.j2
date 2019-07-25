@@ -18,3 +18,9 @@ parameter_defaults:
   StandaloneHomeDir: /home/stack
   StandaloneLocalMtu: 1500
   NovaComputeLibvirtType: kvm
+
+  SELinuxMode: permissive
+  ContainerImagePrepareDebug: true
+  ContainerCli: podman
+  PythonInterpreter: {{ ansible_python_interpreter }}
+  NtpServer: {{ tripleo_ntp_servers | to_yaml }}
