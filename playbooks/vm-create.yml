@@ -238,3 +238,5 @@
     - not ((vm_purge | default(false)) | bool)
 
 - import_playbook: vm-update.yml
+  when:
+    - (vm_update | default(true)) | bool
