@@ -58,12 +58,20 @@
           environment:
             TRIPLEO_ROOT: /opt/tripleo
 
+        - name: Cleanup repos with refspecs
+          file:
+            path: "/opt/tripleo/repos/{{ item.url | basename }}"
+            state: absent
+          when:
+            - item.refs is defined
+          with_items: "{{ developer_patches }}"
+
         - name: Clone patched repo(s)
           git:
             repo: "{{ item.url }}"
             dest: "/opt/tripleo/repos/{{ item.url | basename }}"
             refspec: '{{ item.refs | default(omit) }}'
-            version: "{{ item.version | default(omit) }}"
+            version: "{{ item.version | default(((item.refs is defined) | ternary('FETCH_HEAD', omit))) }}"
           with_items: "{{ developer_patches }}"
 
         - name: Force packages to rebuild
