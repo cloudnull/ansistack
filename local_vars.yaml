@@ -11,10 +11,16 @@ tripleo_ceph_enabled: true
 # Example patches to apply to an environment.
 # NOTICE(cloudnull): One patch is a gerrit review, the other is an external
 #                    repo from github.
-# developer_patches:
-#   - url: "https://review.opendev.org/openstack/tripleo-heat-templates"
-#     refs: "refs/changes/37/677237/4"
-#     version: FETCH_HEAD
+developer_patches:
+  - url: "https://review.opendev.org/openstack/tripleo-heat-templates"
+    refs: "refs/changes/37/677237/4"
+    version: FETCH_HEAD
+  - url: "https://review.opendev.org/openstack/tripleo-common"
+    refs: "refs/changes/19/674919/29"
+    version: FETCH_HEAD
+  - url: "https://review.opendev.org/openstack/tripleo-ansible"
+    refs: "refs/changes/03/676003/8"
+    version: FETCH_HEAD
 #   - url: "https://github.com/openstack/tripleo-ansible"
 #     version: "master"
 

@@ -44,7 +44,6 @@
             state: "directory"
           with_items:
             - rpms
-            - repos
 
         - name: clone tripleo-ci
           git:
@@ -60,7 +59,7 @@
 
         - name: Cleanup repos with refspecs
           file:
-            path: "/opt/tripleo/repos/{{ item.url | basename }}"
+            path: "/opt/tripleo/{{ item.url | basename }}"
             state: absent
           when:
             - item.refs is defined
@@ -69,7 +68,7 @@
         - name: Clone patched repo(s)
           git:
             repo: "{{ item.url }}"
-            dest: "/opt/tripleo/repos/{{ item.url | basename }}"
+            dest: "/opt/tripleo/{{ item.url | basename }}"
             refspec: '{{ item.refs | default(omit) }}'
             version: "{{ item.version | default(((item.refs is defined) | ternary('FETCH_HEAD', omit))) }}"
           with_items: "{{ developer_patches }}"
@@ -94,10 +93,10 @@
             export PKG_NAME="{{ item.url | basename }}"
             source /opt/rdo/bin/activate
             /opt/tripleo-ci/scripts/tripleo.sh --delorean-build ${PKG_NAME}
-            find /opt/tripleo/delorean/data -name '*rpm' -exec mv {} /opt/tripleo/rpms/ \;
             touch /opt/tripleo/delorean/${PKG_NAME}.created
+            find /opt/tripleo/delorean -name '*rpm' -exec mv {} /opt/tripleo/rpms/ \;
           args:
-            chdir: "/opt/tripleo/repos"
+            chdir: "/opt/tripleo"
             creates: "/opt/tripleo/delorean/{{ item.url | basename }}.created"
             executable: /bin/bash
           with_items: "{{ developer_patches }}"
