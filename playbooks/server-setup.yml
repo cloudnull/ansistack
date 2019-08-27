@@ -27,12 +27,12 @@
     - name: Gather variables for each operating system
       include_vars: "{{ item }}"
       with_first_found:
-        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
-        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
-        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
-        - "{{ ansible_distribution | lower }}.yml"
-        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
-        - "{{ ansible_os_family | lower }}.yml"
+        - "vars/{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+        - "vars/{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "vars/{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "vars/{{ ansible_distribution | lower }}.yml"
+        - "vars/{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+        - "vars/{{ ansible_os_family | lower }}.yml"
       tags:
         - always
 
@@ -41,13 +41,66 @@
         name: "{{ server_system_packages }}"
         state: "present"
         update_cache: "{{ ((ansible_os_family | lower) == 'debian') | ternary('yes', omit) }}"
+      when:
+        - not (server_disable_package_install | default(false) | bool)
 
-    - name: Enable and start
+    - name: Enable and start libvirt
       systemd:
         name: "{{ server_libvirt_service_name }}"
         state: started
         daemon_reload: true
         enabled: true
+
+    - name: check if Intel processor
+      command: grep -q Intel /proc/cpuinfo
+      ignore_errors: true
+      register: is_intel
+
+    - name: check if AMD processor
+      command: grep -q AMD /proc/cpuinfo
+      ignore_errors: true
+      register: is_amd
+
+    - name: Add the kvm module
+      modprobe:
+        name: "{{ (is_amd | bool) | ternary('kvm_amd', 'kvm_intel') }}"
+        params: "nested=1"
+        state: present
+      when:
+        - (is_amd.rc == 0) or (is_intel.rc == 0)
+
+    - name: make module persistent
+      lineinfile:
+        path: /etc/modprobe.d/kvm.conf
+        line: "options {{ (is_amd | bool) | ternary('kvm_amd', 'kvm_intel') }} nested=1"
+        owner: root
+        group: root
+        mode: '0644'
+        create: true
+      when:
+        - (is_amd.rc == 0) or (is_intel.rc == 0)
+
+    - name: Add the virtio module
+      modprobe:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - virtio
+        - virtio-scsi
+        - virtio-net
+
+    - name: make module persistent
+      lineinfile:
+        path: /etc/modprobe.d/virtio.conf
+        line: "options {{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+        create: true
+      loop:
+        - virtio
+        - virtio-scsi
+        - virtio-net
 
     - name: Remove the default virt network
       virt_net:
@@ -56,28 +109,37 @@
 
     - name: Define virt network(s)
       virt_net:
-        name: "provisioning"
+        name: "{{ item }}"
         state: present
         xml: "{{ lookup('template', 'virt-' ~ item ~'-net.xml.j2') }}"
+      when:
+        - ((item == 'uplink') and (server_uplink_device is defined)) or (item != 'uplink')
       loop:
         - external
         - provisioning
+        - uplink
 
     - name: Set virt network(s) to active
       virt_net:
         name: "{{ item }}"
         state: active
+      when:
+        - ((item == 'uplink') and (server_uplink_device is defined)) or (item != 'uplink')
       loop:
         - external
         - provisioning
+        - uplink
 
     - name: Set virt network(s) to autostart
       virt_net:
         name: "{{ item }}"
         autostart: true
+      when:
+        - ((item == 'uplink') and (server_uplink_device is defined)) or (item != 'uplink')
       loop:
         - external
         - provisioning
+        - uplink
 
     - name: Install vbmc
       pip:

@@ -1,0 +1,172 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Setup storage DSAL hosts
+  hosts: dsal_hosts
+  any_errors_fatal: true
+  gather_facts: true
+  user: root
+  vars:
+    dsal_destroy_array: false
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Set authorized key taken from file
+      authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+    - name: Storage block
+      when:
+        - dsal_storage_drive is defined
+      block:
+        - name: Create volume group for VMs
+          lvg:
+            vg: vms
+            pvs: "{{ dsal_storage_drive }}"
+
+        - name: Create logical volume for VMs
+          lvol:
+            vg: vms
+            lv: virtualMachines
+            size: +100%FREE
+
+        - name: Creating filesystem
+          filesystem:
+            fstype: "xfs"
+            dev: /dev/mapper/vms-virtualMachines
+
+        - name: Mounting volume(s)
+          mount:
+            name: /var/lib/libvirt
+            src: /dev/mapper/vms-virtualMachines
+            fstype: "xfs"
+            state: "mounted"
+
+    - name: Storage arrays block
+      when:
+        - dsal_storage_arrays is defined
+      block:
+        - name: Ensure mdadm is installed
+          package:
+            name: "mdadm"
+            state: "present"
+
+        # Checking for any existing raid arrays
+        - name: Check status of array(s)
+          shell: "cat /proc/mdstat | grep {{ item.name }}"
+          register: "array_check"
+          changed_when: false
+          failed_when: false
+          with_items: "{{ dsal_storage_arrays }}"
+          check_mode: no
+
+        - name: Destroy block
+          when:
+            - dsal_destroy_array | bool
+            - array_check.results[0].rc == 0
+          block:
+            - name: Un-mounting array(s)
+              mount:
+                name: "{{ item.mountpoint }}"
+                src: "/dev/{{ item.name }}"
+                state: "unmounted"
+              loop: "{{ dsal_storage_arrays }}"
+
+            - name: Stopping array(s)
+              command: "mdadm --stop /dev/{{ item.name }}"
+              args:
+                removes: "/dev/{{ item.name }}"
+              register: "array_stopped"
+              loop: "{{ dsal_storage_arrays }}"
+
+            - name: Removing array(s)
+              command: "mdadm --remove /dev/{{ item.name }}"
+              args:
+                removes: "/dev/{{ item.name }}"
+              register: "array_removed"
+              loop: "{{ dsal_storage_arrays }}"
+
+            - name: Zeroing out array devices
+              command: "mdadm --zero-superblock {{ item.1 }}"
+              with_subelements:
+                - '{{ mdadm_arrays }}'
+                - devices
+
+        - name: Wipe device(s)
+          command: "wipefs -af {{ item.1 }}"
+          register: "disks_wiped"
+          when:
+            - (array_check.results[0].rc != 0) or
+              (dsal_destroy_array | bool)
+          with_subelements:
+            - "{{ dsal_storage_arrays }}"
+            - devices
+
+        - name: End the play for hosts that run CentOS 6
+          meta: end_host
+          when:
+            - dsal_destroy_array | bool
+
+        - name: Creating array(s)
+          shell: "yes | mdadm --create /dev/{{ item.name }} --level={{ item.level }} --raid-devices={{ item.devices|count }} {{ item.devices| join (' ') }}"
+          register: "array_created"
+          loop: "{{ dsal_storage_arrays }}"
+          when:
+            - array_check.results[0].rc != 0
+
+        - name: Updating initramfs
+          command: "dracut -f"
+          when:
+            - array_created is changed
+
+        - name: Capturing array detail(s)
+          command: "mdadm --detail --scan"
+          register: "array_details"
+          changed_when: false
+
+        - name: Updating mdadm.conf
+          lineinfile:
+            dest: "/etc/mdadm.conf"
+            regexp: "^{{ item }}"
+            line: "{{ item }}"
+            state: "present"
+            create: true
+          loop: '{{ array_details.stdout_lines }}'
+
+        - name: Creating array(s) filesystem
+          filesystem:
+            fstype: "{{ item.fs }}"
+            opts: "{{ item.filesystem_opts | default(omit) }}"
+            dev: "/dev/{{ item.name }}"
+          loop: "{{ dsal_storage_arrays }}"
+          when:
+            - item.fs is defined
+
+        - name: Mounting array(s)
+          mount:
+            name: "{{ item.mountpoint }}"
+            src: "/dev/{{ item.name }}"
+            fstype: "{{ item.fs }}"
+            state: "mounted"
+            opts: "{{ item.opts | default(omit) }}"
+          loop: "{{ dsal_storage_arrays }}"
+          when:
+            - item.fs is defined
+            - item.mountpoint is defined

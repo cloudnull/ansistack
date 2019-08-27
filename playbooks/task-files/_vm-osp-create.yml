@@ -16,6 +16,16 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+- name: Undefine running VM
+  virt:
+    name: "{{ inventory_hostname }}"
+    command: undefine
+  register: undefine
+  until: undefine is success
+  retries: 2
+  delay: 1
+  ignore_errors: true
+
 - name: Create disk image
   command: >-
     qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
@@ -23,15 +33,12 @@
     creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
   environment:
     LIBGUESTFS_BACKEND: direct
-  run_once: true
+  register: disk_image
+  until: disk_image.rc == 0
+  retries: 16
+  delay: 2
 
-- name: Undefine running VM
-  virt:
-    name: "{{ inventory_hostname }}"
-    command: undefine
-  failed_when: false
-
-- name: Create virt xml
+- name: Create osp virt xml
   command: >-
     virt-install
       --ram {{ vm_ram }}
@@ -39,8 +46,8 @@
       --os-variant {{ vm_variant | default('rhel7') }}
       --os-type=linux
       --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
-      --network network:provisioning,model=virtio,mac={{ ('52:54:00') | random_mac }}
-      --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }}
+      --network network:provisioning,model=virtio,mac={{ ('52:54:00') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
+      --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
       --name {{ inventory_hostname }}
       {{ vm_flags }}
       --dry-run
@@ -51,30 +58,11 @@
   retries: 16
   delay: 2
 
-- name: Define the VM
+- name: Define the osp vm
   virt:
     command: define
-    xml: "{{ vm_xml.stdout }}"
-
-- name: Add node to vbmc
-  command: >-
-    /opt/vbmc/bin/vbmc add {{ inventory_hostname }}
-      --port {{ vm_vbmc_port }}
-      --username {{ vm_vbmc_username }}
-      --password {{ vm_vbmc_password }}
-  register: vbmc_add
-  until: vbmc_add is success
-  retries: 32
-  delay: 2
-  run_once: true
-
-- name: Start vbmc node
-  command: /opt/vbmc/bin/vbmc start {{ inventory_hostname }}
-  register: start_vbmc_add
-  until: start_vbmc_add is success
-  retries: 32
-  delay: 2
-  run_once: true
+    xml: >-
+      {{ vm_xml.stdout | replace('driver name="vhost" queues="3"', 'driver name="vhost" queues="3" txmode="iothread" ioeventfd="on" event_idx="off"') }}
 
 - name: Get VM mac addresses
   shell: >-

@@ -30,6 +30,20 @@
   any_errors_fatal: true
   gather_facts: false
   user: root
+  vars:
+    image_download_set: |-
+      {% set image_set = {} %}
+      {% for host in ansible_play_hosts %}
+      {%   set _ = image_set.__setitem__(
+          hostvars[host]['vm_virt_host']
+          ~ ':'
+          ~ vm_image_data[hostvars[host]['vm_image_name']]['path']
+          ~ ':' ~ vm_image_data[hostvars[host]['vm_image_name']]['name'],
+          vm_image_data[hostvars[host]['vm_image_name']]['url']
+        )
+      %}
+      {% endfor %}
+      {{ image_set }}
   vars_files:
     - vars/main.yml
 
@@ -65,12 +79,6 @@
           condition: true
         - name: vm_disk_size
           condition: true
-        - name: vm_vbmc_username
-          condition: "{{ inventory_hostname in groups['osp_vms'] }}"
-        - name: vm_vbmc_password
-          condition: "{{ inventory_hostname in groups['osp_vms'] }}"
-        - name: vm_vbmc_port
-          condition: "{{ inventory_hostname in groups['osp_vms'] }}"
         - name: vm_image_name
           condition: "{{ inventory_hostname in groups['raw_vms'] }}"
       delegate_to: localhost
@@ -86,12 +94,6 @@
       loop: "{{ ansible_play_hosts }}"
       run_once: true
 
-    - name: "Check for image"
-      stat:
-        path: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['path'] }}/{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['name'] }}"
-      delegate_to: "{{ hostvars[inventory_hostname]['vm_virt_host'] }}"
-      register: image_stat
-
     - name: Check for rhel image used in vm
       fail:
         msg: >-
@@ -100,119 +102,89 @@
       when:
         - hostvars[inventory_hostname]['vm_image_name'] | regex_search('(rhel)')
         - redhat_cloud_image_url is undefined
-        - not (image_stat.stat.exists | bool)
 
-    - name: Download vm image
-      get_url:
-        url: "{{ vm_image_data[hostvars[item]['vm_image_name']]['url'] }}"
-        dest: "{{ vm_image_data[hostvars[item]['vm_image_name']]['path'] }}/{{ vm_image_data[hostvars[item]['vm_image_name']]['name'] }}"
-      delegate_to: "{{ hostvars[item]['vm_virt_host'] }}"
-      async: 1024
-      poll: 0
-      register: _image_get
-      run_once: true
-      loop: "{{ ansible_play_hosts }}"
-      loop_control:
-        label: "{{ item }} + {{ hostvars[item]['vm_image_name'] }}"
-      when:
-        - (((not ((vm_purge | default(false)) | bool)) and
-           (inventory_hostname in groups['raw_vms'])) or
-           (vm_image_get | bool))
-        - not (hostvars[item]['image_stat']['stat']['exists'] | bool)
-
-    - name: Pre-flight Checks
-      delegate_to: "{{ vm_virt_host }}"
+    - name: Setup block
       block:
-        - name: Check VM
-          command: >-
-            virsh dominfo {{ inventory_hostname }}
-          failed_when: false
-          changed_when: false
-          register: vm_dominfo
-
-        - name: Check VM provisioning network
-          command: >-
-            virsh net-info provisioning
-          ignore_errors: true
-          changed_when: false
-          register: vm_netinfo_provisioning
+        - name: Refresh local facts
+          setup:
+            gather_subset: "!all"
           run_once: true
           delegate_to: "{{ item }}"
           with_items: "{{ groups['vm_virt_hosts'] }}"
 
-        - name: Check VM external network
-          command: >-
-            virsh net-info external
-          ignore_errors: true
-          changed_when: false
-          register: vm_netinfo_external
-          run_once: true
-          delegate_to: "{{ item }}"
-          with_items: "{{ groups['vm_virt_hosts'] }}"
+        - name: Gather variables for each operating system
+          include_vars: "{{ item }}"
+          delegate_to: "{{ vm_virt_host }}"
+          with_first_found:
+            - "vars/{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+            - "vars/{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+            - "vars/{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+            - "vars/{{ ansible_distribution | lower }}.yml"
+            - "vars/{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+            - "vars/{{ ansible_os_family | lower }}.yml"
+          tags:
+            - always
 
-        - name: Fail when provisioning network is missing
-          fail:
-            msg: >-
-              One of the required networks ['provisioning'] is missing on `{{ item.item }}`.
-              Please ensure the network is created and online before continuing.
-          when:
-            - (item.failed | bool)
-          loop: "{{ vm_netinfo_provisioning['results'] }}"
-          loop_control:
-            label: "{{ item.item }}"
-          delegate_to: "{{ item.item }}"
-          run_once: true
-
-        - name: Fail when external network is missing
-          fail:
-            msg: >-
-              One of the required networks ['external'] is missing on `{{ item.item }}`.
-              Please ensure the network is created and online before continuing.
-          when:
-            - (item.failed | bool)
-          loop: "{{ vm_netinfo_external['results'] }}"
-          loop_control:
-            label: "{{ item.item }}"
-          delegate_to: "{{ item.item }}"
-          run_once: true
-
-    - name: Cleanup block
-      when:
-        - ((vm_cleanup | bool) and (vm_dominfo.rc == 0)) or (vm_purge | bool)
-      delegate_to: "{{ vm_virt_host }}"
-      block:
-        - name: Stop running VM
-          virt:
-            name: "{{ inventory_hostname }}"
-            command: destroy
-          ignore_errors: true
-
-        - name: Undefine running VM
-          virt:
-            name: "{{ inventory_hostname }}"
-            command: undefine
-          ignore_errors: true
-
-        - name: Clean up base image file
+        - name: Ensure local facts directory exists
           file:
-            path: "/var/lib/libvirt/images/{{ inventory_hostname }}"
-            state: absent
+            dest: "/etc/ansible/facts.d"
+            state: directory
+            group: "root"
+            owner: "root"
+            mode:  "0755"
+            recurse: no
+          run_once: true
+          delegate_to: "{{ item }}"
+          when:
+            - ansible_local['virt_cloud']['setup']['initialized'] is undefined
+          with_items: "{{ groups['vm_virt_hosts'] }}"
 
-        - name: Remove node from vbmc
-          command: /opt/vbmc/bin/vbmc delete {{ inventory_hostname }}
-          ignore_errors: true
+        - name: initialize local facts
+          ini_file:
+            dest: "/etc/ansible/facts.d/virt_cloud.fact"
+            section: "setup"
+            option: initialized
+            value: true
+          run_once: true
+          delegate_to: "{{ item }}"
+          when:
+            - ansible_local['virt_cloud']['setup']['initialized'] is undefined
+          with_items: "{{ groups['vm_virt_hosts'] }}"
+
+    - include_tasks: task-files/_vm-pre-flight.yml
+      when:
+        - ansible_local['virt_cloud']['setup']['pre_flight_complete'] is undefined
+
+    - name: Check VM
+      command: >-
+        virsh dominfo {{ inventory_hostname }}
+      failed_when: false
+      changed_when: false
+      register: vm_dominfo
+      delegate_to: "{{ vm_virt_host }}"
+
+    - name: Set protected fact
+      set_fact:
+        vm_protected: "{{ (hostvars[inventory_hostname]['vm_protected'] is defined) and (hostvars[inventory_hostname]['vm_protected'] | bool) and (vm_dominfo.rc == 0) }}"
+
+    - include_tasks: task-files/_vm-cleanup.yml
+      when:
+        - (vm_purge | default(_vm_purge) | bool) or (not (vm_protected | bool))
+        - (vm_purge | default(_vm_purge) | bool) or (vm_cleanup | default(_vm_cleanup) | bool)
+        - (vm_purge | default(_vm_purge) | bool) or (vm_dominfo.rc == 0)
 
   tasks:
     - name: Check for purge
       meta: end_play
       when:
-        - vm_purge | bool
+        - (vm_purge | default(_vm_purge) | bool)
 
     - name: Create block
       delegate_to: "{{ vm_virt_host }}"
       when:
-        - (vm_cleanup | bool) or
+        - (vm_cleanup | default(_vm_cleanup) | bool) or
           (vm_dominfo.rc != 0)
+        - (not (vm_protected | bool))
       block:
         - name: Create vm directory
           file:
@@ -235,7 +207,7 @@
 # Generate a local inventory
 - import_playbook: vm-inventory.yml
   when:
-    - not ((vm_purge | default(false)) | bool)
+    - not (vm_purge | default(_vm_purge) | bool)
 
 - import_playbook: vm-update.yml
   when:

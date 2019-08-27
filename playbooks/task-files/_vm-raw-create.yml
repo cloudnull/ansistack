@@ -28,18 +28,6 @@
   vars:
     vm_packages: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['cloud_init_packages'] }}"
 
-- name: 'Check on image get async task'
-  async_status:
-    jid: "{{ item.ansible_job_id }}"
-  register: job_result
-  until: job_result.finished
-  retries: 192
-  run_once: true
-  loop: "{{ _image_get['results'] }}"
-  delegate_to: "{{ hostvars[item.item]['vm_virt_host'] }}"
-  when:
-    item.changed | bool
-
 - name: Create disk image
   command: >-
     qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
@@ -85,13 +73,17 @@
       --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
       --disk /var/lib/libvirt/images/{{ inventory_hostname }}/cidata.iso,device=cdrom
       --import
-      --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }}
-      --network network:provisioning,model=virtio,mac={{ ('52:54:00') | random_mac }}
+    {% if (vm_uplink_floats is defined) %}
+      --network network:uplink,model=virtio,mac={{ ('52:54:01') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
+    {% endif %}
+      --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
+      --network network:provisioning,model=virtio,mac={{ ('52:54:00') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
       --name {{ inventory_hostname }}
       {{ vm_flags }}
       --dry-run
       --print-xml
       --check path_in_use=off
+  changed_when: false
   register: vm_xml
   until: vm_xml.rc == 0
   retries: 16
@@ -100,4 +92,5 @@
 - name: Define the VM
   virt:
     command: define
-    xml: "{{ vm_xml.stdout }}"
+    xml: >-
+      {{ vm_xml.stdout | replace('driver name="vhost" queues="3"', 'driver name="vhost" queues="3" txmode="iothread" ioeventfd="on" event_idx="off"') }}

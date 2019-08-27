@@ -1,0 +1,17 @@
+---
+
+{% set registries = redhat_docker_registries %}
+{% set _ = registries.append('192.168.24.1:8787') %}
+
+parameter_defaults:
+  DockerInsecureRegistryAddress: {{ registries }}
+
+  NovaComputeLibvirtType: qemu
+
+  DnsServers: {{ redhat_dns_servers }}
+
+  ControllerCount: 3
+
+  ComputeCount: {{ (target_node_count | int) - 3 }}
+
+  NtpServer: {{ redhat_ntp_servers }}

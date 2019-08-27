@@ -37,15 +37,15 @@ all:
                     compute2-vm-5: {}
                 raw_compute1:
                   vars:
-                    vm_virt_host: "172.16.27.210"
+                    vm_virt_host: "172.16.27.212"
                     vm_cores: 6  # Number of cores
                     vm_ram: 10240  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
                   hosts:
                     compute1-vm-1:
-                      vm_image_name: fedora28
+                      vm_image_name: centos7
                     compute1-vm-2:
-                      vm_image_name: fedora28
+                      vm_image_name: centos7
                     compute1-vm-3:
                       vm_image_name: centos7
                     compute1-vm-4:

@@ -4,14 +4,11 @@ server_system_packages:
   - "@virtualization"
   - "libselinux-python"
   - "libguestfs-tools"
-  - "libvirt-client"
-  - "libvirt-python"
   - "OpenIPMI"
   - "python*-lxml"
-  - "python-virtualenv"
+  - "python3-virtualenv"
   - "ipmitool"
   - "nfs-utils"
-  - "virt-install"
 
 server_libvirt_service_name: libvirtd
 
@@ -27,13 +24,3 @@ tripleo_system_ceph_packages:
   - ceph-ansible
   - util-linux
   - lvm2
-
-vm_flags: >-
-  --graphics vnc,listen=0.0.0.0
-  --controller scsi,model=virtio-scsi
-  --serial pty
-  --hvm
-  --virt-type kvm
-  --memballoon virtio
-  --cpu host-passthrough
-  --rng /dev/urandom

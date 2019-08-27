@@ -1,0 +1,19 @@
+function set-ansible-env {
+    export ANSIBLE_LOG_PATH="${HOME}/.ansible/logs/ansible-$(date +"%Y-%m-%dT%H").log"
+    export ANSIBLE_RETRY_FILES_ENABLED=False
+    export ANSIBLE_LOAD_CALLBACK_PLUGINS=True
+    export ANSIBLE_HOST_KEY_CHECKING=False
+    export ANSIBLE_FORKS=50
+    export ANSIBLE_PIPELINING=True
+    export ANSIBLE_SSH_RETRIES=8
+}
+
+function unset-ansible-env {
+    for i in $(env | grep ANSIBLE_ | awk -F'=' '{print $1}'); do
+        unset ${i}
+    done
+    echo -e "\nAnsible environment deactivated."
+    echo -e "To re-activate the environment, run 'set-ansible-env'.\n"
+}
+
+set-ansible-env

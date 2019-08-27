@@ -1,0 +1,98 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Run OSP setup
+  hosts: "targets:vms"
+  any_errors_fatal: true
+  gather_facts: false
+  become: true
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Run raw RHOS-Dev commands
+      raw: |-
+        if grep -qwo 'rhel' /etc/os-release; then
+          PKG_MGR=$(command -v dnf || command -v yum)
+          ${PKG_MGR} install -y {{ redhat_package_url }}
+          rhos-release {{ redhat_rhos_release }}
+          update-ca-trust enable
+          curl -k {{ redhat_ca_certs_url }} -o /etc/pki/ca-trust/source/anchors/2015-RH-IT-Root-CA.pem;
+          update-ca-trust extract
+          dnf upgrade -y --allowerasing || yum upgrade -y
+          ${PKG_MGR} install -y vim network-scripts patch git patchutils iptables-services python*-virtualenv tmux OpenIPMI ipmitool
+        fi
+        timedatectl set-timezone UTC
+        hostnamectl --static --transient set-hostname {{ inventory_hostname | replace('_', '-') }}.localdomain
+      when:
+        - redhat_package_url is defined
+        - redhat_ca_certs_url is defined
+
+- name: Run OSP setup
+  hosts: "targets:vms"
+  any_errors_fatal: true
+  gather_facts: true
+  become: true
+  tags:
+    - upgrades
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Ensure local facts directory exists
+      file:
+        dest: "/etc/ansible/facts.d"
+        state: directory
+        group: "root"
+        owner: "root"
+        mode:  "0755"
+        recurse: no
+
+    - name: initialize local facts
+      ini_file:
+        dest: "/etc/ansible/facts.d/dsal.fact"
+        section: "setup"
+        option: "initialized"
+        value: "true"
+      register: dsal_initialized
+
+    - name: Reboot target
+      reboot:
+        reboot_timeout: 3600
+      when:
+        - dsal_initialized is changed
+
+    - name: Install tripleo client
+      package:
+        name: "python3-tripleoclient"
+        state: "latest"
+        allow_downgrade: "{{ ((ansible_os_family | lower) == 'redhat') | ternary('yes', omit) }}"
+      when:
+        - (ansible_distribution | lower) == 'redhat'
+
+    - name: Add the br-netfilter module
+      modprobe:
+        name: br-netfilter
+        state: present
+
+    - name: make module persistent
+      lineinfile:
+        path: /etc/modprobe.d/netfilter.conf
+        line: options br-netfilter
+        owner: root
+        group: root
+        mode: '0644'
+        create: true

@@ -1,6 +1,5 @@
 <network>
   <name>external</name>
-  <forward mode="bridge">
-    <interface dev="{{ server_external_device }}"/>
-  </forward>
+  <forward mode="bridge"/>
+  <bridge name="br-{{ server_external_device }}"/>
 </network>

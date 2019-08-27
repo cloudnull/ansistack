@@ -17,7 +17,7 @@
 
 
 - name: Run tripleo setup
-  hosts: "targets"
+  hosts: "targets:vms"
   any_errors_fatal: true
   gather_facts: true
   become: true
@@ -113,6 +113,23 @@
         - name: Install tripleo packages (py3)
           package:
             name: "python3-tripleoclient"
+            state: present
+
+    - name: Redhat package setup (internal)
+      when:
+        - (ansible_distribution | lower) == 'redhat'
+        - vm_internal_usage | default(false) | bool
+      block:
+        - name: Install tripleo packages (py3)
+          package:
+            name:
+              - python3-tripleoclient
+              - vim
+              - network-scripts
+              - patch
+              - git
+              - patchutils
+              - iptables-services
             state: present
 
     - name: Ensure local facts directory exists

@@ -43,8 +43,8 @@ tripleo_ntp_servers:
 ## VM options
 vm_start_on_create: "{{ inventory_hostname in groups['raw_vms'] }}"
 vm_pub_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"
-vm_cleanup: false
-vm_purge: false
+_vm_cleanup: false
+_vm_purge: false
 vm_flags: >-
   --graphics vnc,listen=0.0.0.0
   --controller scsi,model=virtio-scsi
@@ -53,7 +53,7 @@ vm_flags: >-
   --hvm
   --virt-type kvm
   --memballoon virtio
-  --cpu host
+  --cpu host-passthrough
   --rng /dev/urandom
 
 # Images to pull from for local builds
@@ -64,6 +64,7 @@ vm_image_data:
     name: CentOS-7-x86_64-GenericCloud.qcow2
     access_user: 'centos'
     cloud_init_packages:
+      - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python"
   fedora28:
@@ -72,6 +73,7 @@ vm_image_data:
     name: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
     access_user: 'fedora'
     cloud_init_packages:
+      - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
   fedora30:
@@ -80,22 +82,25 @@ vm_image_data:
     name: Fedora-Cloud-Base-30-1.2.x86_64.qcow2
     access_user: 'fedora'
     cloud_init_packages:
+      - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
   rhel7:
     url: "{{ redhat_cloud_image_url | default('undefined') }}"
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
-    name: rhel-server-7.6-x86_64-kvm.qcow2
+    name: rhel-server-7-x86_64-kvm.qcow2
     access_user: 'cloud-user'
     cloud_init_packages:
+      - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python"
   rhel8:
     url: "{{ redhat_cloud_image_url | default('undefined') }}"
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
-    name: rhel-8.0-update-1-x86_64-kvm.qcow2
+    name: rhel-8-update-1-x86_64-kvm.qcow2
     access_user: 'cloud-user'
     cloud_init_packages:
+      - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
   ubuntu1604:

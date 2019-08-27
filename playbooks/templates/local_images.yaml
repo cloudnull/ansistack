@@ -1,0 +1,11 @@
+---
+
+parameter_defaults:
+
+  NeutronMechanismDrivers: ovn
+
+  ContainerImagePrepare:
+    - set:
+        name_prefix: openstack-
+        namespace: "{{ redhat_docker_registry }}/{{ redhat_osp_release }}"
+        tag: latest
