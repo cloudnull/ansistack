@@ -47,10 +47,19 @@
         src: templates/params.yaml
         dest: "{{ ansible_env.HOME }}/params.yaml"
 
-    - name: Create local images yaml
+    - name: Fetch local_images params
+      get_url:
+        url: "{{ redhat_puddle_local_images_url }}"
+        dest: "{{ ansible_env.HOME }}/local_images.yaml"
+      when:
+        - redhat_puddle_local_images_url is defined
+
+    - name: Create local_images params
       template:
         src: templates/local_images.yaml
         dest: "{{ ansible_env.HOME }}/local_images.yaml"
+      when:
+        - redhat_puddle_local_images_url is undefined
 
     - name: Create images directory
       file:
@@ -58,7 +67,7 @@
         state: directory
       become: false
 
-    - name: Install images package
+    - name: Install images packages
       package:
         name:
           - "rhosp-director-images"
@@ -73,6 +82,13 @@
         done
       args:
         chdir: "{{ ansible_env.HOME }}/images"
+
+    - name: Install build packages
+      package:
+        name:
+          - "gcc"
+        state: present
+      become: true
 
     - name: Install rdopkg
       become: true
