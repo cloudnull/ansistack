@@ -42,24 +42,23 @@
         src: templates/undercloud.conf
         dest: "{{ ansible_env.HOME }}/undercloud.conf"
 
+    - name: Fetch params
+      uri:
+        url: "{{ redhat_puddle_local_images_url }}"
+        return_content: yes
+      register: compose_details
+      when:
+        - redhat_puddle_local_images_url is defined
+
     - name: Create params yaml
       template:
         src: templates/params.yaml
         dest: "{{ ansible_env.HOME }}/params.yaml"
 
-    - name: Fetch local_images params
-      get_url:
-        url: "{{ redhat_puddle_local_images_url }}"
-        dest: "{{ ansible_env.HOME }}/local_images.yaml"
-      when:
-        - redhat_puddle_local_images_url is defined
-
     - name: Create local_images params
       template:
         src: templates/local_images.yaml
         dest: "{{ ansible_env.HOME }}/local_images.yaml"
-      when:
-        - redhat_puddle_local_images_url is undefined
 
     - name: Create images directory
       file:

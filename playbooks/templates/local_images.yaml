@@ -1,11 +1,17 @@
+{% set default_details = {
+    'container-image-prepare': {
+      'prefix': 'openstack-',
+      'namespace': (redhat_docker_registry ~ '/' ~ redhat_osp_release),
+      'tag': 'latest'
+    }
+  }
+%}
+{% set details = (compose_details.content is defined) | ternary((compose_details.content | from_yaml), default_details) %}
 ---
-
 parameter_defaults:
-
   NeutronMechanismDrivers: ovn
-
   ContainerImagePrepare:
     - set:
-        name_prefix: openstack-
-        namespace: "{{ redhat_docker_registry }}/{{ redhat_osp_release }}"
-        tag: latest
+        name_prefix: "{{ details['container-image-prepare']['prefix'] }}"
+        namespace: "{{ details['container-image-prepare']['namespace'] }}"
+        tag: "{{ details['container-image-prepare']['tag'] }}"
