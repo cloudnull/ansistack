@@ -36,8 +36,22 @@
           dnf upgrade -y --allowerasing || yum upgrade -y
           ${PKG_MGR} install -y vim network-scripts patch git patchutils iptables-services python*-virtualenv tmux OpenIPMI ipmitool
         fi
+        # Disable IPv6 for now.
+        if ! grep -q 'all.disable_ipv6' /etc/sysctl.conf; then
+          sysctl -w net.ipv6.conf.all.disable_ipv6=1 | tee -a /etc/sysctl.conf
+        fi
+        if ! grep -q 'default.disable_ipv6' /etc/sysctl.conf; then
+          sysctl -w net.ipv6.conf.default.disable_ipv6=1 | tee -a /etc/sysctl.conf
+        fi
+        if ! grep -q 'lo.disable_ipv6' /etc/sysctl.conf; then
+          sysctl -w net.ipv6.conf.lo.disable_ipv6=1 | tee -a /etc/sysctl.conf
+        fi
         timedatectl set-timezone UTC
         hostnamectl --static --transient set-hostname {{ inventory_hostname | replace('_', '-') }}.localdomain
+      register: setup_vm
+      until: setup_vm is success
+      retries: 5
+      delay: 2
       when:
         - redhat_package_url is defined
         - redhat_ca_certs_url is defined
