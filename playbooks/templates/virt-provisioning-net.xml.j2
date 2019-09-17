@@ -1,5 +1,6 @@
 <network>
   <name>provisioning</name>
-  <forward mode="bridge"/>
-  <bridge name="br-{{ server_provisioning_device }}"/>
+  <forward mode="bridge">
+    <interface dev="{{ server_provisioning_device }}"/>
+  </forward>
 </network>

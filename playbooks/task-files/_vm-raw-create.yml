@@ -76,8 +76,8 @@
     {% if (vm_uplink_floats is defined) %}
       --network network:uplink,model=virtio,mac={{ ('52:54:01') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
     {% endif %}
-      --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
       --network network:provisioning,model=virtio,mac={{ ('52:54:00') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
+      --network network:external,model=virtio,mac={{ ('52:54:01') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
       --name {{ inventory_hostname }}
       {{ vm_flags }}
       --dry-run

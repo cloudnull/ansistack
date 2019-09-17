@@ -8,10 +8,6 @@ production.
 > All playbooks take user input, an example user input variable file can
   be seen in the `local_vars.yaml` file.
 
-## Virtual Server Setup
-
-TBD
-
 ## TripleO Standalone Deployment
 
 Standalone deployments are simple test driven deployments that rapidly
@@ -24,9 +20,9 @@ name where the deployment will be executed, and the username used to
 login to the target node.
 
 ``` shell
-ansible-playbook -i inventory-vms.yaml \
-                 playbooks/tripleo-standalone-deployment.yml \
-                 -e vm_job_target=raw-vm-3
+$ ansible-playbook -i inventory-vms.yaml \
+                   playbooks/tripleo-standalone-deployment.yml \
+                   -e vm_job_target=raw-vm-3
 ```
 
 Other options exist which can aide in deployment setup and
@@ -39,14 +35,6 @@ troubleshooting, common options to include in the playbook run are
   can be used to set the desired deployment version.
 * `tripleo_ceph_enabled` is a Boolean option which will setup standalone
   ceph within the deployment.
-
-## TripleO Undercloud Deployment
-
-TBD
-
-## TripleO Overcloud Deployment
-
-TBD
 
 ## Run package upgrades
 
@@ -84,7 +72,7 @@ machines which have no operating system installed and are connected to
 VirtualBMC for ipmi control.
 
 ``` shell
-ansible-playbook -i vm-inventory.yaml playbooks/vm-create.yml
+$ ansible-playbook -i vm-inventory.yaml playbooks/vm-create.yml
 ```
 
 ###### This playbook requires two networks to be enabled within libvirt
@@ -118,3 +106,34 @@ process.
 
 These playbooks are idempotent and will return an **instackenv** file even if
 no new vms are created.
+
+#### Re-provisioning VMs
+
+To re-provision VMs within an environment the `vm-create.yml` playbook can be used
+with the `vm_cleanup` flag set to `true`. This will "re-kick" all virtual machines
+in the targetted inventory.
+
+``` shell
+$ ansible-playbook -i inventory.yaml -e vm_cleanup=true playbooks/vm-create.yml
+```
+
+#### Deploy OSP
+
+Deploying OSP (Red Hat) is simple, and only requires the user to define variables
+which pertain the given release.
+
+``` yaml
+redhat_package_url: ""
+redhat_ca_certs_url: ""
+redhat_docker_registries: []
+redhat_osp_release: ""
+redhat_ntp_servers: []
+redhat_dns_servers: []
+```
+
+Once the needed options are defined, the playbook can be invoked with the
+following command.
+
+``` shell
+$ ansible-playbook -i inventory.yaml playbooks/osp-deployment.yml
+```
