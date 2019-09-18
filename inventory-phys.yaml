@@ -14,6 +14,50 @@ all_machines:
       -o ForwardX11=no
       -o ForwardAgent=no
   children:
+    all_vms:
+      vars:
+        ansible_become: true
+        ansible_become_user: "root"
+        ansible_user: "root"
+        vm_vbmc_username: admin
+        vm_vbmc_password: secrete
+        vm_uplink_floats: {}
+      children:
+        osp_vms: {}
+        raw_vms:
+          children:
+            raw_compute_hosts:
+              children:
+                # raw_compute2:
+                #   vars:
+                #     vm_virt_host: "172.16.27.67"
+                #     vm_cores: 8  # Number of cores
+                #     vm_ram: 10240  # Size in MiB
+                #     vm_disk_size: 72  # Size in GiB
+                #     vm_image_name: centos7  # Set the base image used for raw vms
+                #     ansible_python_interpreter: "{{ hostvars['compute2']['ansible_python_interpreter'] }}"
+                #   hosts:
+                #     compute2-vm-1: {}
+                #     compute2-vm-2: {}
+                #     compute2-vm-3: {}
+                #     compute2-vm-4: {}
+                #     compute2-vm-5: {}
+                raw_compute1:
+                  vars:
+                    vm_virt_host: "172.16.27.216"
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 10240  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                    ansible_python_interpreter: "/usr/bin/python"
+                  hosts:
+                    compute1-vm-1:
+                      vm_image_name: centos7
+                    compute1-vm-2:
+                      vm_image_name: centos7
+                    compute1-vm-3:
+                      vm_image_name: centos7
+                    compute1-vm-4:
+                      vm_image_name: centos7
     all_hosts:
       children:
         compute_hosts:
@@ -24,7 +68,7 @@ all_machines:
                   ansible_host: 172.16.27.25
                   ansible_python_interpreter: "/usr/bin/python3"
               children:
-                vms:
+                infra_vms:
                   hosts:
                     router:
                       ansible_host: 172.16.27.44
@@ -38,7 +82,7 @@ all_machines:
             libvirt_hosts:
               hosts:
                 compute1:
-                  ansible_host: 172.16.27.220
+                  ansible_host: 172.16.27.216
                   ansible_python_interpreter: "/usr/bin/python3"
 
                 compute2:

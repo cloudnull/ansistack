@@ -40,7 +40,7 @@ timezone: UTC
 packages: {{ vm_packages }}
 
 {% set cmd_list = ["systemctl enable network", "systemctl restart network", "systemctl enable sshd", "systemctl restart sshd"] %}
-{% if not (vm_uplink_floats is defined) %}
+{% if not (vm_uplink_floats is defined) or not ('address' in vm_uplink_floats) %}
 {%   set _ = cmd_list.append('dhclient') %}
 {% else %}
 {%   set _ = cmd_list.append('systemctl enable NetworkManager') %}
