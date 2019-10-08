@@ -28,20 +28,6 @@ all_machines:
           children:
             raw_compute_hosts:
               children:
-                # raw_compute2:
-                #   vars:
-                #     vm_virt_host: "172.16.27.67"
-                #     vm_cores: 8  # Number of cores
-                #     vm_ram: 10240  # Size in MiB
-                #     vm_disk_size: 72  # Size in GiB
-                #     vm_image_name: centos7  # Set the base image used for raw vms
-                #     ansible_python_interpreter: "{{ hostvars['compute2']['ansible_python_interpreter'] }}"
-                #   hosts:
-                #     compute2-vm-1: {}
-                #     compute2-vm-2: {}
-                #     compute2-vm-3: {}
-                #     compute2-vm-4: {}
-                #     compute2-vm-5: {}
                 raw_compute1:
                   vars:
                     vm_virt_host: "172.16.27.216"
@@ -94,7 +80,6 @@ all_machines:
             plex:
               ansible_host: 172.16.27.219
               ansible_python_interpreter: "/usr/bin/python3"
-
             brix:
               ansible_host: 172.16.27.218
               ansible_python_interpreter: "/usr/bin/python"
