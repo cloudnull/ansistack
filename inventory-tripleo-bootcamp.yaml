@@ -1,0 +1,267 @@
+---
+
+all_machines:
+  vars:
+    vm_image_path: /var/cache/images
+    vm_image_shared_storage: false
+    vm_cleanup: true
+    server_provisioning_device: BOND0-VLAN10
+    server_external_device: bond0
+    ansible_become: yes
+    ansible_become_user: "root"
+    ansible_user: "root"
+    ansible_ssh_extra_args: >-
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+      -o Compression=no
+      -o TCPKeepAlive=yes
+      -o VerifyHostKeyDNS=no
+      -o ForwardX11=no
+      -o ForwardAgent=no
+    ansible_ssh_common_args: >-
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+      -o Compression=no
+      -o TCPKeepAlive=yes
+      -o VerifyHostKeyDNS=no
+      -o ForwardX11=no
+      -o ForwardAgent=no
+    ansible_python_interpreter: "/usr/bin/python"
+  children:
+    all_hosts:
+      children:
+        dsal_hosts:
+          children:
+            libvirt_hosts:
+              hosts:
+                dell-r730-031.dsal.lab.eng.rdu2.redhat.com:
+                  server_uplink_device: em3
+                  server_provisioning_device: p1p1-VLAN151
+                  server_external_device: p1p2-VLAN160
+                  ansible_host: 10.1.8.41
+                  dsal_storage_drive: /dev/sdc1
+                dell-r730-033.dsal.lab.eng.rdu2.redhat.com:
+                  server_uplink_device: em3
+                  server_provisioning_device: p1p1-VLAN151
+                  server_external_device: p1p2-VLAN160
+                  ansible_host: 10.1.8.43
+                  dsal_storage_drive: /dev/sdc1
+                dell-r740-001.dsal.lab.eng.rdu2.redhat.com:
+                  server_uplink_device: em1
+                  server_provisioning_device: p4p1-VLAN151
+                  server_external_device: p4p2-VLAN160
+                  ansible_host: 10.1.8.62
+                  dsal_storage_drive: /dev/sdb1
+                dell-r730-034.dsal.lab.eng.rdu2.redhat.com:
+                  server_uplink_device: em3
+                  server_provisioning_device: p1p1-VLAN151
+                  server_external_device: p1p2-VLAN160
+                  ansible_host: 10.1.8.44
+                  dsal_storage_drive: /dev/sdc1
+                dell-r730-012.dsal.lab.eng.rdu2.redhat.com:
+                  server_uplink_device: em1
+                  server_provisioning_device: p5p1-VLAN151
+                  server_external_device: p5p2-VLAN160
+                  ansible_host: 10.1.8.22
+                  dsal_storage_drive: /dev/sdb1
+                dell-r630-001.dsal.lab.eng.rdu2.redhat.com:
+                  server_uplink_device: em1
+                  server_provisioning_device: p1p1-VLAN151
+                  server_external_device: p1p2-VLAN160
+                  ansible_host: 10.1.8.61
+                  dsal_storage_drive: /dev/sdb1
+              children:
+                storage_hosts:
+                  hosts:
+                    dell-r730-035.dsal.lab.eng.rdu2.redhat.com:
+                      server_uplink_device: em1
+                      server_provisioning_device: p4p1-VLAN151
+                      server_external_device: p4p2-VLAN160
+                      ansible_host: 10.1.8.45
+                      dsal_storage_arrays:
+                        - name: 'md0'
+                          level: 0
+                          opts: 'noatime'
+                          mountpoint: /var/lib/libvirt
+                          fs: 'xfs'
+                          devices:
+                            - /dev/sdh
+                            - /dev/sdi
+                            - /dev/sdj
+                            - /dev/sdb
+                            - /dev/sdc
+                            - /dev/sdd
+                            - /dev/sde
+                            - /dev/sdg
+                            - /dev/sdf
+                            - /dev/sda
+                    dell-r730-036.dsal.lab.eng.rdu2.redhat.com:
+                      server_uplink_device: em1
+                      server_provisioning_device: p4p1-VLAN151
+                      server_external_device: p4p2-VLAN160
+                      ansible_host: 10.1.8.46
+                      dsal_storage_arrays:
+                        - name: 'md0'
+                          level: 0
+                          opts: 'noatime'
+                          mountpoint: /var/lib/libvirt
+                          fs: 'xfs'
+                          devices:
+                            - /dev/sdh
+                            - /dev/sdi
+                            - /dev/sdj
+                            - /dev/sda
+                            - /dev/sdb
+                            - /dev/sdc
+                            - /dev/sde
+                            - /dev/sdd
+                            - /dev/sdf
+                            - /dev/sdg
+    all_vms:
+      vars:
+        ansible_become: true
+        ansible_become_user: "root"
+        ansible_user: "root"
+        vm_vbmc_username: admin
+        vm_vbmc_password: secrete
+        vm_internal_usage: true
+      children:
+        raw_vms:
+          children:
+            raw_compute_hosts:
+              children:
+                dell_r730_031_vms:
+                  vars:
+                    vm_virt_host: "10.1.8.41"
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 8192  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                    vm_image_name: rhel8  # Set the base image used for raw vms
+                    vm_uplink_floats:
+                      gateway: 10.1.11.254
+                      netmask: 255.255.252.0
+                      address: 10.1.10.68
+                  hosts:
+                    dell-r730-031-vm0: {}
+                    dell-r730-031-vm1: {}
+                    dell-r730-031-vm2: {}
+                    dell-r730-031-vm3: {}
+                    dell-r730-031-vm4: {}
+                    dell-r730-031-vm5: {}
+                    dell-r730-031-vm6: {}
+                    dell-r730-031-vm7: {}
+                    dell-r730-031-vm8: {}
+                    dell-r730-031-vm9: {}
+                dell_r730_033_vms:
+                  vars:
+                    vm_virt_host: "10.1.8.43"
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 8192  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                    vm_image_name: rhel8  # Set the base image used for raw vms
+                    vm_uplink_floats:
+                      gateway: 10.1.11.254
+                      netmask: 255.255.252.0
+                      address: 10.1.10.68
+                  hosts:
+                    dell-r730-033-vm0: {}
+                    dell-r730-033-vm1: {}
+                    dell-r730-033-vm2: {}
+                    dell-r730-033-vm3: {}
+                    dell-r730-033-vm4: {}
+                    dell-r730-033-vm5: {}
+                    dell-r730-033-vm6: {}
+                    dell-r730-033-vm7: {}
+                    dell-r730-033-vm8: {}
+                    dell-r730-033-vm9: {}
+                dell_r740_001_vms:
+                  vars:
+                    vm_virt_host: "10.1.8.62"
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 8192  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                    vm_image_name: rhel8  # Set the base image used for raw vms
+                    vm_uplink_floats:
+                      gateway: 10.1.11.254
+                      netmask: 255.255.252.0
+                      address: 10.1.10.68
+                  hosts:
+                    dell-r740-001-vm0: {}
+                    dell-r740-001-vm1: {}
+                    dell-r740-001-vm2: {}
+                    dell-r740-001-vm3: {}
+                    dell-r740-001-vm4: {}
+                    dell-r740-001-vm5: {}
+                    dell-r740-001-vm6: {}
+                    dell-r740-001-vm7: {}
+                    dell-r740-001-vm8: {}
+                    dell-r740-001-vm9: {}
+                dell_r730_034_vms:
+                  vars:
+                    vm_virt_host: "10.1.8.44"
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 8192  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                    vm_image_name: rhel8  # Set the base image used for raw vms
+                    vm_uplink_floats:
+                      gateway: 10.1.11.254
+                      netmask: 255.255.252.0
+                      address: 10.1.10.68
+                  hosts:
+                    dell-r730-034-vm0: {}
+                    dell-r730-034-vm1: {}
+                    dell-r730-034-vm2: {}
+                    dell-r730-034-vm3: {}
+                    dell-r730-034-vm4: {}
+                    dell-r730-034-vm5: {}
+                    dell-r730-034-vm6: {}
+                    dell-r730-034-vm7: {}
+                    dell-r730-034-vm8: {}
+                    dell-r730-034-vm9: {}
+                dell_r730_012_vms:
+                  vars:
+                    vm_virt_host: "10.1.8.22"
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 8192  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                    vm_image_name: rhel8  # Set the base image used for raw vms
+                    vm_uplink_floats:
+                      gateway: 10.1.11.254
+                      netmask: 255.255.252.0
+                      address: 10.1.10.68
+                  hosts:
+                    dell-r730-012-vm0: {}
+                    dell-r730-012-vm1: {}
+                    dell-r730-012-vm2: {}
+                    dell-r730-012-vm3: {}
+                    dell-r730-012-vm4: {}
+                    dell-r730-012-vm5: {}
+                    dell-r730-012-vm6: {}
+                    dell-r730-012-vm7: {}
+                    dell-r730-012-vm8: {}
+                    dell-r730-012-vm9: {}
+                dell_r630_001_vms:
+                  vars:
+                    vm_virt_host: "10.1.8.61"
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 8192  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                    vm_image_name: rhel8  # Set the base image used for raw vms
+                    vm_uplink_floats:
+                      gateway: 10.1.11.254
+                      netmask: 255.255.252.0
+                      address: 10.1.10.68
+                  hosts:
+                    dell-r630-001-vm0: {}
+                    dell-r630-001-vm1: {}
+                    dell-r630-001-vm2: {}
+                    dell-r630-001-vm3: {}
+                    dell-r630-001-vm4: {}
+                    dell-r630-001-vm5: {}
+                    dell-r630-001-vm6: {}
+                    dell-r630-001-vm7: {}
+                    dell-r630-001-vm8: {}
+                    dell-r630-001-vm9: {}
+        osp_vms:
+          children:
+            osp_compute_hosts: {}
