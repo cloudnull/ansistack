@@ -50,7 +50,6 @@ vm_flags: >-
   --controller scsi,model=virtio-scsi
   --serial pty
   --parallel pty
-  --hvm
   --virt-type kvm
   --memballoon virtio
   --cpu host-passthrough
@@ -99,6 +98,16 @@ vm_image_data:
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
     name: rhel-8-update-1-x86_64-kvm.qcow2
     access_user: 'cloud-user'
+    cloud_init_packages:
+      - NetworkManager
+      - qemu-guest-agent
+    python_interpreter: "/usr/bin/python3"
+  rhel8-ppc64le:
+    url: "{{ redhat_cloud_image_url | default('undefined') }}"
+    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    name: rhel-8.0-ppc64le-kvm.qcow2
+    access_user: 'cloud-user'
+    arch: ppc64le
     cloud_init_packages:
       - NetworkManager
       - qemu-guest-agent

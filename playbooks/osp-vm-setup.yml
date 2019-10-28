@@ -95,6 +95,7 @@
         state: "latest"
         allow_downgrade: "{{ ((ansible_os_family | lower) == 'redhat') | ternary('yes', omit) }}"
       when:
+        - deploy_tripleoclient | default(true) | bool
         - (ansible_distribution | lower) == 'redhat'
 
     - name: Add the br-netfilter module

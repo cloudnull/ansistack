@@ -105,6 +105,8 @@
         - redhat_cloud_image_url is undefined
 
     - name: Setup block
+      when:
+        - not (vm_purge | default(_vm_purge) | bool)
       block:
         - name: Refresh local facts
           setup:

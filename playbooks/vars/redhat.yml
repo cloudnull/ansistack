@@ -32,7 +32,6 @@ vm_flags: >-
   --graphics vnc,listen=0.0.0.0
   --controller scsi,model=virtio-scsi
   --serial pty
-  --hvm
   --virt-type kvm
   --memballoon virtio
   --cpu host-passthrough

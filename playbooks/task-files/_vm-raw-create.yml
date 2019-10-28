@@ -45,7 +45,7 @@
     /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2
   register: resize_img
   until: resize_img is success
-  retries: 32
+  retries: 3
   delay: 2
   environment:
     LIBGUESTFS_BACKEND: direct
@@ -73,6 +73,11 @@
       --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
       --disk /var/lib/libvirt/images/{{ inventory_hostname }}/cidata.iso,device=cdrom
       --import
+    {% if (vm_image_data[vm_image_name]['arch'] is defined) %}
+      --arch {{ vm_image_data[vm_image_name]['arch'] }}
+    {% else %}
+      --hvm
+    {% endif %}
     {% if (vm_uplink_floats is defined) %}
       --network network:uplink,model=virtio,mac={{ ('52:54:01') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
     {% endif %}
@@ -86,7 +91,7 @@
   changed_when: false
   register: vm_xml
   until: vm_xml.rc == 0
-  retries: 16
+  retries: 3
   delay: 2
 
 - name: Define the VM
