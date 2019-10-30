@@ -11,10 +11,7 @@ tripleo_ceph_enabled: true
 # Example patches to apply to an environment.
 # NOTICE(cloudnull): One patch is a gerrit review, the other is an external
 #                    repo from github.
-developer_patches:
-  - url: "https://review.opendev.org/openstack/tripleo-heat-templates"
-    refs: "refs/changes/83/661883/7"
-    version: FETCH_HEAD
+developer_patches: {}
 
 server_provisioning_device: BOND0-VLAN10
 server_external_device: BOND0-VLAN11

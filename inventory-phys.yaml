@@ -23,7 +23,31 @@ all_machines:
         vm_vbmc_password: secrete
         vm_uplink_floats: {}
       children:
-        osp_vms: {}
+        osp_vms:
+          children:
+            osp_compute_hosts:
+              children:
+                osp_compute1:
+                  vars:
+                    vm_virt_host: "172.16.27.216"
+                    vm_cores: 6
+                    vm_ram: 8192
+                    vm_disk_size: 96
+                  hosts:
+                    osp-compute1-vm-controller1:
+                      vm_vbmc_port: 16020
+                    osp-compute1-vm-controller2:
+                      vm_vbmc_port: 16021
+                    osp-compute1-vm-controller3:
+                      vm_vbmc_port: 16022
+                    osp-compute1-vm-compute1:
+                      vm_cores: 4
+                      vm_ram: 4096
+                      vm_vbmc_port: 16030
+                    osp-compute1-vm-compute2:
+                      vm_cores: 4
+                      vm_ram: 4096
+                      vm_vbmc_port: 16031
         raw_vms:
           children:
             raw_compute_hosts:
@@ -32,17 +56,15 @@ all_machines:
                   vars:
                     vm_virt_host: "172.16.27.216"
                     vm_cores: 6  # Number of cores
-                    vm_ram: 10240  # Size in MiB
-                    vm_disk_size: 72  # Size in GiB
+                    vm_ram: 8192  # Size in MiB
+                    vm_disk_size: 96  # Size in GiB
                     ansible_python_interpreter: "/usr/bin/python"
                   hosts:
-                    compute1-vm-1:
+                    test1:
                       vm_image_name: centos7
-                    compute1-vm-2:
+                    test2:
                       vm_image_name: centos7
-                    compute1-vm-3:
-                      vm_image_name: centos7
-                    compute1-vm-4:
+                    test3:
                       vm_image_name: centos7
     all_hosts:
       children:
