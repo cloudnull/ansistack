@@ -23,9 +23,15 @@
   vars_files:
     - vars/main.yml
   tasks:
+    - name: Set instackenv file fact
+      set_fact:
+        instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+      when:
+        - instackenv_file is undefined
+
     - name: Copy instackenv into place
       copy:
-        src: "~/vm-instackenv.yaml"
+        src: "{{ instackenv_file }}"
         dest: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
 
     - name: Read instackenv yaml

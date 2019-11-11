@@ -67,6 +67,7 @@
       get_url:
         url: "{{ item.value }}"
         dest: "{{ item.key.split(':')[1] }}/{{ item.key.split(':')[-1]  }}"
+        force: "{{ image_force_download | default(false) }}"
       delegate_to: "{{ item.key.split(':')[0] }}"
       async: 1024
       poll: 0

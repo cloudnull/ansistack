@@ -75,6 +75,12 @@
   set_fact:
     vm_macs: "{{ vm_mac_addresses.stdout_lines | map('quote') | list }}"
 
+- name: Set instackenv file fact
+  set_fact:
+    instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+  when:
+    - instackenv_file is undefined
+
 - name: Finishing block
   delegate_to: "localhost"
   connection: local
@@ -103,5 +109,5 @@
           {% endfor %}
           {% set render_this = {'nodes': nodes_list} %}
           {{ render_this | to_nice_yaml }}
-        dest: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+        dest: "{{ instackenv_file }}"
       notify: Deployment notice

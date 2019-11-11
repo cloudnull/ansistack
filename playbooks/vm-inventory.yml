@@ -131,20 +131,22 @@
       debug:
         msg: >-
           VM(s) creation has completed. An instackenv file has been created for the generated nodes.
-          This file can be found here `{{ lookup('env','HOME') }}/vm-lab-inventory.yaml`.
+          This file can be found here `{{ raw_vm_inventory_file }}`.
       run_once: true
   tasks:
     - name: Show limit group
       debug:
         msg: "{{ vm_limit_group }}"
 
+    - name: Set inventory file path
+      set_fact:
+        raw_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
+      when:
+        - raw_vm_inventory_file is undefined
+
     - name: Finishing block
       run_once: true
       block:
-        - name: Set inventory file path
-          set_fact:
-            raw_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
-
         - name: Check for inventory file
           stat:
             path: "{{ raw_vm_inventory_file }}"
