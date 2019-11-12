@@ -39,6 +39,24 @@
         src: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
       register: instack_env
 
+    - name: Check for rh it ca
+      stat:
+        path: "/etc/pki/ca-trust/source/anchors/2015-RH-IT-Root-CA.pem"
+      register: rh_it_ca_stat
+
+    - name: Read RH IT CA
+      slurp:
+        src: "/etc/pki/ca-trust/source/anchors/2015-RH-IT-Root-CA.pem"
+      register: rh_it_ca
+      when:
+        - rh_it_ca_stat.stat.exists | bool
+
+    - name: Set rh ca fact
+      set_fact:
+        rh_it_ca_fact: "{{ rh_it_ca['content'] | b64decode }}"
+      when:
+        - rh_it_ca_stat.stat.exists | bool
+
     - name: Set Nodes
       set_fact:
         target_nodes: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] }}"
@@ -145,7 +163,9 @@
                           -e $THT/environments/docker-ha.yaml
                           -e $THT/environments/podman.yaml
                           -e $THT/environments/services/neutron-ovn-ha.yaml
-                          -e containers-prepare-parameters.yaml -e params.yaml" C-m
+                          -e containers-prepare-parameters.yaml
+                          -e params.yaml
+                          {% if (rh_it_ca_stat.stat.exists | bool) %}-e $THT/environments/ssl/inject-trust-anchor.yaml{% endif %}" C-m
 
     - name: Build notice
       when:
