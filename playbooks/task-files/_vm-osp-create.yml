@@ -94,7 +94,11 @@
           {%   if node in groups['osp_vms'] %}
           {%     set node_info = {} %}
           {%     set _ = node_info.__setitem__('mac', hostvars[node]['vm_macs']) %}
-          {%     set _ = node_info.__setitem__('name', hostvars[node]['inventory_hostname']) %}
+          {%     if 'name' in hostvars[node] %}
+          {%       set _ = node_info.__setitem__('name', hostvars[node]['name']) %}
+          {%     else %}
+          {%       set _ = node_info.__setitem__('name', hostvars[node]['inventory_hostname']) %}
+          {%     endif %}
           {%     set _ = node_info.__setitem__('cpu', hostvars[node]['vm_cores']) %}
           {%     set _ = node_info.__setitem__('memory', hostvars[node]['vm_ram']) %}
           {%     set _ = node_info.__setitem__('disk', hostvars[node]['vm_disk_size']) %}
@@ -104,6 +108,9 @@
           {%     set _ = node_info.__setitem__('pm_password', hostvars[node]['vm_vbmc_password']) %}
           {%     set _ = node_info.__setitem__('pm_addr', hostvars[node]['vm_virt_host']) %}
           {%     set _ = node_info.__setitem__('pm_port', hostvars[node]['vm_vbmc_port']) %}
+          {%     if 'capabilities' in hostvars[node] %}
+          {%       set _ = node_info.__setitem__('capabilities', hostvars[node]['capabilities']) %}
+          {%     endif %}
           {%     set _ = nodes_list.append(node_info) %}
           {%   endif %}
           {% endfor %}

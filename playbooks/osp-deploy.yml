@@ -39,9 +39,13 @@
         src: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
       register: instack_env
 
+    - name: Set Nodes
+      set_fact:
+        target_nodes: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] }}"
+
     - name: Set Node cound fact
       set_fact:
-        target_node_count: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] | length }}"
+        target_node_count: "{{ target_nodes | length }}"
 
     - name: Create undercloud config
       template:
@@ -80,7 +84,7 @@
         state: present
       become: true
 
-    - name: Run setup command(s)
+    - name: Run image unpack command(s)
       shell: |-
         for i in overcloud-full.tar ironic-python-agent.tar; do
           tar xf /usr/share/rhosp-director-images/$i
@@ -104,6 +108,8 @@
         virtualenv_python: "{{ ansible_python_interpreter | basename }}"
 
     - name: Run deployment command(s)
+      when:
+        - deploy_osp | default(true) | bool
       shell: "{{ item }}"
       environment:
         THT: "/usr/share/openstack-tripleo-heat-templates"
@@ -123,7 +129,15 @@
         - tmux send-keys "popd" C-m
         - tmux send-keys "openstack tripleo container image prepare -e local_images.yaml --output-env-file containers-prepare-parameters.yaml" C-m
         - tmux send-keys "openstack overcloud node import vm-instackenv.yaml" C-m
-        - tmux send-keys "openstack overcloud node introspect --all-manageable --provide --concurrency {{ (ansible_processor_vcpus | int) * 2  }}" C-m
+        - tmux send-keys "openstack overcloud node introspect --all-manageable --provide --concurrency {{ (ansible_processor_vcpus | int) * 2  }} ||
+                          openstack overcloud node introspect --all-manageable --provide" C-m
+        - tmux send-keys "{%- for item in target_nodes %}
+                          {%-   if 'capabilities' in item %}
+                          openstack overcloud node node set --property {{ item['capabilities'] }} {{ item['name'] }};
+                          {%-   else %}
+                          echo no capabilities set on {{ item['name'] }};
+                          {%-   endif %}
+                          {%- endfor %}" C-m
         - tmux send-keys "openstack overcloud deploy --templates $THT/
                           --timeout 100
                           -e $THT/environments/enable-swap.yaml
@@ -134,6 +148,8 @@
                           -e containers-prepare-parameters.yaml -e params.yaml" C-m
 
     - name: Build notice
+      when:
+        - deploy_osp | default(true) | bool
       debug:
         msg: >-
           Stack creation has started. Connect to the system `{{ ansible_host }}`

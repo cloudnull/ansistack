@@ -223,6 +223,15 @@ all_machines:
                       vm_cores: 6  # Number of cores
                       vm_ram: 6144  # Size in MiB
                       vm_disk_size: 96  # Size in GiB
+                    paulh-1:
+                      vm_uplink_floats:
+                        gateway: 10.1.11.254
+                        netmask: 255.255.252.0
+                        address: 10.10.10.10
+                      vm_virt_host: "10.1.8.43"
+                      vm_cores: 6  # Number of cores
+                      vm_ram: 6144  # Size in MiB
+                      vm_disk_size: 96  # Size in GiB
                     monitor:
                       vm_uplink_floats:
                         gateway: 10.1.11.254
@@ -246,19 +255,32 @@ all_machines:
                 dell_r730_033_vms:
                   vars:
                     vm_virt_host: "10.1.8.43"
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     kecarter-dell-r730-033-vm-1:
                       vm_vbmc_port: 11001
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-1
                     kecarter-dell-r730-033-vm-2:
                       vm_vbmc_port: 11002
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-2
                     kecarter-dell-r730-033-vm-3:
                       vm_vbmc_port: 11003
+                      capabilities: boot_option:local,profile:control
+                      name: controller-1
                     kecarter-dell-r730-033-vm-4:
                       vm_vbmc_port: 11004
+                      capabilities: boot_option:local,profile:control
+                      name: controller-2
                     kecarter-dell-r730-033-vm-5:
                       vm_vbmc_port: 11005
+                      capabilities: boot_option:local,profile:control
+                      name: controller-3
                     kecarter-dell-r730-033-vm-6:
                       vm_vbmc_port: 11006
+                      capabilities: boot_option:local,profile:ceph-storage
+                      name: ceph-1
                     jhajyahy-dell-r730-033-vm-7:
                       vm_vbmc_port: 11007
                     jhajyahy-dell-r730-033-vm-8:
@@ -288,6 +310,7 @@ all_machines:
                 dell_r740_001_vms:
                   vars:
                     vm_virt_host: "10.1.8.62"
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     cjeanner-dell-r740-001-vm-1:
                       vm_vbmc_port: 12001
@@ -303,18 +326,30 @@ all_machines:
                       vm_vbmc_port: 12006
                     cjeanner-dell-r740-001-vm-7:
                       vm_vbmc_port: 12007
-                    dell-r740-001-vm-8:
+                    paulh-dell-r740-001-vm-8:
                       vm_vbmc_port: 12008
-                    dell-r740-001-vm-9:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-1
+                    paulh-dell-r740-001-vm-9:
                       vm_vbmc_port: 12009
-                    dell-r740-001-vm-10:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-2
+                    paulh-dell-r740-001-vm-10:
                       vm_vbmc_port: 12010
-                    dell-r740-001-vm-11:
+                      capabilities: boot_option:local,profile:control
+                      name: controller-1
+                    paulh-dell-r740-001-vm-11:
                       vm_vbmc_port: 12011
-                    dell-r740-001-vm-12:
+                      capabilities: boot_option:local,profile:control
+                      name: controller-2
+                    paulh-dell-r740-001-vm-12:
                       vm_vbmc_port: 12012
-                    dell-r740-001-vm-13:
+                      capabilities: boot_option:local,profile:control
+                      name: controller-3
+                    paulh-dell-r740-001-vm-13:
                       vm_vbmc_port: 12013
+                      capabilities: boot_option:local,profile:ceph-storage
+                      name: ceph-1
                     dell-r740-001-vm-14:
                       vm_vbmc_port: 12014
                     dell-r740-001-vm-15:
@@ -330,6 +365,7 @@ all_machines:
                 dell_r730_034_vms:
                   vars:
                     vm_virt_host: "10.1.8.44"
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r730-034-vm-1:
                       vm_vbmc_port: 13001
@@ -372,6 +408,7 @@ all_machines:
                 dell_r730_012_vms:
                   vars:
                     vm_virt_host: "10.1.8.22"
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r730-012-vm-1:
                       vm_vbmc_port: 14001
@@ -414,6 +451,7 @@ all_machines:
                 dell_r630_001_vms:
                   vars:
                     vm_virt_host: "10.1.8.61"
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r630-001-vm-1:
                       vm_vbmc_port: 15001
@@ -456,6 +494,7 @@ all_machines:
                 dell_r730_035_vms:
                   vars:
                     vm_virt_host: "10.1.8.45"
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r730-035-vm-1:
                       vm_vbmc_port: 16001
@@ -498,6 +537,7 @@ all_machines:
                 dell_r730_036_vms:
                   vars:
                     vm_virt_host: "10.1.8.46"
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r730-036-vm-1:
                       vm_vbmc_port: 17001
