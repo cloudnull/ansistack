@@ -19,7 +19,7 @@ tmux send-keys "openstack overcloud node import vm-instackenv.yaml" C-m
 tmux send-keys "openstack overcloud node introspect --all-manageable --provide --concurrency {{ (ansible_processor_vcpus | int) * 2  }} || openstack overcloud node introspect --all-manageable --provide" C-m
 {% for item in target_nodes %}
 {%   if 'capabilities' in item %}
-tmux send-keys "openstack baremetal node set --property {{ item['capabilities'] }} {{ item['name'] }}" C-m
+tmux send-keys "openstack baremetal node set --property capabilities={{ item['capabilities'] }} --property machine_name={{ item }} --description 'original target hostname [ {{ item }} ]. This is a KVM VM controlled with VBMC.' {{ item['name'] }}" C-m
 {%   endif %}
 {% endfor %}
 {% set environments = ['$THT/environments/enable-swap.yaml'] %}

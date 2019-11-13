@@ -1,4 +1,7 @@
 function set-ansible-env {
+    if [[ -f "${HOME}/.ansible/vault-pass" ]]; then
+      export ANSIBLE_VAULT_PASSWORD_FILE="${HOME}/.ansible/vault-pass"
+    fi
     export ANSIBLE_LOG_PATH="${HOME}/.ansible/logs/ansible-$(date +"%Y-%m-%dT%H").log"
     export ANSIBLE_RETRY_FILES_ENABLED=False
     export ANSIBLE_LOAD_CALLBACK_PLUGINS=True

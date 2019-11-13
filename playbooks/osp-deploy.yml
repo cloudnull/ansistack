@@ -61,9 +61,36 @@
       set_fact:
         target_nodes: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] }}"
 
-    - name: Set Node cound fact
+    - name: Set Node count fact
       set_fact:
         target_node_count: "{{ target_nodes | length }}"
+
+    - name: Ensure local facts directory exists
+      become: true
+      file:
+        dest: "/etc/ansible/facts.d"
+        state: directory
+        group: "root"
+        owner: "root"
+        mode:  "0755"
+        recurse: no
+
+    - name: Initialize local facts
+      become: true
+      ini_file:
+        dest: "/etc/ansible/facts.d/osp.fact"
+        section: "setup"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+      loop:
+        - option: initialized
+          value: true
+        - option: osp_magic_number
+          value: "{{ (24 | random) }}"
+
+    - name: Refresh local facts
+      setup:
+        gather_subset: "!all"
 
     - name: Create undercloud config
       template:

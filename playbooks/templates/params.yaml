@@ -1,7 +1,7 @@
 ---
 
 {% set registries = redhat_docker_registries %}
-{% set _ = registries.append('192.168.24.1:8787') %}
+{% set _ = registries.append('192.168.' + ansible_local.osp.setup.osp_magic_number + '.1:8787') %}
 
 parameter_defaults:
   DockerInsecureRegistryAddress: {{ registries }}
