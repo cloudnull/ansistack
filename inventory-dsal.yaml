@@ -139,33 +139,6 @@ all_machines:
                     vm_image_name: rhel8  # Set the base image used for raw vms
                     vm_protected: true
                   hosts:
-                    jhajyahy-1:
-                      vm_uplink_floats:
-                        gateway: 10.1.11.254
-                        netmask: 255.255.252.0
-                        address: 10.10.10.10
-                      vm_virt_host: "10.1.8.62"
-                      vm_cores: 16  # Number of cores
-                      vm_ram: 65536  # Size in MiB
-                      vm_disk_size: 256  # Size in GiB
-                    jhajyahy-2:
-                      vm_uplink_floats:
-                        gateway: 10.1.11.254
-                        netmask: 255.255.252.0
-                        address: 10.10.10.10
-                      vm_virt_host: "10.1.8.41"
-                      vm_cores: 16  # Number of cores
-                      vm_ram: 65536  # Size in MiB
-                      vm_disk_size: 256  # Size in GiB
-                    jhajyahy-3:
-                      vm_uplink_floats:
-                        gateway: 10.1.11.254
-                        netmask: 255.255.252.0
-                        address: 10.10.10.10
-                      vm_virt_host: "10.1.8.43"
-                      vm_cores: 16  # Number of cores
-                      vm_ram: 65536  # Size in MiB
-                      vm_disk_size: 256  # Size in GiB
                     kecarter-1:
                       vm_uplink_floats:
                         gateway: 10.1.11.254
@@ -173,29 +146,10 @@ all_machines:
                         address: 10.10.10.10
                       vm_virt_host: "10.1.8.62"
                       vm_cores: 6  # Number of cores
-                      vm_ram: 10240  # Size in MiB
+                      vm_ram: 16384  # Size in MiB
                       vm_disk_size: 96  # Size in GiB
                       vm_protected: false
-                    kecarter-2:
-                      vm_uplink_floats:
-                        gateway: 10.1.11.254
-                        netmask: 255.255.252.0
-                        address: 10.10.10.10
-                      vm_virt_host: "10.1.8.41"
-                      vm_cores: 6  # Number of cores
-                      vm_ram: 10240  # Size in MiB
-                      vm_disk_size: 96  # Size in GiB
-                      vm_protected: false
-                    kecarter-3:
-                      vm_uplink_floats:
-                        gateway: 10.1.11.254
-                        netmask: 255.255.252.0
-                        address: 10.10.10.10
-                      vm_virt_host: "10.1.8.43"
-                      vm_cores: 6  # Number of cores
-                      vm_ram: 10240  # Size in MiB
-                      vm_disk_size: 96  # Size in GiB
-                      vm_protected: false
+                      undercloud_target: true
                     cjeanner-1:
                       vm_uplink_floats:
                         gateway: 10.1.11.254
@@ -230,7 +184,7 @@ all_machines:
                         address: 10.10.10.10
                       vm_virt_host: "10.1.8.43"
                       vm_cores: 6  # Number of cores
-                      vm_ram: 6144  # Size in MiB
+                      vm_ram: 16384  # Size in MiB
                       vm_disk_size: 96  # Size in GiB
                     monitor:
                       vm_uplink_floats:
@@ -281,26 +235,46 @@ all_machines:
                       vm_vbmc_port: 11006
                       capabilities: boot_option:local,profile:ceph-storage
                       name: ceph-1
-                    jhajyahy-dell-r730-033-vm-7:
+                    kecarter-dell-r730-033-vm-7:
                       vm_vbmc_port: 11007
-                    jhajyahy-dell-r730-033-vm-8:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-3
+                    kecarter-dell-r730-033-vm-8:
                       vm_vbmc_port: 11008
-                    jhajyahy-dell-r730-033-vm-9:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-4
+                    kecarter-dell-r730-033-vm-9:
                       vm_vbmc_port: 11009
-                    jhajyahy-dell-r730-033-vm-10:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-5
+                    kecarter-dell-r730-033-vm-10:
                       vm_vbmc_port: 11010
-                    jhajyahy-dell-r730-033-vm-11:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-6
+                    kecarter-dell-r730-033-vm-11:
                       vm_vbmc_port: 11011
-                    jhajyahy-dell-r730-033-vm-12:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-7
+                    kecarter-dell-r730-033-vm-12:
                       vm_vbmc_port: 11012
-                    jhajyahy-dell-r730-033-vm-13:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-8
+                    kecarter-dell-r730-033-vm-13:
                       vm_vbmc_port: 11013
-                    jhajyahy-dell-r730-033-vm-14:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-9
+                    kecarter-dell-r730-033-vm-14:
                       vm_vbmc_port: 11014
-                    jhajyahy-dell-r730-033-vm-15:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-10
+                    kecarter-dell-r730-033-vm-15:
                       vm_vbmc_port: 11015
-                    jhajyahy-dell-r730-033-vm-16:
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-11
+                    kecarter-dell-r730-033-vm-16:
                       vm_vbmc_port: 11016
+                      capabilities: boot_option:local,profile:compute
+                      name: compute-12
                     cjeanner-dell-r730-033-vm-18:
                       vm_vbmc_port: 11018
                     cjeanner-dell-r730-033-vm-19:

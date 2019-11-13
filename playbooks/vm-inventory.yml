@@ -167,6 +167,11 @@
                       'vars': {
                         'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'
                       },
+                      'children': {
+                        'undercloud': {
+                          'hosts': {}
+                        }
+                      },
                       'hosts': {}
                     }
                   }
@@ -184,6 +189,9 @@
                      }
               %}
               {%     set _ = inventory['vms']['hosts'].__setitem__(node, entry) %}
+              {%     if hostvars[node]['undercloud_target'] | default(false) | bool %}
+              {%       set _ = inventory['vms']['children']['undercloud']['hosts'].__setitem__(node, {}) %}
+              {%     endif %}
               {%   endif %}
               {% endfor %}
               {{ (existing_raw_vm_inventory_file | default({})) | combine(inventory, recursive=True) | to_nice_yaml }}

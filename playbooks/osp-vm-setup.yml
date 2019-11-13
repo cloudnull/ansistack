@@ -141,6 +141,8 @@
     - name: turn on swap
       become: true
       command: swapon /swapfile
+      when:
+        - mkswap_file is changed
 
     - name: set swapiness
       become: true

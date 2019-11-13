@@ -49,6 +49,16 @@
             /opt/vbmc/bin/vbmc delete {{ inventory_hostname }}
           ignore_errors: true
 
+        - name: Check for VM
+          virt:
+            name: "{{ inventory_hostname }}"
+            command: status
+          register: vm_status
+          until: vm_status is success
+          retries: 2
+          delay: 1
+          ignore_errors: true
+
         - name: Add node to vbmc
           command: >-
             /opt/vbmc/bin/vbmc add {{ inventory_hostname }}
@@ -58,16 +68,31 @@
               --address {{ vm_virt_host }}
           register: vbmc_add
           until: vbmc_add is success
-          retries: 32
+          retries: 3
           delay: 2
+          when:
+            - vm_status is success
+
+        - name: Kill vbmcd
+          command: pkill --signal 9 --echo vbmcd
+          failed_when: false
+
+        - name: Enable and start vbmcd
+          systemd:
+            name: vbmcd.service
+            state: started
 
         - name: Start vbmc node
           command: /opt/vbmc/bin/vbmc start {{ inventory_hostname }}
           register: start_vbmc_add
           until: start_vbmc_add is success
-          retries: 32
+          retries: 3
           delay: 2
+          when:
+            - vm_status is success
 
         - name: Ensure vbmc node started
           command: /opt/vbmc/bin/vbmc start {{ inventory_hostname }}
           failed_when: false
+          when:
+            - vm_status is success
