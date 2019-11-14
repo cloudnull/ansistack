@@ -24,5 +24,5 @@ pushd ${PROJECT_DIR}
                      -e redhat_osp_release=${DEPLOY_RELEASE} \
                      -e instackenv_file=${HOME}/vm-${DEPLOY_NAME}-lab-instackenv.yaml \
                      ${PROJECT_DIR}/playbooks/osp-vm-setup.yml \
-                     ${PROJECT_DIR}/playbooks/osp-deploy.yml
+                     ${PROJECT_DIR}/playbooks/osp-deploy.yml ${@}
 popd

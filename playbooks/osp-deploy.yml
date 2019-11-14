@@ -87,6 +87,8 @@
           value: true
         - option: osp_magic_number
           value: "{{ (24 | random) }}"
+      when:
+        - deploy_osp | default(true) | bool
 
     - name: Refresh local facts
       setup:

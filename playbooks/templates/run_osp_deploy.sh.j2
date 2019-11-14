@@ -17,19 +17,12 @@ tmux send-keys "popd" C-m
 tmux send-keys "openstack tripleo container image prepare -e local_images.yaml --output-env-file containers-prepare-parameters.yaml" C-m
 tmux send-keys "openstack overcloud node import vm-instackenv.yaml" C-m
 tmux send-keys "openstack overcloud node introspect --all-manageable --provide --concurrency {{ (ansible_processor_vcpus | int) * 2  }} || openstack overcloud node introspect --all-manageable --provide" C-m
-{% for item in target_nodes %}
-{%   if 'capabilities' in item %}
-tmux send-keys "openstack baremetal node set --property capabilities={{ item['capabilities'] }} --property machine_name={{ item }} --description 'original target hostname [ {{ item }} ]. This is a KVM VM controlled with VBMC.' {{ item['name'] }}" C-m
-{%   endif %}
-{% endfor %}
 {% set environments = ['$THT/environments/enable-swap.yaml'] %}
 {% if (rh_it_ca_stat.stat.exists | bool) %}
 {%   set _ = environments.append('$THT/environments/ssl/inject-trust-anchor.yaml') %}
 {% endif %}
 {% set _ = environments.append('$THT/environments/disable-telemetry.yaml') %}
-{% set _ = environments.append('$THT/environments/docker-ha.yaml') %}
-{% set _ = environments.append('$THT/environments/podman.yaml') %}
-{% set _ = environments.append('$THT/environments/services/neutron-ovn-ha.yaml') %}
+{# {% set _ = environments.append('$THT/environments/network-isolation.yaml') %} #}
 {% set _ = environments.append('containers-prepare-parameters.yaml') %}
 {% set _ = environments.append('params.yaml') %}
 tmux send-keys "openstack overcloud deploy --templates $THT/ -e {{ environments | join(' -e ') }} --timeout 100" C-m

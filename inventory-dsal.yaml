@@ -209,71 +209,71 @@ all_machines:
                 dell_r730_033_vms:
                   vars:
                     vm_virt_host: "10.1.8.43"
-                    capabilities: boot_option:local,profile:undefined,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     kecarter-dell-r730-033-vm-1:
                       vm_vbmc_port: 11001
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-1
                     kecarter-dell-r730-033-vm-2:
                       vm_vbmc_port: 11002
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-2
                     kecarter-dell-r730-033-vm-3:
                       vm_vbmc_port: 11003
-                      capabilities: boot_option:local,profile:control,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:control
                       name: controller-1
                     kecarter-dell-r730-033-vm-4:
                       vm_vbmc_port: 11004
-                      capabilities: boot_option:local,profile:control,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:control
                       name: controller-2
                     kecarter-dell-r730-033-vm-5:
                       vm_vbmc_port: 11005
-                      capabilities: boot_option:local,profile:control,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:control
                       name: controller-3
                     kecarter-dell-r730-033-vm-6:
                       vm_vbmc_port: 11006
-                      capabilities: boot_option:local,profile:ceph-storage,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:ceph-storage
                       name: ceph-1
                     kecarter-dell-r730-033-vm-7:
                       vm_vbmc_port: 11007
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-3
                     kecarter-dell-r730-033-vm-8:
                       vm_vbmc_port: 11008
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-4
                     kecarter-dell-r730-033-vm-9:
                       vm_vbmc_port: 11009
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-5
                     kecarter-dell-r730-033-vm-10:
                       vm_vbmc_port: 11010
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-6
                     kecarter-dell-r730-033-vm-11:
                       vm_vbmc_port: 11011
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-7
                     kecarter-dell-r730-033-vm-12:
                       vm_vbmc_port: 11012
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-8
                     kecarter-dell-r730-033-vm-13:
                       vm_vbmc_port: 11013
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-9
                     kecarter-dell-r730-033-vm-14:
                       vm_vbmc_port: 11014
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-10
                     kecarter-dell-r730-033-vm-15:
                       vm_vbmc_port: 11015
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-11
                     kecarter-dell-r730-033-vm-16:
                       vm_vbmc_port: 11016
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-12
                     cjeanner-dell-r730-033-vm-18:
                       vm_vbmc_port: 11018
@@ -284,7 +284,7 @@ all_machines:
                 dell_r740_001_vms:
                   vars:
                     vm_virt_host: "10.1.8.62"
-                    capabilities: boot_option:local,profile:undefined,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     cjeanner-dell-r740-001-vm-1:
                       vm_vbmc_port: 12001
@@ -302,27 +302,27 @@ all_machines:
                       vm_vbmc_port: 12007
                     paulh-dell-r740-001-vm-8:
                       vm_vbmc_port: 12008
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-1
                     paulh-dell-r740-001-vm-9:
                       vm_vbmc_port: 12009
-                      capabilities: boot_option:local,profile:compute,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:compute
                       name: compute-2
                     paulh-dell-r740-001-vm-10:
                       vm_vbmc_port: 12010
-                      capabilities: boot_option:local,profile:control,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:control
                       name: controller-1
                     paulh-dell-r740-001-vm-11:
                       vm_vbmc_port: 12011
-                      capabilities: boot_option:local,profile:control,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:control
                       name: controller-2
                     paulh-dell-r740-001-vm-12:
                       vm_vbmc_port: 12012
-                      capabilities: boot_option:local,profile:control,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:control
                       name: controller-3
                     paulh-dell-r740-001-vm-13:
                       vm_vbmc_port: 12013
-                      capabilities: boot_option:local,profile:ceph-storage,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                      capabilities: boot_option:local,profile:ceph-storage
                       name: ceph-1
                     dell-r740-001-vm-14:
                       vm_vbmc_port: 12014
@@ -339,7 +339,7 @@ all_machines:
                 dell_r730_034_vms:
                   vars:
                     vm_virt_host: "10.1.8.44"
-                    capabilities: boot_option:local,profile:undefined,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r730-034-vm-1:
                       vm_vbmc_port: 13001
@@ -382,7 +382,7 @@ all_machines:
                 dell_r730_012_vms:
                   vars:
                     vm_virt_host: "10.1.8.22"
-                    capabilities: boot_option:local,profile:undefined,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r730-012-vm-1:
                       vm_vbmc_port: 14001
@@ -425,7 +425,7 @@ all_machines:
                 dell_r630_001_vms:
                   vars:
                     vm_virt_host: "10.1.8.61"
-                    capabilities: boot_option:local,profile:undefined,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r630-001-vm-1:
                       vm_vbmc_port: 15001
@@ -468,7 +468,7 @@ all_machines:
                 dell_r730_035_vms:
                   vars:
                     vm_virt_host: "10.1.8.45"
-                    capabilities: boot_option:local,profile:undefined,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r730-035-vm-1:
                       vm_vbmc_port: 16001
@@ -511,7 +511,7 @@ all_machines:
                 dell_r730_036_vms:
                   vars:
                     vm_virt_host: "10.1.8.46"
-                    capabilities: boot_option:local,profile:undefined,cpu_aes:true,cpu_hugepages:true,cpu_hugepages_1g:true
+                    capabilities: boot_option:local,profile:undefined
                   hosts:
                     dell-r730-036-vm-1:
                       vm_vbmc_port: 17001
