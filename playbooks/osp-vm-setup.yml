@@ -89,14 +89,26 @@
       when:
         - dsal_initialized is changed
 
-    - name: Install tripleo client
-      package:
-        name: "python3-tripleoclient"
-        state: "latest"
-        allow_downgrade: "{{ ((ansible_os_family | lower) == 'redhat') | ternary('yes', omit) }}"
+    - name: tripleo client install
       when:
         - deploy_tripleoclient | default(true) | bool
+        - deploy_osp | default(true) | bool
         - (ansible_distribution | lower) == 'redhat'
+      block:
+        - name: Install tripleo client
+          package:
+            name: "python3-tripleoclient"
+            state: "latest"
+            allow_downgrade: "{{ ((ansible_os_family | lower) == 'redhat') | ternary('yes', omit) }}"
+      rescue:
+        - name: Notice
+          debug:
+            msg: >-
+              The client installation has failed so OSP deployment will be disabled.
+
+        - name: Client install failed
+          set_fact:
+            deploy_osp: false
 
     - name: Add the br-netfilter module
       modprobe:

@@ -172,6 +172,7 @@ all_machines:
                       vm_disk_size: 96  # Size in GiB
                       vm_protected: false
                       undercloud_target: true
+                      vm_image_name: rhel8.0
                     monitor:
                       vm_uplink_floats:
                         gateway: 10.1.11.254

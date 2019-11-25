@@ -117,22 +117,6 @@
         state: directory
       become: false
 
-    - name: Install images packages
-      package:
-        name:
-          - "rhosp-director-images"
-          - "rhosp-director-images-ipa"
-        state: present
-      become: true
-
-    - name: Run image unpack command(s)
-      shell: |-
-        for i in overcloud-full.tar ironic-python-agent.tar; do
-          tar xf /usr/share/rhosp-director-images/$i
-        done
-      args:
-        chdir: "{{ ansible_env.HOME }}/images"
-
     - name: Install build packages
       package:
         name:
@@ -148,15 +132,31 @@
         virtualenv_site_packages: yes
         virtualenv_python: "{{ ansible_python_interpreter | basename }}"
 
+    - name: Create run osp deploy script
+      template:
+        src: run_osp_deploy.sh.j2
+        dest: "{{ ansible_env.HOME }}/run-osp-deploy.sh"
+        mode: '0755'
+
     - name: Run deployment block
       when:
         - deploy_osp | default(true) | bool
       block:
-        - name: Create run osp deploy script
-          template:
-            src: run_osp_deploy.sh.j2
-            dest: "{{ ansible_env.HOME }}/run-osp-deploy.sh"
-            mode: '0755'
+        - name: Install images packages
+          package:
+            name:
+              - "rhosp-director-images"
+              - "rhosp-director-images-ipa"
+            state: present
+          become: true
+
+        - name: Run image unpack command(s)
+          shell: |-
+            for i in overcloud-full.tar ironic-python-agent.tar; do
+              tar xf /usr/share/rhosp-director-images/$i
+            done
+          args:
+            chdir: "{{ ansible_env.HOME }}/images"
 
         - name: Run deployment command(s)
           shell: "{{ ansible_env.HOME }}/run-osp-deploy.sh"
