@@ -17,6 +17,9 @@ export DEPLOY_RELEASE=${DEPLOY_RELEASE:-rhosp15}
 echo -e "\nRunning with Deployment Name:  ${DEPLOY_NAME}"
 echo -e "Running with Deployment Release: ${DEPLOY_RELEASE}\n"
 
+rm -f ${HOME}/vm-${DEPLOY_NAME}-lab-inventory.yaml
+rm -f ${HOME}/vm-${DEPLOY_NAME}-lab-instackenv.yaml
+
 pushd ${PROJECT_DIR}
     source ansible-env-vars.rc
     ansible-playbook -i inventory-dsal.yaml \

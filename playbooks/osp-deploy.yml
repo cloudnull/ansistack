@@ -61,10 +61,6 @@
       set_fact:
         target_nodes: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] }}"
 
-    - name: Set Node count fact
-      set_fact:
-        target_node_count: "{{ target_nodes | length }}"
-
     - name: Ensure local facts directory exists
       become: true
       file:
@@ -87,8 +83,6 @@
           value: true
         - option: osp_magic_number
           value: "{{ (24 | random) }}"
-      when:
-        - deploy_osp | default(true) | bool
 
     - name: Refresh local facts
       setup:
@@ -154,23 +148,23 @@
         virtualenv_site_packages: yes
         virtualenv_python: "{{ ansible_python_interpreter | basename }}"
 
-    - name: Create run osp deploy script
-      template:
-        src: run_osp_deploy.sh.j2
-        dest: "{{ ansible_env.HOME }}/run-osp-deploy.sh"
-        mode: '0755'
-
-    - name: Run deployment command(s)
+    - name: Run deployment block
       when:
         - deploy_osp | default(true) | bool
-      shell: "{{ ansible_env.HOME }}/run-osp-deploy.sh"
-      become: false
+      block:
+        - name: Create run osp deploy script
+          template:
+            src: run_osp_deploy.sh.j2
+            dest: "{{ ansible_env.HOME }}/run-osp-deploy.sh"
+            mode: '0755'
 
-    - name: Build notice
-      when:
-        - deploy_osp | default(true) | bool
-      debug:
-        msg: >-
-          Stack creation has started. Connect to the system `{{ ansible_host }}`
-          as `{{ ansible_user }}`. When ready, you can monitor the installation
-          progress via the `undercloud` tmux session.
+        - name: Run deployment command(s)
+          shell: "{{ ansible_env.HOME }}/run-osp-deploy.sh"
+          become: false
+
+        - name: Build notice
+          debug:
+            msg: >-
+              Stack creation has started. Connect to the system `{{ ansible_host }}`
+              as `{{ ansible_user }}`. When ready, you can monitor the installation
+              progress via the `undercloud` tmux session.

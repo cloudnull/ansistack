@@ -10,9 +10,15 @@ parameter_defaults:
 
   DnsServers: {{ redhat_dns_servers }}
 
-  ControllerCount: 3
+  ControllerCount: {{ target_nodes | selectattr("capabilities", "match", ".*control.*") | list | length }}
 
-  ComputeCount: {{ (target_node_count | int) - 3 }}
+  ComputeCount: {{ target_nodes | selectattr("capabilities", "match", ".*compute.*") | list | length }}
+
+  CephStorageCount: {{ target_nodes | selectattr("capabilities", "match", ".*ceph.*") | list | length }}
+
+  BlockStorageCount: {{ target_nodes | selectattr("capabilities", "match", ".*block.*") | list | length }}
+
+  ObjectStorageCount: {{ target_nodes | selectattr("capabilities", "match", ".*swift.*") | list | length }}
 
   NtpServer: {{ redhat_ntp_servers }}
 

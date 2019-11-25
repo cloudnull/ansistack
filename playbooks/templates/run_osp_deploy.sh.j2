@@ -22,7 +22,6 @@ tmux send-keys "openstack overcloud node introspect --all-manageable --provide -
 {%   set _ = environments.append('$THT/environments/ssl/inject-trust-anchor.yaml') %}
 {% endif %}
 {% set _ = environments.append('$THT/environments/disable-telemetry.yaml') %}
-{# {% set _ = environments.append('$THT/environments/network-isolation.yaml') %} #}
 {% set _ = environments.append('containers-prepare-parameters.yaml') %}
 {% set _ = environments.append('params.yaml') %}
 tmux send-keys "openstack overcloud deploy --templates $THT/ -e {{ environments | join(' -e ') }} --timeout 100" C-m
