@@ -35,7 +35,8 @@ all_machines:
             libvirt_monitor:
               hosts:
                 monitor:
-                  ansible_host: 10.1.11.238
+                  ansible_host: 10.1.11.243
+                  ansible_user: centos
             libvirt_hosts:
               hosts:
                 dell-r730-031.dsal.lab.eng.rdu2.redhat.com:
@@ -172,7 +173,6 @@ all_machines:
                       vm_disk_size: 96  # Size in GiB
                       vm_protected: false
                       undercloud_target: true
-                      vm_image_name: rhel8.0
                     monitor:
                       vm_uplink_floats:
                         gateway: 10.1.11.254
@@ -186,8 +186,8 @@ all_machines:
         osp_vms:
           vars:
             vm_virt_host: "10.1.8.62"
-            vm_cores: 8  # Number of cores
-            vm_ram: 16384  # Size in MiB
+            vm_cores: 6   # Number of cores
+            vm_ram: 8192  # Size in MiB
             vm_disk_size: 72  # Size in GiB
             vm_image_name: centos7  # Set the base image used for raw vms
           children:
@@ -210,32 +210,150 @@ all_machines:
                       vm_vbmc_port: 11005
                     lshort-dell-r730-033-vm-6:
                       vm_vbmc_port: 11006
-                    dell-r730-033-vm-7:
+                    lshort-dell-r730-033-vm-7:
                       vm_vbmc_port: 11007
-                    dell-r730-033-vm-8:
+                    lshort-dell-r730-033-vm-8:
                       vm_vbmc_port: 11008
-                    dell-r730-033-vm-9:
+                    lshort-dell-r730-033-vm-9:
                       vm_vbmc_port: 11009
-                    dell-r730-033-vm-10:
+                    lshort-dell-r730-033-vm-10:
                       vm_vbmc_port: 11010
-                    dell-r730-033-vm-11:
+                    lshort-dell-r730-033-vm-11:
                       vm_vbmc_port: 11011
-                    dell-r730-033-vm-12:
+                    lshort-dell-r730-033-vm-12:
                       vm_vbmc_port: 11012
-                    dell-r730-033-vm-13:
+                    lshort-dell-r730-033-vm-13:
                       vm_vbmc_port: 11013
-                    dell-r730-033-vm-14:
+                    lshort-dell-r730-033-vm-14:
                       vm_vbmc_port: 11014
-                    dell-r730-033-vm-15:
+                    lshort-dell-r730-033-vm-15:
                       vm_vbmc_port: 11015
-                    dell-r730-033-vm-16:
+                    lshort-dell-r730-033-vm-16:
                       vm_vbmc_port: 11016
-                    dell-r730-033-vm-18:
+                    lshort-dell-r730-033-vm-18:
                       vm_vbmc_port: 11018
-                    dell-r730-033-vm-19:
+                    lshort-dell-r730-033-vm-19:
                       vm_vbmc_port: 11019
-                    dell-r730-033-vm-20:
+                    lshort-dell-r730-033-vm-20:
                       vm_vbmc_port: 11020
+                    lshort-dell-r730-033-vm-21:
+                      vm_vbmc_port: 11021
+                    lshort-dell-r730-033-vm-22:
+                      vm_vbmc_port: 11022
+                    lshort-dell-r730-033-vm-23:
+                      vm_vbmc_port: 11023
+                    lshort-dell-r730-033-vm-24:
+                      vm_vbmc_port: 11024
+                    lshort-dell-r730-033-vm-25:
+                      vm_vbmc_port: 11025
+                    lshort-dell-r730-033-vm-26:
+                      vm_vbmc_port: 11026
+                    lshort-dell-r730-033-vm-27:
+                      vm_vbmc_port: 11027
+                    lshort-dell-r730-033-vm-28:
+                      vm_vbmc_port: 11028
+                    lshort-dell-r730-033-vm-29:
+                      vm_vbmc_port: 11029
+                    lshort-dell-r730-033-vm-30:
+                      vm_vbmc_port: 11030
+                    lshort-dell-r730-033-vm-31:
+                      vm_vbmc_port: 11031
+                    lshort-dell-r730-033-vm-32:
+                      vm_vbmc_port: 11032
+                    lshort-dell-r730-033-vm-33:
+                      vm_vbmc_port: 11033
+                    lshort-dell-r730-033-vm-34:
+                      vm_vbmc_port: 11034
+                    lshort-dell-r730-033-vm-35:
+                      vm_vbmc_port: 11035
+                    lshort-dell-r730-033-vm-36:
+                      vm_vbmc_port: 11036
+                    lshort-dell-r730-033-vm-37:
+                      vm_vbmc_port: 11037
+                    lshort-dell-r730-033-vm-38:
+                      vm_vbmc_port: 11038
+                    lshort-dell-r730-033-vm-39:
+                      vm_vbmc_port: 11039
+                    lshort-dell-r730-033-vm-40:
+                      vm_vbmc_port: 11040
+                    lshort-dell-r730-033-vm-41:
+                      vm_vbmc_port: 11041
+                    lshort-dell-r730-033-vm-42:
+                      vm_vbmc_port: 11042
+                    lshort-dell-r730-033-vm-43:
+                      vm_vbmc_port: 11043
+                    lshort-dell-r730-033-vm-44:
+                      vm_vbmc_port: 11044
+                    lshort-dell-r730-033-vm-45:
+                      vm_vbmc_port: 11045
+                    lshort-dell-r730-033-vm-46:
+                      vm_vbmc_port: 11046
+                    lshort-dell-r730-033-vm-47:
+                      vm_vbmc_port: 11047
+                    lshort-dell-r730-033-vm-48:
+                      vm_vbmc_port: 11048
+                    lshort-dell-r730-033-vm-49:
+                      vm_vbmc_port: 11049
+                    lshort-dell-r730-033-vm-50:
+                      vm_vbmc_port: 11050
+                    lshort-dell-r730-033-vm-51:
+                      vm_vbmc_port: 11051
+                    lshort-dell-r730-033-vm-52:
+                      vm_vbmc_port: 11052
+                    lshort-dell-r730-033-vm-53:
+                      vm_vbmc_port: 11053
+                    lshort-dell-r730-033-vm-54:
+                      vm_vbmc_port: 11054
+                    lshort-dell-r730-033-vm-55:
+                      vm_vbmc_port: 11055
+                    lshort-dell-r730-033-vm-56:
+                      vm_vbmc_port: 11056
+                    lshort-dell-r730-033-vm-57:
+                      vm_vbmc_port: 11057
+                    lshort-dell-r730-033-vm-58:
+                      vm_vbmc_port: 11058
+                    lshort-dell-r730-033-vm-59:
+                      vm_vbmc_port: 11059
+                    lshort-dell-r730-033-vm-60:
+                      vm_vbmc_port: 11060
+                    lshort-dell-r730-033-vm-61:
+                      vm_vbmc_port: 11061
+                    lshort-dell-r730-033-vm-62:
+                      vm_vbmc_port: 11062
+                    lshort-dell-r730-033-vm-63:
+                      vm_vbmc_port: 11063
+                    lshort-dell-r730-033-vm-64:
+                      vm_vbmc_port: 11064
+                    lshort-dell-r730-033-vm-65:
+                      vm_vbmc_port: 11065
+                    lshort-dell-r730-033-vm-66:
+                      vm_vbmc_port: 11066
+                    lshort-dell-r730-033-vm-67:
+                      vm_vbmc_port: 11067
+                    lshort-dell-r730-033-vm-68:
+                      vm_vbmc_port: 11068
+                    lshort-dell-r730-033-vm-69:
+                      vm_vbmc_port: 11069
+                    lshort-dell-r730-033-vm-70:
+                      vm_vbmc_port: 11070
+                    lshort-dell-r730-033-vm-71:
+                      vm_vbmc_port: 11071
+                    lshort-dell-r730-033-vm-72:
+                      vm_vbmc_port: 11072
+                    lshort-dell-r730-033-vm-73:
+                      vm_vbmc_port: 11073
+                    lshort-dell-r730-033-vm-74:
+                      vm_vbmc_port: 11074
+                    lshort-dell-r730-033-vm-75:
+                      vm_vbmc_port: 11075
+                    lshort-dell-r730-033-vm-76:
+                      vm_vbmc_port: 11076
+                    lshort-dell-r730-033-vm-77:
+                      vm_vbmc_port: 11077
+                    lshort-dell-r730-033-vm-78:
+                      vm_vbmc_port: 11078
+                    lshort-dell-r730-033-vm-79:
+                      vm_vbmc_port: 11079
                 dell_r740_001_vms:
                   vars:
                     vm_virt_host: "10.1.8.62"
@@ -266,28 +384,146 @@ all_machines:
                       vm_vbmc_port: 13007
                     lshort-dell-r730-034-vm-8:
                       vm_vbmc_port: 13008
-                    dell-r730-034-vm-9:
+                    lshort-dell-r730-034-vm-9:
                       vm_vbmc_port: 13009
-                    dell-r730-034-vm-10:
+                    lshort-dell-r730-034-vm-10:
                       vm_vbmc_port: 13010
-                    dell-r730-034-vm-11:
+                    lshort-dell-r730-034-vm-11:
                       vm_vbmc_port: 13011
-                    dell-r730-034-vm-12:
+                    lshort-dell-r730-034-vm-12:
                       vm_vbmc_port: 13012
-                    dell-r730-034-vm-13:
+                    lshort-dell-r730-034-vm-13:
                       vm_vbmc_port: 13013
-                    dell-r730-034-vm-14:
+                    lshort-dell-r730-034-vm-14:
                       vm_vbmc_port: 13014
-                    dell-r730-034-vm-15:
+                    lshort-dell-r730-034-vm-15:
                       vm_vbmc_port: 13015
-                    dell-r730-034-vm-16:
+                    lshort-dell-r730-034-vm-16:
                       vm_vbmc_port: 13016
-                    dell-r730-034-vm-18:
+                    lshort-dell-r730-034-vm-18:
                       vm_vbmc_port: 13018
-                    dell-r730-034-vm-19:
+                    lshort-dell-r730-034-vm-19:
                       vm_vbmc_port: 13019
-                    dell-r730-034-vm-20:
+                    lshort-dell-r730-034-vm-20:
                       vm_vbmc_port: 13020
+                    lshort-dell-r730-034-vm-21:
+                      vm_vbmc_port: 13021
+                    lshort-dell-r730-034-vm-22:
+                      vm_vbmc_port: 13022
+                    lshort-dell-r730-034-vm-23:
+                      vm_vbmc_port: 13023
+                    lshort-dell-r730-034-vm-24:
+                      vm_vbmc_port: 13024
+                    lshort-dell-r730-034-vm-25:
+                      vm_vbmc_port: 13025
+                    lshort-dell-r730-034-vm-26:
+                      vm_vbmc_port: 13026
+                    lshort-dell-r730-034-vm-27:
+                      vm_vbmc_port: 13027
+                    lshort-dell-r730-034-vm-28:
+                      vm_vbmc_port: 13028
+                    lshort-dell-r730-034-vm-29:
+                      vm_vbmc_port: 13029
+                    lshort-dell-r730-034-vm-30:
+                      vm_vbmc_port: 13030
+                    lshort-dell-r730-034-vm-31:
+                      vm_vbmc_port: 13031
+                    lshort-dell-r730-034-vm-32:
+                      vm_vbmc_port: 13032
+                    lshort-dell-r730-034-vm-33:
+                      vm_vbmc_port: 13033
+                    lshort-dell-r730-034-vm-34:
+                      vm_vbmc_port: 13034
+                    lshort-dell-r730-034-vm-35:
+                      vm_vbmc_port: 13035
+                    lshort-dell-r730-034-vm-36:
+                      vm_vbmc_port: 13036
+                    lshort-dell-r730-034-vm-37:
+                      vm_vbmc_port: 13037
+                    lshort-dell-r730-034-vm-38:
+                      vm_vbmc_port: 13038
+                    lshort-dell-r730-034-vm-39:
+                      vm_vbmc_port: 13039
+                    lshort-dell-r730-034-vm-40:
+                      vm_vbmc_port: 13040
+                    lshort-dell-r730-034-vm-41:
+                      vm_vbmc_port: 13041
+                    lshort-dell-r730-034-vm-42:
+                      vm_vbmc_port: 13042
+                    lshort-dell-r730-034-vm-43:
+                      vm_vbmc_port: 13043
+                    lshort-dell-r730-034-vm-44:
+                      vm_vbmc_port: 13044
+                    lshort-dell-r730-034-vm-45:
+                      vm_vbmc_port: 13045
+                    lshort-dell-r730-034-vm-46:
+                      vm_vbmc_port: 13046
+                    lshort-dell-r730-034-vm-47:
+                      vm_vbmc_port: 13047
+                    lshort-dell-r730-034-vm-48:
+                      vm_vbmc_port: 13048
+                    lshort-dell-r730-034-vm-49:
+                      vm_vbmc_port: 13049
+                    lshort-dell-r730-034-vm-50:
+                      vm_vbmc_port: 13050
+                    lshort-dell-r730-034-vm-51:
+                      vm_vbmc_port: 13051
+                    lshort-dell-r730-034-vm-52:
+                      vm_vbmc_port: 13052
+                    lshort-dell-r730-034-vm-53:
+                      vm_vbmc_port: 13053
+                    lshort-dell-r730-034-vm-54:
+                      vm_vbmc_port: 13054
+                    lshort-dell-r730-034-vm-55:
+                      vm_vbmc_port: 13055
+                    lshort-dell-r730-034-vm-56:
+                      vm_vbmc_port: 13056
+                    lshort-dell-r730-034-vm-57:
+                      vm_vbmc_port: 13057
+                    lshort-dell-r730-034-vm-58:
+                      vm_vbmc_port: 13058
+                    lshort-dell-r730-034-vm-59:
+                      vm_vbmc_port: 13059
+                    lshort-dell-r730-034-vm-60:
+                      vm_vbmc_port: 13060
+                    lshort-dell-r730-034-vm-61:
+                      vm_vbmc_port: 13061
+                    lshort-dell-r730-034-vm-62:
+                      vm_vbmc_port: 13062
+                    lshort-dell-r730-034-vm-63:
+                      vm_vbmc_port: 13063
+                    lshort-dell-r730-034-vm-64:
+                      vm_vbmc_port: 13064
+                    lshort-dell-r730-034-vm-65:
+                      vm_vbmc_port: 13065
+                    lshort-dell-r730-034-vm-66:
+                      vm_vbmc_port: 13066
+                    lshort-dell-r730-034-vm-67:
+                      vm_vbmc_port: 13067
+                    lshort-dell-r730-034-vm-68:
+                      vm_vbmc_port: 13068
+                    lshort-dell-r730-034-vm-69:
+                      vm_vbmc_port: 13069
+                    lshort-dell-r730-034-vm-70:
+                      vm_vbmc_port: 13070
+                    lshort-dell-r730-034-vm-71:
+                      vm_vbmc_port: 13071
+                    lshort-dell-r730-034-vm-72:
+                      vm_vbmc_port: 13072
+                    lshort-dell-r730-034-vm-73:
+                      vm_vbmc_port: 13073
+                    lshort-dell-r730-034-vm-74:
+                      vm_vbmc_port: 13074
+                    lshort-dell-r730-034-vm-75:
+                      vm_vbmc_port: 13075
+                    lshort-dell-r730-034-vm-76:
+                      vm_vbmc_port: 13076
+                    lshort-dell-r730-034-vm-77:
+                      vm_vbmc_port: 13077
+                    lshort-dell-r730-034-vm-78:
+                      vm_vbmc_port: 13078
+                    lshort-dell-r730-034-vm-79:
+                      vm_vbmc_port: 13079
                 dell_r730_012_vms:
                   vars:
                     vm_virt_host: "10.1.8.22"
@@ -315,26 +551,144 @@ all_machines:
                       vm_vbmc_port: 14008
                     lshort-dell-r730-012-vm-9:
                       vm_vbmc_port: 14009
-                    dell-r730-012-vm-10:
+                    lshort-dell-r730-012-vm-10:
                       vm_vbmc_port: 14010
-                    dell-r730-012-vm-11:
+                    lshort-dell-r730-012-vm-11:
                       vm_vbmc_port: 14011
-                    dell-r730-012-vm-12:
+                    lshort-dell-r730-012-vm-12:
                       vm_vbmc_port: 14012
-                    dell-r730-012-vm-13:
+                    lshort-dell-r730-012-vm-13:
                       vm_vbmc_port: 14013
-                    dell-r730-012-vm-14:
+                    lshort-dell-r730-012-vm-14:
                       vm_vbmc_port: 14014
-                    dell-r730-012-vm-15:
+                    lshort-dell-r730-012-vm-15:
                       vm_vbmc_port: 14015
-                    dell-r730-012-vm-16:
+                    lshort-dell-r730-012-vm-16:
                       vm_vbmc_port: 14016
-                    dell-r730-012-vm-18:
+                    lshort-dell-r730-012-vm-18:
                       vm_vbmc_port: 14018
-                    dell-r730-012-vm-19:
+                    lshort-dell-r730-012-vm-19:
                       vm_vbmc_port: 14019
-                    dell-r730-012-vm-20:
+                    lshort-dell-r730-012-vm-20:
                       vm_vbmc_port: 14020
+                    lshort-dell-r730-012-vm-21:
+                      vm_vbmc_port: 14021
+                    lshort-dell-r730-012-vm-22:
+                      vm_vbmc_port: 14022
+                    lshort-dell-r730-012-vm-23:
+                      vm_vbmc_port: 14023
+                    lshort-dell-r730-012-vm-24:
+                      vm_vbmc_port: 14024
+                    lshort-dell-r730-012-vm-25:
+                      vm_vbmc_port: 14025
+                    lshort-dell-r730-012-vm-26:
+                      vm_vbmc_port: 14026
+                    lshort-dell-r730-012-vm-27:
+                      vm_vbmc_port: 14027
+                    lshort-dell-r730-012-vm-28:
+                      vm_vbmc_port: 14028
+                    lshort-dell-r730-012-vm-29:
+                      vm_vbmc_port: 14029
+                    lshort-dell-r730-012-vm-30:
+                      vm_vbmc_port: 14030
+                    lshort-dell-r730-012-vm-31:
+                      vm_vbmc_port: 14031
+                    lshort-dell-r730-012-vm-32:
+                      vm_vbmc_port: 14032
+                    lshort-dell-r730-012-vm-33:
+                      vm_vbmc_port: 14033
+                    lshort-dell-r730-012-vm-34:
+                      vm_vbmc_port: 14034
+                    lshort-dell-r730-012-vm-35:
+                      vm_vbmc_port: 14035
+                    lshort-dell-r730-012-vm-36:
+                      vm_vbmc_port: 14036
+                    lshort-dell-r730-012-vm-37:
+                      vm_vbmc_port: 14037
+                    lshort-dell-r730-012-vm-38:
+                      vm_vbmc_port: 14038
+                    lshort-dell-r730-012-vm-39:
+                      vm_vbmc_port: 14039
+                    lshort-dell-r730-012-vm-40:
+                      vm_vbmc_port: 14040
+                    lshort-dell-r730-012-vm-41:
+                      vm_vbmc_port: 14041
+                    lshort-dell-r730-012-vm-42:
+                      vm_vbmc_port: 14042
+                    lshort-dell-r730-012-vm-43:
+                      vm_vbmc_port: 14043
+                    lshort-dell-r730-012-vm-44:
+                      vm_vbmc_port: 14044
+                    lshort-dell-r730-012-vm-45:
+                      vm_vbmc_port: 14045
+                    lshort-dell-r730-012-vm-46:
+                      vm_vbmc_port: 14046
+                    lshort-dell-r730-012-vm-47:
+                      vm_vbmc_port: 14047
+                    lshort-dell-r730-012-vm-48:
+                      vm_vbmc_port: 14048
+                    lshort-dell-r730-012-vm-49:
+                      vm_vbmc_port: 14049
+                    lshort-dell-r730-012-vm-50:
+                      vm_vbmc_port: 14050
+                    lshort-dell-r730-012-vm-51:
+                      vm_vbmc_port: 14051
+                    lshort-dell-r730-012-vm-52:
+                      vm_vbmc_port: 14052
+                    lshort-dell-r730-012-vm-53:
+                      vm_vbmc_port: 14053
+                    lshort-dell-r730-012-vm-54:
+                      vm_vbmc_port: 14054
+                    lshort-dell-r730-012-vm-55:
+                      vm_vbmc_port: 14055
+                    lshort-dell-r730-012-vm-56:
+                      vm_vbmc_port: 14056
+                    lshort-dell-r730-012-vm-57:
+                      vm_vbmc_port: 14057
+                    lshort-dell-r730-012-vm-58:
+                      vm_vbmc_port: 14058
+                    lshort-dell-r730-012-vm-59:
+                      vm_vbmc_port: 14059
+                    lshort-dell-r730-012-vm-60:
+                      vm_vbmc_port: 14060
+                    lshort-dell-r730-012-vm-61:
+                      vm_vbmc_port: 14061
+                    lshort-dell-r730-012-vm-62:
+                      vm_vbmc_port: 14062
+                    lshort-dell-r730-012-vm-63:
+                      vm_vbmc_port: 14063
+                    lshort-dell-r730-012-vm-64:
+                      vm_vbmc_port: 14064
+                    lshort-dell-r730-012-vm-65:
+                      vm_vbmc_port: 14065
+                    lshort-dell-r730-012-vm-66:
+                      vm_vbmc_port: 14066
+                    lshort-dell-r730-012-vm-67:
+                      vm_vbmc_port: 14067
+                    lshort-dell-r730-012-vm-68:
+                      vm_vbmc_port: 14068
+                    lshort-dell-r730-012-vm-69:
+                      vm_vbmc_port: 14069
+                    lshort-dell-r730-012-vm-70:
+                      vm_vbmc_port: 14070
+                    lshort-dell-r730-012-vm-71:
+                      vm_vbmc_port: 14071
+                    lshort-dell-r730-012-vm-72:
+                      vm_vbmc_port: 14072
+                    lshort-dell-r730-012-vm-73:
+                      vm_vbmc_port: 14073
+                    lshort-dell-r730-012-vm-74:
+                      vm_vbmc_port: 14074
+                    lshort-dell-r730-012-vm-75:
+                      vm_vbmc_port: 14075
+                    lshort-dell-r730-012-vm-76:
+                      vm_vbmc_port: 14076
+                    lshort-dell-r730-012-vm-77:
+                      vm_vbmc_port: 14077
+                    lshort-dell-r730-012-vm-78:
+                      vm_vbmc_port: 14078
+                    lshort-dell-r730-012-vm-79:
+                      vm_vbmc_port: 14079
                 dell_r630_001_vms:
                   vars:
                     vm_virt_host: "10.1.8.61"
@@ -360,28 +714,146 @@ all_machines:
                       vm_vbmc_port: 15007
                     lshort-dell-r630-001-vm-8:
                       vm_vbmc_port: 15008
-                    dell-r630-001-vm-9:
+                    lshort-dell-r630-001-vm-9:
                       vm_vbmc_port: 15009
-                    dell-r630-001-vm-10:
+                    lshort-dell-r630-001-vm-10:
                       vm_vbmc_port: 15010
-                    dell-r630-001-vm-11:
+                    lshort-dell-r630-001-vm-11:
                       vm_vbmc_port: 15011
-                    dell-r630-001-vm-12:
+                    lshort-dell-r630-001-vm-12:
                       vm_vbmc_port: 15012
-                    dell-r630-001-vm-13:
+                    lshort-dell-r630-001-vm-13:
                       vm_vbmc_port: 15013
-                    dell-r630-001-vm-14:
+                    lshort-dell-r630-001-vm-14:
                       vm_vbmc_port: 15014
-                    dell-r630-001-vm-15:
+                    lshort-dell-r630-001-vm-15:
                       vm_vbmc_port: 15015
-                    dell-r630-001-vm-16:
+                    lshort-dell-r630-001-vm-16:
                       vm_vbmc_port: 15016
-                    dell-r630-001-vm-18:
+                    lshort-dell-r630-001-vm-18:
                       vm_vbmc_port: 15018
-                    dell-r630-001-vm-19:
+                    lshort-dell-r630-001-vm-19:
                       vm_vbmc_port: 15019
-                    dell-r630-001-vm-20:
+                    lshort-dell-r630-001-vm-20:
                       vm_vbmc_port: 15020
+                    lshort-dell-r630-001-vm-21:
+                      vm_vbmc_port: 15021
+                    lshort-dell-r630-001-vm-22:
+                      vm_vbmc_port: 15022
+                    lshort-dell-r630-001-vm-23:
+                      vm_vbmc_port: 15023
+                    lshort-dell-r630-001-vm-24:
+                      vm_vbmc_port: 15024
+                    lshort-dell-r630-001-vm-25:
+                      vm_vbmc_port: 15025
+                    lshort-dell-r630-001-vm-26:
+                      vm_vbmc_port: 15026
+                    lshort-dell-r630-001-vm-27:
+                      vm_vbmc_port: 15027
+                    lshort-dell-r630-001-vm-28:
+                      vm_vbmc_port: 15028
+                    lshort-dell-r630-001-vm-29:
+                      vm_vbmc_port: 15029
+                    lshort-dell-r630-001-vm-30:
+                      vm_vbmc_port: 15030
+                    lshort-dell-r630-001-vm-31:
+                      vm_vbmc_port: 15031
+                    lshort-dell-r630-001-vm-32:
+                      vm_vbmc_port: 15032
+                    lshort-dell-r630-001-vm-33:
+                      vm_vbmc_port: 15033
+                    lshort-dell-r630-001-vm-34:
+                      vm_vbmc_port: 15034
+                    lshort-dell-r630-001-vm-35:
+                      vm_vbmc_port: 15035
+                    lshort-dell-r630-001-vm-36:
+                      vm_vbmc_port: 15036
+                    lshort-dell-r630-001-vm-37:
+                      vm_vbmc_port: 15037
+                    lshort-dell-r630-001-vm-38:
+                      vm_vbmc_port: 15038
+                    lshort-dell-r630-001-vm-39:
+                      vm_vbmc_port: 15039
+                    lshort-dell-r630-001-vm-40:
+                      vm_vbmc_port: 15040
+                    lshort-dell-r630-001-vm-41:
+                      vm_vbmc_port: 15041
+                    lshort-dell-r630-001-vm-42:
+                      vm_vbmc_port: 15042
+                    lshort-dell-r630-001-vm-43:
+                      vm_vbmc_port: 15043
+                    lshort-dell-r630-001-vm-44:
+                      vm_vbmc_port: 15044
+                    lshort-dell-r630-001-vm-45:
+                      vm_vbmc_port: 15045
+                    lshort-dell-r630-001-vm-46:
+                      vm_vbmc_port: 15046
+                    lshort-dell-r630-001-vm-47:
+                      vm_vbmc_port: 15047
+                    lshort-dell-r630-001-vm-48:
+                      vm_vbmc_port: 15048
+                    lshort-dell-r630-001-vm-49:
+                      vm_vbmc_port: 15049
+                    lshort-dell-r630-001-vm-50:
+                      vm_vbmc_port: 15050
+                    lshort-dell-r630-001-vm-51:
+                      vm_vbmc_port: 15051
+                    lshort-dell-r630-001-vm-52:
+                      vm_vbmc_port: 15052
+                    lshort-dell-r630-001-vm-53:
+                      vm_vbmc_port: 15053
+                    lshort-dell-r630-001-vm-54:
+                      vm_vbmc_port: 15054
+                    lshort-dell-r630-001-vm-55:
+                      vm_vbmc_port: 15055
+                    lshort-dell-r630-001-vm-56:
+                      vm_vbmc_port: 15056
+                    lshort-dell-r630-001-vm-57:
+                      vm_vbmc_port: 15057
+                    lshort-dell-r630-001-vm-58:
+                      vm_vbmc_port: 15058
+                    lshort-dell-r630-001-vm-59:
+                      vm_vbmc_port: 15059
+                    lshort-dell-r630-001-vm-60:
+                      vm_vbmc_port: 15060
+                    lshort-dell-r630-001-vm-61:
+                      vm_vbmc_port: 15061
+                    lshort-dell-r630-001-vm-62:
+                      vm_vbmc_port: 15062
+                    lshort-dell-r630-001-vm-63:
+                      vm_vbmc_port: 15063
+                    lshort-dell-r630-001-vm-64:
+                      vm_vbmc_port: 15064
+                    lshort-dell-r630-001-vm-65:
+                      vm_vbmc_port: 15065
+                    lshort-dell-r630-001-vm-66:
+                      vm_vbmc_port: 15066
+                    lshort-dell-r630-001-vm-67:
+                      vm_vbmc_port: 15067
+                    lshort-dell-r630-001-vm-68:
+                      vm_vbmc_port: 15068
+                    lshort-dell-r630-001-vm-69:
+                      vm_vbmc_port: 15069
+                    lshort-dell-r630-001-vm-70:
+                      vm_vbmc_port: 15070
+                    lshort-dell-r630-001-vm-71:
+                      vm_vbmc_port: 15071
+                    lshort-dell-r630-001-vm-72:
+                      vm_vbmc_port: 15072
+                    lshort-dell-r630-001-vm-73:
+                      vm_vbmc_port: 15073
+                    lshort-dell-r630-001-vm-74:
+                      vm_vbmc_port: 15074
+                    lshort-dell-r630-001-vm-75:
+                      vm_vbmc_port: 15075
+                    lshort-dell-r630-001-vm-76:
+                      vm_vbmc_port: 15076
+                    lshort-dell-r630-001-vm-77:
+                      vm_vbmc_port: 15077
+                    lshort-dell-r630-001-vm-78:
+                      vm_vbmc_port: 15078
+                    lshort-dell-r630-001-vm-79:
+                      vm_vbmc_port: 15079
                 dell_r730_035_vms:
                   vars:
                     vm_virt_host: "10.1.8.45"
@@ -407,28 +879,146 @@ all_machines:
                       vm_vbmc_port: 16007
                     lshort-dell-r730-035-vm-8:
                       vm_vbmc_port: 16008
-                    dell-r730-035-vm-9:
+                    lshort-dell-r730-035-vm-9:
                       vm_vbmc_port: 16009
-                    dell-r730-035-vm-10:
+                    lshort-dell-r730-035-vm-10:
                       vm_vbmc_port: 16010
-                    dell-r730-035-vm-11:
+                    lshort-dell-r730-035-vm-11:
                       vm_vbmc_port: 16011
-                    dell-r730-035-vm-12:
+                    lshort-dell-r730-035-vm-12:
                       vm_vbmc_port: 16012
-                    dell-r730-035-vm-13:
+                    lshort-dell-r730-035-vm-13:
                       vm_vbmc_port: 16013
-                    dell-r730-035-vm-14:
+                    lshort-dell-r730-035-vm-14:
                       vm_vbmc_port: 16014
-                    dell-r730-035-vm-15:
+                    lshort-dell-r730-035-vm-15:
                       vm_vbmc_port: 16015
-                    dell-r730-035-vm-16:
+                    lshort-dell-r730-035-vm-16:
                       vm_vbmc_port: 16016
-                    dell-r730-035-vm-18:
+                    lshort-dell-r730-035-vm-18:
                       vm_vbmc_port: 16018
-                    dell-r730-035-vm-19:
+                    lshort-dell-r730-035-vm-19:
                       vm_vbmc_port: 16019
-                    dell-r730-035-vm-20:
+                    lshort-dell-r730-035-vm-20:
                       vm_vbmc_port: 16020
+                    lshort-dell-r730-035-vm-21:
+                      vm_vbmc_port: 16021
+                    lshort-dell-r730-035-vm-22:
+                      vm_vbmc_port: 16022
+                    lshort-dell-r730-035-vm-23:
+                      vm_vbmc_port: 16023
+                    lshort-dell-r730-035-vm-24:
+                      vm_vbmc_port: 16024
+                    lshort-dell-r730-035-vm-25:
+                      vm_vbmc_port: 16025
+                    lshort-dell-r730-035-vm-26:
+                      vm_vbmc_port: 16026
+                    lshort-dell-r730-035-vm-27:
+                      vm_vbmc_port: 16027
+                    lshort-dell-r730-035-vm-28:
+                      vm_vbmc_port: 16028
+                    lshort-dell-r730-035-vm-29:
+                      vm_vbmc_port: 16029
+                    lshort-dell-r730-035-vm-30:
+                      vm_vbmc_port: 16030
+                    lshort-dell-r730-035-vm-31:
+                      vm_vbmc_port: 16031
+                    lshort-dell-r730-035-vm-32:
+                      vm_vbmc_port: 16032
+                    lshort-dell-r730-035-vm-33:
+                      vm_vbmc_port: 16033
+                    lshort-dell-r730-035-vm-34:
+                      vm_vbmc_port: 16034
+                    lshort-dell-r730-035-vm-35:
+                      vm_vbmc_port: 16035
+                    lshort-dell-r730-035-vm-36:
+                      vm_vbmc_port: 16036
+                    lshort-dell-r730-035-vm-37:
+                      vm_vbmc_port: 16037
+                    lshort-dell-r730-035-vm-38:
+                      vm_vbmc_port: 16038
+                    lshort-dell-r730-035-vm-39:
+                      vm_vbmc_port: 16039
+                    lshort-dell-r730-035-vm-40:
+                      vm_vbmc_port: 16040
+                    lshort-dell-r730-035-vm-41:
+                      vm_vbmc_port: 16041
+                    lshort-dell-r730-035-vm-42:
+                      vm_vbmc_port: 16042
+                    lshort-dell-r730-035-vm-43:
+                      vm_vbmc_port: 16043
+                    lshort-dell-r730-035-vm-44:
+                      vm_vbmc_port: 16044
+                    lshort-dell-r730-035-vm-45:
+                      vm_vbmc_port: 16045
+                    lshort-dell-r730-035-vm-46:
+                      vm_vbmc_port: 16046
+                    lshort-dell-r730-035-vm-47:
+                      vm_vbmc_port: 16047
+                    lshort-dell-r730-035-vm-48:
+                      vm_vbmc_port: 16048
+                    lshort-dell-r730-035-vm-49:
+                      vm_vbmc_port: 16049
+                    lshort-dell-r730-035-vm-50:
+                      vm_vbmc_port: 16050
+                    lshort-dell-r730-035-vm-51:
+                      vm_vbmc_port: 16051
+                    lshort-dell-r730-035-vm-52:
+                      vm_vbmc_port: 16052
+                    lshort-dell-r730-035-vm-53:
+                      vm_vbmc_port: 16053
+                    lshort-dell-r730-035-vm-54:
+                      vm_vbmc_port: 16054
+                    lshort-dell-r730-035-vm-55:
+                      vm_vbmc_port: 16055
+                    lshort-dell-r730-035-vm-56:
+                      vm_vbmc_port: 16056
+                    lshort-dell-r730-035-vm-57:
+                      vm_vbmc_port: 16057
+                    lshort-dell-r730-035-vm-58:
+                      vm_vbmc_port: 16058
+                    lshort-dell-r730-035-vm-59:
+                      vm_vbmc_port: 16059
+                    lshort-dell-r730-035-vm-60:
+                      vm_vbmc_port: 16060
+                    lshort-dell-r730-035-vm-61:
+                      vm_vbmc_port: 16061
+                    lshort-dell-r730-035-vm-62:
+                      vm_vbmc_port: 16062
+                    lshort-dell-r730-035-vm-63:
+                      vm_vbmc_port: 16063
+                    lshort-dell-r730-035-vm-64:
+                      vm_vbmc_port: 16064
+                    lshort-dell-r730-035-vm-65:
+                      vm_vbmc_port: 16065
+                    lshort-dell-r730-035-vm-66:
+                      vm_vbmc_port: 16066
+                    lshort-dell-r730-035-vm-67:
+                      vm_vbmc_port: 16067
+                    lshort-dell-r730-035-vm-68:
+                      vm_vbmc_port: 16068
+                    lshort-dell-r730-035-vm-69:
+                      vm_vbmc_port: 16069
+                    lshort-dell-r730-035-vm-70:
+                      vm_vbmc_port: 16070
+                    lshort-dell-r730-035-vm-71:
+                      vm_vbmc_port: 16071
+                    lshort-dell-r730-035-vm-72:
+                      vm_vbmc_port: 16072
+                    lshort-dell-r730-035-vm-73:
+                      vm_vbmc_port: 16073
+                    lshort-dell-r730-035-vm-74:
+                      vm_vbmc_port: 16074
+                    lshort-dell-r730-035-vm-75:
+                      vm_vbmc_port: 16075
+                    lshort-dell-r730-035-vm-76:
+                      vm_vbmc_port: 16076
+                    lshort-dell-r730-035-vm-77:
+                      vm_vbmc_port: 16077
+                    lshort-dell-r730-035-vm-78:
+                      vm_vbmc_port: 16078
+                    lshort-dell-r730-035-vm-79:
+                      vm_vbmc_port: 16079
                 dell_r730_036_vms:
                   vars:
                     vm_virt_host: "10.1.8.46"
@@ -446,29 +1036,147 @@ all_machines:
                       vm_vbmc_port: 17005
                     lshort-dell-r730-036-vm-6:
                       vm_vbmc_port: 17006
-                    dell-r730-036-vm-7:
+                    lshort-dell-r730-036-vm-7:
                       vm_vbmc_port: 17007
-                    dell-r730-036-vm-8:
+                    lshort-dell-r730-036-vm-8:
                       vm_vbmc_port: 17008
-                    dell-r730-036-vm-9:
+                    lshort-dell-r730-036-vm-9:
                       vm_vbmc_port: 17009
-                    dell-r730-036-vm-10:
+                    lshort-dell-r730-036-vm-10:
                       vm_vbmc_port: 17010
-                    dell-r730-036-vm-11:
+                    lshort-dell-r730-036-vm-11:
                       vm_vbmc_port: 17011
-                    dell-r730-036-vm-12:
+                    lshort-dell-r730-036-vm-12:
                       vm_vbmc_port: 17012
-                    dell-r730-036-vm-13:
+                    lshort-dell-r730-036-vm-13:
                       vm_vbmc_port: 17013
-                    dell-r730-036-vm-14:
+                    lshort-dell-r730-036-vm-14:
                       vm_vbmc_port: 17014
-                    dell-r730-036-vm-15:
+                    lshort-dell-r730-036-vm-15:
                       vm_vbmc_port: 17015
-                    dell-r730-036-vm-16:
+                    lshort-dell-r730-036-vm-16:
                       vm_vbmc_port: 17016
-                    dell-r730-036-vm-18:
+                    lshort-dell-r730-036-vm-18:
                       vm_vbmc_port: 17018
-                    dell-r730-036-vm-19:
+                    lshort-dell-r730-036-vm-19:
                       vm_vbmc_port: 17019
-                    dell-r730-036-vm-20:
+                    lshort-dell-r730-036-vm-20:
                       vm_vbmc_port: 17020
+                    lshort-dell-r730-036-vm-21:
+                      vm_vbmc_port: 17021
+                    lshort-dell-r730-036-vm-22:
+                      vm_vbmc_port: 17022
+                    lshort-dell-r730-036-vm-23:
+                      vm_vbmc_port: 17023
+                    lshort-dell-r730-036-vm-24:
+                      vm_vbmc_port: 17024
+                    lshort-dell-r730-036-vm-25:
+                      vm_vbmc_port: 17025
+                    lshort-dell-r730-036-vm-26:
+                      vm_vbmc_port: 17026
+                    lshort-dell-r730-036-vm-27:
+                      vm_vbmc_port: 17027
+                    lshort-dell-r730-036-vm-28:
+                      vm_vbmc_port: 17028
+                    lshort-dell-r730-036-vm-29:
+                      vm_vbmc_port: 17029
+                    lshort-dell-r730-036-vm-30:
+                      vm_vbmc_port: 17030
+                    lshort-dell-r730-036-vm-31:
+                      vm_vbmc_port: 17031
+                    lshort-dell-r730-036-vm-32:
+                      vm_vbmc_port: 17032
+                    lshort-dell-r730-036-vm-33:
+                      vm_vbmc_port: 17033
+                    lshort-dell-r730-036-vm-34:
+                      vm_vbmc_port: 17034
+                    lshort-dell-r730-036-vm-35:
+                      vm_vbmc_port: 17035
+                    lshort-dell-r730-036-vm-36:
+                      vm_vbmc_port: 17036
+                    lshort-dell-r730-036-vm-37:
+                      vm_vbmc_port: 17037
+                    lshort-dell-r730-036-vm-38:
+                      vm_vbmc_port: 17038
+                    lshort-dell-r730-036-vm-39:
+                      vm_vbmc_port: 17039
+                    lshort-dell-r730-036-vm-40:
+                      vm_vbmc_port: 17040
+                    lshort-dell-r730-036-vm-41:
+                      vm_vbmc_port: 17041
+                    lshort-dell-r730-036-vm-42:
+                      vm_vbmc_port: 17042
+                    lshort-dell-r730-036-vm-43:
+                      vm_vbmc_port: 17043
+                    lshort-dell-r730-036-vm-44:
+                      vm_vbmc_port: 17044
+                    lshort-dell-r730-036-vm-45:
+                      vm_vbmc_port: 17045
+                    lshort-dell-r730-036-vm-46:
+                      vm_vbmc_port: 17046
+                    lshort-dell-r730-036-vm-47:
+                      vm_vbmc_port: 17047
+                    lshort-dell-r730-036-vm-48:
+                      vm_vbmc_port: 17048
+                    lshort-dell-r730-036-vm-49:
+                      vm_vbmc_port: 17049
+                    lshort-dell-r730-036-vm-50:
+                      vm_vbmc_port: 17050
+                    lshort-dell-r730-036-vm-51:
+                      vm_vbmc_port: 17051
+                    lshort-dell-r730-036-vm-52:
+                      vm_vbmc_port: 17052
+                    lshort-dell-r730-036-vm-53:
+                      vm_vbmc_port: 17053
+                    lshort-dell-r730-036-vm-54:
+                      vm_vbmc_port: 17054
+                    lshort-dell-r730-036-vm-55:
+                      vm_vbmc_port: 17055
+                    lshort-dell-r730-036-vm-56:
+                      vm_vbmc_port: 17056
+                    lshort-dell-r730-036-vm-57:
+                      vm_vbmc_port: 17057
+                    lshort-dell-r730-036-vm-58:
+                      vm_vbmc_port: 17058
+                    lshort-dell-r730-036-vm-59:
+                      vm_vbmc_port: 17059
+                    lshort-dell-r730-036-vm-60:
+                      vm_vbmc_port: 17060
+                    lshort-dell-r730-036-vm-61:
+                      vm_vbmc_port: 17061
+                    lshort-dell-r730-036-vm-62:
+                      vm_vbmc_port: 17062
+                    lshort-dell-r730-036-vm-63:
+                      vm_vbmc_port: 17063
+                    lshort-dell-r730-036-vm-64:
+                      vm_vbmc_port: 17064
+                    lshort-dell-r730-036-vm-65:
+                      vm_vbmc_port: 17065
+                    lshort-dell-r730-036-vm-66:
+                      vm_vbmc_port: 17066
+                    lshort-dell-r730-036-vm-67:
+                      vm_vbmc_port: 17067
+                    lshort-dell-r730-036-vm-68:
+                      vm_vbmc_port: 17068
+                    lshort-dell-r730-036-vm-69:
+                      vm_vbmc_port: 17069
+                    lshort-dell-r730-036-vm-70:
+                      vm_vbmc_port: 17070
+                    lshort-dell-r730-036-vm-71:
+                      vm_vbmc_port: 17071
+                    lshort-dell-r730-036-vm-72:
+                      vm_vbmc_port: 17072
+                    lshort-dell-r730-036-vm-73:
+                      vm_vbmc_port: 17073
+                    lshort-dell-r730-036-vm-74:
+                      vm_vbmc_port: 17074
+                    lshort-dell-r730-036-vm-75:
+                      vm_vbmc_port: 17075
+                    lshort-dell-r730-036-vm-76:
+                      vm_vbmc_port: 17076
+                    lshort-dell-r730-036-vm-77:
+                      vm_vbmc_port: 17077
+                    lshort-dell-r730-036-vm-78:
+                      vm_vbmc_port: 17078
+                    lshort-dell-r730-036-vm-79:
+                      vm_vbmc_port: 17079
