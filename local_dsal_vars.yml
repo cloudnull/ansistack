@@ -11,7 +11,6 @@ redhat_development_hash:
     release: 14-trunk
     compose: http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/OpenStack/14.0-RHEL-7/latest/overcloud_container_image_prepare.yaml
 
-redhat_cloud_image_url: 'https://access.cdn.redhat.com/content/origin/files/sha256/53/5374da54169844ec36a291da7adb4b2e2254020a97b1e7eaaa92cebf8f4ac6e4/rhel-8.0-update-1-x86_64-kvm.qcow2?user=a26051c345422326dc742824ad94c80c&_auth_=1566923444_ff4b02c9704e272195f48a15694e7850'
 redhat_package_url: http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
 redhat_ca_certs_url: https://password.corp.redhat.com/RH-IT-Root-CA.crt
 redhat_docker_registry: brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888

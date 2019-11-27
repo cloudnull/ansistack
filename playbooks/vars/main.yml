@@ -96,7 +96,7 @@ vm_image_data:
   rhel8.0:
     url: "{{ redhat_80_cloud_image_url | default('undefined') }}"
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
-    name: rhel-8.0-update-x86_64-kvm.qcow2
+    name: rhel-8.0-x86_64-kvm.qcow2
     access_user: 'cloud-user'
     cloud_init_packages:
       - NetworkManager
@@ -105,7 +105,7 @@ vm_image_data:
   rhel8:
     url: "{{ redhat_8_cloud_image_url | default('undefined') }}"
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
-    name: rhel-8-update-1-x86_64-kvm.qcow2
+    name: rhel-8-x86_64-kvm.qcow2
     access_user: 'cloud-user'
     cloud_init_packages:
       - NetworkManager
@@ -114,7 +114,7 @@ vm_image_data:
   rhel8-ppc64le:
     url: "{{ redhat_8_ppc64le_cloud_image_url | default('undefined') }}"
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
-    name: rhel-8.0-ppc64le-kvm.qcow2
+    name: rhel-8-ppc64le-kvm.qcow2
     access_user: 'cloud-user'
     arch: ppc64le
     cloud_init_packages:

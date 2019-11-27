@@ -106,16 +106,6 @@
       loop: "{{ ansible_play_hosts }}"
       run_once: true
 
-    - name: Check for rhel image used in vm
-      fail:
-        msg: >-
-          RHEL image has been selected and the option `redhat_cloud_image_url` is undefined.
-          Check your options and try again.
-      when:
-        - "'vm_image_name' in hostvars[inventory_hostname]"
-        - hostvars[inventory_hostname]['vm_image_name'] | regex_search('(rhel)')
-        - redhat_cloud_image_url is undefined
-
     - name: Setup block
       when:
         - not (vm_purge | default(_vm_purge) | bool)

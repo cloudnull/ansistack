@@ -26,18 +26,6 @@
   delay: 1
   ignore_errors: true
 
-- name: Create disk image
-  command: >-
-    qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
-  args:
-    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
-  environment:
-    LIBGUESTFS_BACKEND: direct
-  register: disk_image
-  until: disk_image.rc == 0
-  retries: 16
-  delay: 2
-
 - name: Create osp virt xml
   command: >-
     virt-install
@@ -55,6 +43,18 @@
       --check path_in_use=off
   register: vm_xml
   until: vm_xml.rc == 0
+  retries: 16
+  delay: 2
+
+- name: Create disk image
+  command: >-
+    qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
+  args:
+    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
+  environment:
+    LIBGUESTFS_BACKEND: direct
+  register: disk_image
+  until: disk_image.rc == 0
   retries: 16
   delay: 2
 

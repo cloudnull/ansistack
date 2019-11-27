@@ -31,8 +31,18 @@ ssh_genkeytypes: ['rsa', 'ecdsa']
 ssh_pwauth: True
 
 # Install your public ssh key to the first user-defined user configured
-ssh_authorized_keys:
-  - "{{ lookup('file', vm_pub_key) }}"
+{% set keys = [lookup('file', vm_pub_key)] %}
+{% if vm_keys_links is defined %}
+{%   for item in vm_keys_links %}
+{%     set _ = keys.append(lookup('url', item, split_lines=False)) %}
+{%   endfor %}
+{% endif %}
+{% if vm_keys_files is defined %}
+{%   for item in vm_keys_files %}
+{%     set _ = keys.append(lookup('file', item)) %}
+{%   endfor %}
+{% endif %}
+ssh_authorized_keys: {{ keys }}
 
 # set timezone for VM
 timezone: UTC
