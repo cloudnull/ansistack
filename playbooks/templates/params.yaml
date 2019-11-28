@@ -23,11 +23,11 @@ parameter_defaults:
   NtpServer: {{ redhat_ntp_servers }}
 
   ControllerSchedulerHints:
-    'capabilities:node': 'controller-%index%'
+    'capabilities:node': '%stack%-controller-%index%'
   ComputeSchedulerHints:
-    'capabilities:node': 'compute-%index%'
+    'capabilities:node': '%stack%-compute-%index%'
   CephStorageSchedulerHints:
-    'capabilities:node': 'ceph-%index%'
+    'capabilities:node': '%stack%-ceph-%index%'
 
 {% if (redhat_access_username is defined) and (redhat_access_password is defined )%}
   ContainerImageRegistryCredentials:
