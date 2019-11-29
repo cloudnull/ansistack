@@ -55,7 +55,7 @@
         enabled: true
 
 - name: Setup DSAL metric collection
-  hosts: "vms"
+  hosts: "vms:all_vms"
   any_errors_fatal: true
   gather_facts: true
   become: true
