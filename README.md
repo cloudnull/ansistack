@@ -1,9 +1,9 @@
-# Virt Lab Setup and VM Deployment
+# AnsiStack
 
-This repository contains playbooks which may be useful when setting cloud
-deployments using Virtual Machines. While this is geared toward lab
-deployments there's nothing stopping these tools from being used in
-production.
+This repository contains tools for running cloud like infrastructure without
+cloud like APIs. The tools themselves are mostly Ansible playbooks which
+interact with hosts to provision and manage virtualized infrastructure with
+minimal, to no overhead.
 
 > All playbooks take user input, an example user input variable file can
   be seen in the `local_vars.yaml` file.
@@ -14,15 +14,11 @@ Standalone deployments are simple test driven deployments that rapidly
 deploys an run the overcloud on a single node. This playbook assumes
 raw VMs have already been created using the `vm-create.yml` playbook.
 
-To run the standalone deployment capability two arguments are required;
-`vm_job_target` and `vm_job_user`. These arguments denote the node
-name where the deployment will be executed, and the username used to
-login to the target node.
+Running the standalone deployment workflow.
 
 ``` shell
-$ ansible-playbook -i inventory-vms.yaml \
-                   playbooks/tripleo-standalone-deployment.yml \
-                   -e vm_job_target=raw-vm-3
+$ ansible-playbook -i ~/vm-local-lab-inventory.yaml \
+                   workflows/tripleo-standalone-deployment.yml --limit node1
 ```
 
 Other options exist which can aide in deployment setup and
@@ -47,7 +43,7 @@ supports most modern GNU/Linux distros.
 ###### Assumptions
 
 * VirtualBMC is already be installed and ready for use when using the
-  `osp_vms` group.
+  `bootable_vms` group.
 * The `virt-install` command is available on the `vm_virt_host` system.
 
 ###### Usage
@@ -126,7 +122,7 @@ which pertain the given release.
 redhat_package_url: ""
 redhat_ca_certs_url: ""
 redhat_docker_registries: []
-redhat_osp_release: ""
+redhat_bootable_release: ""
 redhat_ntp_servers: []
 redhat_dns_servers: []
 ```
@@ -135,5 +131,5 @@ Once the needed options are defined, the playbook can be invoked with the
 following command.
 
 ``` shell
-$ ansible-playbook -i inventory.yaml playbooks/osp-deployment.yml
+$ ansible-playbook -i inventory.yaml workflows/osp-deployment.yml
 ```

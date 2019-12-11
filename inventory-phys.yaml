@@ -1,131 +1,80 @@
 ---
-
-all_machines:
+all:
   vars:
-    ansible_become: yes
-    ansible_become_user: "root"
-    ansible_user: "root"
-    ansible_ssh_extra_args: >-
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-      -o Compression=no
-      -o TCPKeepAlive=yes
-      -o VerifyHostKeyDNS=no
-      -o ForwardX11=no
-      -o ForwardAgent=no
+    provisioned_vm_inventory_file: "{{ lookup('env', 'HOME') }}/vm-local-lab-inventory.yaml"
   children:
-    all_vms:
+    all_machines:
       vars:
-        ansible_become: true
+        ansible_become: yes
         ansible_become_user: "root"
         ansible_user: "root"
-        vm_vbmc_username: admin
-        vm_vbmc_password: secrete
-        vm_uplink_floats: {}
+        ansible_ssh_extra_args: >-
+          -o UserKnownHostsFile=/dev/null
+          -o StrictHostKeyChecking=no
+          -o Compression=no
+          -o TCPKeepAlive=yes
+          -o VerifyHostKeyDNS=no
+          -o ForwardX11=no
+          -o ForwardAgent=no
+        ansible_python_interpreter: "/usr/bin/python3"
+        server_networks:
+          uplink:
+            interface: bond0
+          provisioning:
+            interface: BOND0-VLAN10
+          external:
+            interface: BOND0-VLAN11
       children:
-        osp_vms:
+        all_hosts:
           children:
-            osp_compute_hosts:
+            compute_hosts:
               children:
-                osp_compute1:
-                  vars:
-                    vm_virt_host: "172.16.27.216"
-                    vm_cores: 6
-                    vm_ram: 8192
-                    vm_disk_size: 96
+                proxmox_hosts:
                   hosts:
-                    osp-compute1-vm-controller1:
-                      vm_vbmc_port: 16020
-                    osp-compute1-vm-controller2:
-                      vm_vbmc_port: 16021
-                    osp-compute1-vm-controller3:
-                      vm_vbmc_port: 16022
-                    osp-compute1-vm-compute1:
-                      vm_cores: 4
-                      vm_ram: 4096
-                      vm_vbmc_port: 16030
-                    osp-compute1-vm-compute2:
-                      vm_cores: 4
-                      vm_ram: 4096
-                      vm_vbmc_port: 16031
-        raw_vms:
-          children:
-            raw_compute_hosts:
-              children:
-                raw_compute1:
-                  vars:
-                    vm_virt_host: "172.16.27.216"
-                    vm_cores: 6  # Number of cores
-                    vm_ram: 8192  # Size in MiB
-                    vm_disk_size: 96  # Size in GiB
-                    ansible_python_interpreter: "/usr/bin/python"
+                    compute3:
+                      ansible_host: 172.16.27.25
+                  children:
+                    infra_vms:
+                      hosts:
+                        router:
+                          ansible_host: 172.16.27.44
+                          ansible_python_interpreter: "/usr/bin/python"
+                    containers:
+                      hosts:
+                        plex_indexer:
+                          ansible_host: 172.16.27.227
+
+                libvirt_hosts:
                   hosts:
-                    test1:
-                      vm_image_name: centos7
-                    test2:
-                      vm_image_name: centos7
-                    test3:
-                      vm_image_name: centos7
-    all_hosts:
-      children:
-        compute_hosts:
-          children:
-            proxmox_hosts:
+                    compute1:
+                      ansible_host: 172.16.27.216
+
+                    compute2:
+                      ansible_host: 172.16.27.67
+
+            infra_hosts:
               hosts:
-                compute3:
-                  ansible_host: 172.16.27.25
-                  ansible_python_interpreter: "/usr/bin/python3"
+                plex:
+                  ansible_host: 172.16.27.219
+                brix:
+                  ansible_host: 172.16.27.218
+                  ansible_python_interpreter: "/usr/bin/python"
               children:
-                infra_vms:
-                  hosts:
-                    router:
-                      ansible_host: 172.16.27.44
-                      ansible_python_interpreter: "/usr/bin/python"
                 containers:
                   hosts:
-                    plex_indexer:
-                      ansible_host: 172.16.27.227
-                      ansible_python_interpreter: "/usr/bin/python3"
+                    irc:
+                      ansible_host: 172.16.27.52
+                    unifi:
+                      ansible_host: 172.16.27.141
 
-            libvirt_hosts:
+            storage_hosts:
               hosts:
-                compute1:
-                  ansible_host: 172.16.27.216
-                  ansible_python_interpreter: "/usr/bin/python3"
-
-                compute2:
-                  ansible_host: 172.16.27.67
-                  ansible_python_interpreter: "/usr/bin/python3"
-
-        infra_hosts:
-          hosts:
-            plex:
-              ansible_host: 172.16.27.219
-              ansible_python_interpreter: "/usr/bin/python3"
-            brix:
-              ansible_host: 172.16.27.218
-              ansible_python_interpreter: "/usr/bin/python"
-          children:
-            containers:
-              hosts:
-                irc:
-                  ansible_host: 172.16.27.52
-                  ansible_python_interpreter: "/usr/bin/python3"
-                unifi:
-                  ansible_host: 172.16.27.141
-                  ansible_python_interpreter: "/usr/bin/python3"
-
-        storage_hosts:
-          hosts:
-            system:
-              ansible_host: 172.16.24.92
-              ansible_python_interpreter: "/usr/bin/python3"
-          children:
-            containers:
-              hosts:
-                sabnzb:
-                  ansible_host: 172.16.27.244
-                  ansible_python_interpreter: "/usr/bin/python3"
-                transmission:
-                  ansible_host: 172.16.27.49
-                  ansible_python_interpreter: "/usr/bin/python3"
+                system:
+                  ansible_host: 172.16.24.92
+              children:
+                containers:
+                  hosts:
+                    sabnzb:
+                      ansible_host: 172.16.27.244
+                    transmission:
+                      ansible_host: 172.16.27.49

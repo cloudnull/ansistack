@@ -1,0 +1,209 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+#
+# This playbook has three basic options:
+#   * vm_cleanup - if `true` clenaup old VMs and create create new ones
+#   * vm_purge - if `true` purge all VMs
+#   * vm_flags - Options to pass into libvirt (virt-install).
+#
+# This setup tool requires two networks to be enabled within libvirt: ['provisioning', 'external'].
+#
+
+- name: Create virtual machines
+  hosts: all_vms
+  any_errors_fatal: true
+  gather_facts: false
+  user: root
+  vars:
+    image_download_set: |-
+      {% set image_set = {} %}
+      {% for host in ansible_play_hosts %}
+      {%   set _ = image_set.__setitem__(
+          hostvars[host]['vm_virt_host']
+          ~ ':'
+          ~ vm_image_data[hostvars[host]['vm_image_name']]['path']
+          ~ ':' ~ vm_image_data[hostvars[host]['vm_image_name']]['name'],
+          vm_image_data[hostvars[host]['vm_image_name']]['url']
+        )
+      %}
+      {% endfor %}
+      {{ image_set }}
+  vars_files:
+    - vars/main.yml
+
+  handlers:
+    - name: Deployment notice
+      debug:
+        msg: >-
+          VM(s) creation has completed. An instackenv file has been created for the generated nodes.
+          This file can be found here `{{ instackenv_file }}`.
+      run_once: true
+
+    - name: Raw deployment notice
+      debug:
+        msg: >-
+          VM(s) creation has completed. An inventory file has been created for the generated nodes.
+          This file can be found here `{{ provisioned_vm_inventory_file }}`.
+      run_once: true
+
+  pre_tasks:
+    - name: Check for required hostvars
+      fail:
+        msg: >-
+          The required variable `{{ item.name }}` is undefined. Define the option in order to continue.
+      when:
+        - item.condition | bool
+        - hostvars[inventory_hostname][item.name] is undefined
+      with_items:
+        - name: vm_virt_host
+          condition: true
+        - name: vm_cores
+          condition: true
+        - name: vm_ram
+          condition: true
+        - name: vm_disk_size
+          condition: true
+        - name: vm_image_name
+          condition: "{{ inventory_hostname in groups['provisioned_vms'] }}"
+      delegate_to: localhost
+      connection: local
+
+    - name: Set instackenv file fact
+      set_fact:
+        instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+      when:
+        - instackenv_file is undefined
+
+    - name: Set inventory file path
+      set_fact:
+        provisioned_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
+      when:
+        - provisioned_vm_inventory_file is undefined
+
+    - name: Create in-memory vm_virt_hosts group
+      add_host:
+        name: "{{ hostvars[item]['vm_virt_host'] }}"
+        groups: vm_virt_hosts
+      changed_when: false
+      when:
+        - hostvars[item]['vm_virt_host'] is defined
+      loop: "{{ ansible_play_hosts }}"
+      run_once: true
+
+    - name: Setup block
+      when:
+        - not (vm_purge | default(_vm_purge) | bool)
+      block:
+        - name: Refresh local facts
+          setup:
+            gather_subset: "!all"
+          run_once: true
+          delegate_to: "{{ item }}"
+          with_items: "{{ groups['vm_virt_hosts'] }}"
+
+        - name: Gather variables for each operating system
+          include_vars: "{{ item }}"
+          delegate_to: "{{ vm_virt_host }}"
+          with_first_found:
+            - "vars/{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+            - "vars/{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+            - "vars/{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+            - "vars/{{ ansible_distribution | lower }}.yml"
+            - "vars/{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+            - "vars/{{ ansible_os_family | lower }}.yml"
+          tags:
+            - always
+
+        - name: Ensure local facts directory exists
+          file:
+            dest: "/etc/ansible/facts.d"
+            state: directory
+            group: "root"
+            owner: "root"
+            mode:  "0755"
+            recurse: no
+          run_once: true
+          delegate_to: "{{ item }}"
+          when:
+            - ansible_local['virt_cloud']['setup']['initialized'] is undefined
+          with_items: "{{ groups['vm_virt_hosts'] }}"
+
+        - name: initialize local facts
+          ini_file:
+            dest: "/etc/ansible/facts.d/virt_cloud.fact"
+            section: "setup"
+            option: initialized
+            value: true
+          run_once: true
+          delegate_to: "{{ item }}"
+          when:
+            - ansible_local['virt_cloud']['setup']['initialized'] is undefined
+          with_items: "{{ groups['vm_virt_hosts'] }}"
+
+    - include_tasks: task-files/_vm-pre-flight.yml
+      when:
+        - ansible_local['virt_cloud']['setup']['pre_flight_complete'] is undefined
+
+    - name: Check VM
+      command: >-
+        virsh dominfo {{ inventory_hostname }}
+      failed_when: false
+      changed_when: false
+      register: vm_dominfo
+      delegate_to: "{{ vm_virt_host }}"
+
+    - name: Set protected fact
+      set_fact:
+        vm_protected: "{{ (hostvars[inventory_hostname]['vm_protected'] is defined) and (hostvars[inventory_hostname]['vm_protected'] | bool) and (vm_dominfo.rc == 0) }}"
+
+    - include_tasks: task-files/_vm-cleanup.yml
+      when:
+        - (vm_purge | default(_vm_purge) | bool) or (not (vm_protected | bool))
+        - (vm_purge | default(_vm_purge) | bool) or (vm_cleanup | default(_vm_cleanup) | bool)
+        - (vm_purge | default(_vm_purge) | bool) or (vm_dominfo.rc == 0)
+
+  tasks:
+    - name: Check for purge
+      meta: end_play
+      when:
+        - (vm_purge | default(_vm_purge) | bool)
+
+    - name: Create block
+      delegate_to: "{{ vm_virt_host }}"
+      when:
+        - (vm_cleanup | default(_vm_cleanup) | bool) or
+          (vm_dominfo.rc != 0)
+        - (not (vm_protected | bool))
+      block:
+        - name: Create vm directory
+          file:
+            path: "/var/lib/libvirt/images/{{ inventory_hostname }}"
+            state: directory
+
+        - name: Gather virt-host facts
+          setup:
+            gather_subset: "!facter,!ohai"
+
+        - include_tasks: task-files/_vm-create.yml
+
+
+# Generate a local inventory
+- import_playbook: vm-inventory.yml
+  when:
+    - not (vm_purge | default(_vm_purge) | bool)

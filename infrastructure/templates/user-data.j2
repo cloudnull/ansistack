@@ -1,0 +1,77 @@
+#cloud-config
+# Customize as per your need. At least change username (vivek) and ssh-ed22519
+# key with your actual public key
+password: Password1
+chpasswd: { expire: False }
+
+# Hostname management
+preserve_hostname: False
+hostname: {{ inventory_hostname }}
+fqdn: {{ inventory_hostname }}.local
+
+# Setup Users with ssh keys so that I can log in into new machine
+users:
+  - default
+  - name: vm-user
+    groups: []
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_pwauth: True
+    ssh-authorized-keys:
+      - "{{ lookup('file', vm_pub_key) }}"
+
+# Configure where output will go
+output:
+  all: ">> /var/log/cloud-init.log"
+
+# configure interaction with ssh server
+ssh_svcname: ssh
+ssh_deletekeys: True
+ssh_genkeytypes: ['rsa', 'ecdsa']
+ssh_pwauth: True
+
+# Install your public ssh key to the first user-defined user configured
+{% set keys = lookup('file', vm_pub_key).splitlines() %}
+{% if vm_keys_links is defined %}
+{%   for item in vm_keys_links %}
+{%     for key in lookup('url', item, split_lines=True) %}
+{%       set _ = keys.append(key) %}
+{%     endfor %}
+{%   endfor %}
+{% endif %}
+{% if vm_keys_files is defined %}
+{%   for item in vm_keys_files %}
+{%     for key in lookup('file', item).splitlines() %}
+{%       set _ = keys.append(key) %}
+{%     endfor %}
+{%   endfor %}}
+{% endif %}
+ssh_authorized_keys: {{ keys }}
+
+# set timezone for VM
+timezone: UTC
+
+packages: {{ vm_packages }}
+
+{% set cmd_list = ["systemctl enable network", "systemctl restart network", "systemctl enable sshd", "systemctl restart sshd"] %}
+{% set _ = cmd_list.append('systemctl enable NetworkManager') %}
+{% set _ = cmd_list.append('systemctl start NetworkManager') %}
+{% for k, v in vm_networks.items() %}
+{%   if (v.manager is defined and v.manager == 'nmcli') %}
+{%     if (v.interface is defined) and (v.address is defined) and (v.netmask is defined) and (v.gateway is defined) %}
+{%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ k ~ ' ifname ' ~ v.interface ~ ' ip4 ' ~ v.address ~ '/' ~ v.netmask ~ ' gw4 ' ~ v.gateway) %}
+{%     elif (v.interface is defined) and (v.dhcp is defined and v.dhcp | bool) %}
+{%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ k ~ ' ifname ' ~ v.interface ~ ' ipv4.method auto ipv6.method auto') %}
+{%     elif (v.interface is defined) and (v.dhcp is defined and not (v.dhcp | bool)) %}
+{%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ k ~ ' ifname ' ~ v.interface ~ ' ipv4.method disabled ipv6.method ignore') %}
+{%     endif %}
+{%     if (v.dns is defined) %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.dns ' ~ (v.dns | join(' ') | string) ) %}
+{%     endif %}
+{%     set _ = cmd_list.append('nmcli con down ' ~ k) %}
+{%     set _ = cmd_list.append('nmcli con up ' ~ k) %}
+{%   endif %}
+{% endfor %}
+{% set _ = cmd_list.append('systemctl enable qemu-guest-agent') %}
+{% set _ = cmd_list.append('systemctl restart qemu-guest-agent') %}
+runcmd: {{ cmd_list }}

@@ -1,0 +1,10 @@
+---
+
+tripleo_system_ceph_packages: []
+
+developer_system_packages:
+  - gcc
+  - git
+  - tmux
+  - vim
+  - virtualenv

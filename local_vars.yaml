@@ -1,12 +1,6 @@
 ---
 
-# When true existing targets will be destroyed and rebuilt when encountered.
-vm_cleanup: false
-
 vm_image_shared_storage: true
-
-# Enable ceph within the deployment
-tripleo_ceph_enabled: false
 
 # Example patches to apply to an environment.
 # NOTICE(cloudnull): One patch is a gerrit review, the other is an external
@@ -15,12 +9,9 @@ tripleo_ceph_enabled: false
 #   - url: "https://review.opendev.org/openstack/tripleo-heat-templates"
 #     refs: "refs/changes/86/683286/13"
 #     version: FETCH_HEAD
-
+#     install_in_venv: true || false
 developer_patches:
   - url: "https://review.opendev.org/openstack/python-tripleoclient"
-    refs: "refs/changes/78/671878/16"
+    refs: "refs/changes/78/671878/42"
     version: "FETCH_HEAD"
-
-server_provisioning_device: BOND0-VLAN10
-server_external_device: BOND0-VLAN11
-server_uplink_device: bond0
+    install_in_venv: false

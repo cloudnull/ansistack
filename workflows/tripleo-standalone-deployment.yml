@@ -1,0 +1,55 @@
+# Ansible cloud tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+# These playbooks use the "vms" group to control deployment nodes.
+# All of these playbooks will control flow using user input variables.
+- import_playbook: node-update.yml
+- import_playbook: tripleo-setup.yml
+- import_playbook: tripleo-standalone-setup-ceph.yml
+- import_playbook: tripleo-developer-packages.yml
+
+
+- name: Run tripleo standalone deployment
+  hosts: "all"
+  any_errors_fatal: true
+  gather_facts: true
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Setup basic standalone deployment
+      template:
+        src: "standalone_parameters.yaml.j2"
+        dest: "{{ ansible_env.HOME }}/standalone_parameters.yaml"
+        owner: "{{ ansible_env.USER }}"
+      become: true
+
+    - name: Create run osp deploy script
+      template:
+        src: run_tripleo_deploy.sh.j2
+        dest: "{{ ansible_env.HOME }}/run-tripleo-deploy.sh"
+        mode: '0755'
+
+    - name: Run deployment command(s)
+      shell: "{{ ansible_env.HOME }}/run-tripleo-deploy.sh"
+
+    - name: Build notice
+      debug:
+        msg: >-
+          Stack creation has started. Connect to the system `{{ ansible_host }}`
+          as `{{ vm_job_user }}`. When ready, you can monitor the installation
+          progress via the `standalone` tmux session.

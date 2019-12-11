@@ -1,0 +1,54 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Install packages on the compute host
+  hosts: routers
+  any_errors_fatal: true
+  gather_facts: true
+  user: root
+  vars:
+    dnsmasq_domain: localdomain
+    dnsmasq_server_address: 192.168.19.1
+    dnsmasq_dhcp_range:
+      start: 192.168.16.1
+      stop: 192.168.17.254
+      netmask: 255.255.252.0
+    dnsmasq_allowed_mac_prefix: 52:54:*:*:*:*
+    dnsmasq_interface: "{{ ansible_default_ipv4.alias }}"
+
+  vars_files:
+    - vars/main.yml
+
+  handlers:
+    - name: Restart dnsmasq
+      systemd:
+        name: dnsmasq
+        state: restarted
+
+  tasks:
+    - name: Run package updates across the board
+      package:
+        name: "dnsmasq"
+        state: "latest"
+
+    - name: Create the dnsmasq config file
+      template:
+        src: dnsmasq.conf.j2
+        dest: /etc/dnsmasq.conf
+      notify:
+        - Restart dnsmasq

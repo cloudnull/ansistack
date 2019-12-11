@@ -1,0 +1,44 @@
+---
+
+developer_py_venv_packages:
+  - rdopkg
+  - glances
+
+# list of hashes which point to patches to pull from online sources
+#
+#  developer_patches:
+#    - url: "https://review.opendev.org/openstack/tripleo-common"
+#      refspec: "refs/changes/96/662496/5"
+#    - url: "https://review.opendev.org/openstack/tripleo-heat-templates"
+#      refspec: "refs/changes/80/662580/1"
+#    - url: "https://github.com/openstack/tripleo-ansible"
+#      version: "master"
+#
+developer_patches: []
+
+# Force developer packages to rebuild
+developer_rebuild_rpms: false
+
+# System packages to be installed in a development environment
+developer_system_packages: []
+
+# Name of the cuurent development release
+tripleo_version_dev_enabled: true
+tripleo_version: stein
+
+# Enable ceph support on the deployment
+tripleo_ceph_enabled: false
+tripleo_loopback_ceph_size: 10
+tripleo_ceph_templates: >-
+  -e /home/stack/standalone_ceph_parameters.yaml
+  -e /usr/share/openstack-tripleo-heat-templates/environments/ceph-ansible/ceph-ansible.yaml
+
+# Basic standalone network information. Only used in standalone deployments.
+tripleo_cidr: "192.168.24.0/24"
+tripleo_job_address: "192.168.24.2"
+
+# Set NTP list
+tripleo_ntp_servers:
+  - time.google.com
+  - time2.google.com
+  - time3.google.com

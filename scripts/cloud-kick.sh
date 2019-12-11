@@ -25,7 +25,6 @@ pushd ${PROJECT_DIR}
     ansible-playbook -i inventory-dsal.yaml \
                      -e @local_dsal_vars.yml \
                      -e vm_cleanup=yes \
-                     -e raw_vm_inventory_file=${HOME}/vm-${DEPLOY_NAME}-lab-inventory.yaml \
                      -e instackenv_file=${HOME}/vm-${DEPLOY_NAME}-lab-instackenv.yaml \
                      --forks 150 \
                      --limit "${DEPLOY_NAME}*:localhost" \

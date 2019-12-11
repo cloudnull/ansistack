@@ -1,0 +1,106 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Run tripleo developer setup
+  hosts: "all"
+  any_errors_fatal: true
+  gather_facts: true
+  become: true
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Install rdopkg
+      pip:
+        name: "{{ developer_py_venv_packages }}"
+        virtualenv: "/opt/rdo"
+        virtualenv_site_packages: yes
+        virtualenv_python: "{{ ((ansible_distribution | lower) != 'centos') | ternary('python3', omit) }}"
+
+    - name: Install developer patches
+      when:
+        - (developer_patches | length) > 0
+      vars:
+        ansible_python_interpreter: /opt/rdo/bin/python
+      block:
+        - name: Create delorian directories
+          file:
+            path: "/opt/tripleo/{{ item }}"
+            state: "directory"
+          with_items:
+            - rpms
+
+        - name: clone tripleo-ci
+          git:
+            dest: "/opt/tripleo-ci"
+            repo: "https://opendev.org/openstack/tripleo-ci"
+
+        - name: install tripleo-ci dependencies
+          command: /opt/tripleo-ci/scripts/tripleo.sh --delorean-setup
+          args:
+            creates: /opt/tripleo/delorean
+          environment:
+            TRIPLEO_ROOT: /opt/tripleo
+
+        - name: Cleanup repos with refspecs
+          file:
+            path: "/opt/tripleo/{{ item.url | basename }}"
+            state: absent
+          when:
+            - item.refs is defined
+          with_items: "{{ developer_patches }}"
+
+        - name: Clone patched repo(s)
+          git:
+            repo: "{{ item.url }}"
+            dest: "/opt/tripleo/{{ item.url | basename }}"
+            refspec: '{{ item.refs | default(omit) }}'
+            version: "{{ item.version | default(((item.refs is defined) | ternary('FETCH_HEAD', omit))) }}"
+          with_items: "{{ developer_patches }}"
+
+        - name: Force packages to rebuild
+          file:
+            path: "/opt/tripleo/delorean/{{ item.url | basename }}.created"
+            state: absent
+          with_items: "{{ developer_patches }}"
+          when:
+            - developer_rebuild_rpms | bool
+
+        - name: Download the centos gpg key
+          get_url:
+            url: http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-7
+            dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+          when:
+            - (ansible_distribution | lower) != 'centos'
+
+        - name: Install developer pip packages
+          pip:
+            name: "/opt/tripleo/{{ item.url | basename }}"
+            extra_args: '--force --upgrade'
+            virtualenv: "/opt/tripleo-patches"
+            virtualenv_site_packages: no
+            virtualenv_python: "{{ ((ansible_distribution | lower) != 'centos') | ternary('python3', omit) }}"
+          when:
+            - item.install_in_venv | default(false) | bool
+          with_items: "{{ developer_patches }}"
+
+        - name: Create run osp deploy script
+          template:
+            src: rpm_build.sh.j2
+            dest: "/opt/tripleo/build-packages.sh"
+            mode: '0755'

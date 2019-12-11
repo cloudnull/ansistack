@@ -1,0 +1,142 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Run tripleo setup
+  hosts: "all"
+  any_errors_fatal: true
+  gather_facts: true
+  become: true
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: set hostname properly
+      lineinfile:
+        dest: /etc/hosts
+        line: "127.0.0.1 undercloud.{{ ansible_domain }} undercloud localhost localhost.localdomain"
+        regexp: '^127\.0\.0\.1'
+
+    - name: Centos package setup
+      when:
+        - (ansible_distribution | lower) == 'centos'
+      block:
+        - name: fetch latest repo version
+          uri:
+            url: https://trunk.rdoproject.org/centos7/current/
+            return_content: yes
+          register: tripleo_packages
+
+        - name: Set package fact
+          set_fact:
+            tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python2-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
+
+        - name: install tripleo repository (centos)
+          package:
+            name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
+            state: present
+
+        - name: Enable tripleo repository (dev)
+          command: >-
+            tripleo-repos current-tripleo-dev {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
+          changed_when: false
+          when:
+            - tripleo_version_dev_enabled | bool
+
+        - name: Enable tripleo repository (stable)
+          command: >-
+            tripleo-repos -b {{ tripleo_version }} current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
+          args:
+            creates: "/etc/yum.repos.d/{{ tripleo_version }}-stable.repo"
+          changed_when: false
+          when:
+            - not (tripleo_version_dev_enabled | bool)
+
+        - name: Install tripleo packages (py2)
+          package:
+            name: "python-tripleoclient"
+            state: present
+
+    - name: Fedora package setup
+      when:
+        - (ansible_distribution | lower) == 'fedora'
+      block:
+        - name: fetch latest repo version
+          uri:
+            url: https://trunk.rdoproject.org/fedora/current/
+            return_content: yes
+          register: tripleo_packages
+
+        - name: Set package fact
+          set_fact:
+            tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python3-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
+
+        - name: install tripleo repository (fedora)
+          package:
+            name: "https://trunk.rdoproject.org/fedora/current/{{ tripleo_package_fact }}"
+            state: present
+
+        - name: Enable tripleo repository (fedora)
+          command: >-
+            tripleo-repos -d fedora current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
+          args:
+            creates: /etc/yum.repos.d/fedora-stable.repo
+          changed_when: false
+
+        - name: Install tripleo packages (py3)
+          package:
+            name: "python3-tripleoclient"
+            state: present
+
+    - name: Redhat package setup (internal)
+      when:
+        - (ansible_distribution | lower) == 'redhat'
+        - vm_internal_usage | default(false) | bool
+      block:
+        - name: Install tripleo packages (py3)
+          package:
+            name:
+              - python3-tripleoclient
+              - vim
+              - network-scripts
+              - patch
+              - git
+              - patchutils
+              - iptables-services
+            state: present
+
+    - name: Ensure local facts directory exists
+      file:
+        dest: "/etc/ansible/facts.d"
+        state: directory
+        group: "root"
+        owner: "root"
+        mode:  "0755"
+        recurse: no
+
+    - name: Set local ceph facts
+      ini_file:
+        dest: "/etc/ansible/facts.d/tripleo.fact"
+        section: "lab"
+        option: "tripleo_ceph_enabled"
+        value: "{{ tripleo_ceph_enabled }}"
+
+    - name: Set local package facts
+      ini_file:
+        dest: "/etc/ansible/facts.d/tripleo.fact"
+        section: "lab"
+        option: "tripleo_package_fact"
+        value: "{{ tripleo_package_fact }}"

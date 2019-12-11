@@ -1,0 +1,98 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Enroll OSP vms into vbmc
+  hosts: bootable_vms
+  any_errors_fatal: true
+  gather_facts: false
+  user: root
+  vars_files:
+    - vars/main.yml
+  pre_tasks:
+    - name: Check for required hostvars
+      fail:
+        msg: >-
+          The required variable `{{ item.name }}` is undefined. Define the option in order to continue.
+      when:
+        - item.condition | bool
+        - hostvars[inventory_hostname][item.name] is undefined
+      with_items:
+        - name: vm_vbmc_username
+          condition: "{{ inventory_hostname in groups['bootable_vms'] }}"
+        - name: vm_vbmc_password
+          condition: "{{ inventory_hostname in groups['bootable_vms'] }}"
+        - name: vm_vbmc_port
+          condition: "{{ inventory_hostname in groups['bootable_vms'] }}"
+      delegate_to: localhost
+      connection: local
+  tasks:
+    - name: vbmc add node
+      delegate_to: "{{ vm_virt_host }}"
+      block:
+        - name: Delete node from vbmc
+          command: >-
+            /opt/vbmc/bin/vbmc delete {{ inventory_hostname }}
+          ignore_errors: true
+
+        - name: Check for VM
+          virt:
+            name: "{{ inventory_hostname }}"
+            command: status
+          register: vm_status
+          until: vm_status is success
+          retries: 2
+          delay: 1
+          ignore_errors: true
+
+        - name: Add node to vbmc
+          command: >-
+            /opt/vbmc/bin/vbmc add {{ inventory_hostname }}
+              --port {{ vm_vbmc_port }}
+              --username {{ vm_vbmc_username }}
+              --password {{ vm_vbmc_password }}
+              --address {{ hostvars[hostvars[inventory_hostname]['vm_virt_host']]['ansible_host'] }}
+          register: vbmc_add
+          until: vbmc_add is success
+          retries: 3
+          delay: 2
+          when:
+            - vm_status is success
+
+        - name: Kill vbmcd
+          command: pkill --signal 9 --echo vbmcd
+          failed_when: false
+
+        - name: Enable and start vbmcd
+          systemd:
+            name: vbmcd.service
+            state: started
+
+        - name: Start vbmc node
+          command: /opt/vbmc/bin/vbmc start {{ inventory_hostname }}
+          register: start_vbmc_add
+          until: start_vbmc_add is success
+          retries: 3
+          delay: 2
+          when:
+            - vm_status is success
+
+        - name: Ensure vbmc node started
+          command: /opt/vbmc/bin/vbmc start {{ inventory_hostname }}
+          failed_when: false
+          when:
+            - vm_status is success

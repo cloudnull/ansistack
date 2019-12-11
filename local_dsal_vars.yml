@@ -17,6 +17,7 @@ redhat_docker_registry: brew-pulp-docker01.web.prod.ext.phx2.redhat.com:8888
 redhat_docker_registries:
   - docker-registry.engineering.redhat.com
   - "{{ redhat_docker_registry }}"
+
 redhat_osp_release: rhosp16
 redhat_ntp_servers:
   - clock.redhat.com
@@ -28,6 +29,5 @@ redhat_dns_servers:
 
 redhat_rhos_release: "{{ redhat_development_hash[redhat_osp_release]['release'] }}"
 redhat_puddle_local_images_url: "{{ redhat_development_hash[redhat_osp_release]['compose'] }}"
-
 redhat_access_username: cloudnull
 redhat_access_password: secrete

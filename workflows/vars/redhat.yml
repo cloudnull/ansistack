@@ -1,0 +1,13 @@
+---
+
+tripleo_system_ceph_packages:
+  - ceph-ansible
+  - util-linux
+  - lvm2
+
+developer_system_packages:
+  - gcc
+  - git
+  - python*-virtualenv
+  - tmux
+  - vim

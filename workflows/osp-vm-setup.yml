@@ -1,0 +1,163 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Run OSP setup
+  hosts: "all"
+  any_errors_fatal: true
+  gather_facts: false
+  become: true
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Run raw RHOS-Dev commands
+      raw: |-
+        if grep -qwo 'rhel' /etc/os-release; then
+          PKG_MGR=$(command -v dnf || command -v yum)
+          ${PKG_MGR} install -y {{ redhat_package_url }}
+          rhos-release {{ redhat_rhos_release }}
+          update-ca-trust enable
+          curl -k {{ redhat_ca_certs_url }} -o /etc/pki/ca-trust/source/anchors/{{ redhat_ca_certs_url | basename }};
+          update-ca-trust extract
+          dnf upgrade -y --allowerasing || yum upgrade -y
+          ${PKG_MGR} install -y vim network-scripts patch git patchutils iptables-services python*-virtualenv tmux OpenIPMI ipmitool
+        fi
+        # Disable IPv6 for now.
+        if ! grep -q 'all.disable_ipv6' /etc/sysctl.conf; then
+          sysctl -w net.ipv6.conf.all.disable_ipv6=1 | tee -a /etc/sysctl.conf
+        fi
+        if ! grep -q 'default.disable_ipv6' /etc/sysctl.conf; then
+          sysctl -w net.ipv6.conf.default.disable_ipv6=1 | tee -a /etc/sysctl.conf
+        fi
+        if ! grep -q 'lo.disable_ipv6' /etc/sysctl.conf; then
+          sysctl -w net.ipv6.conf.lo.disable_ipv6=1 | tee -a /etc/sysctl.conf
+        fi
+        timedatectl set-timezone UTC
+        hostnamectl --static --transient set-hostname {{ inventory_hostname | replace('_', '-') }}.localdomain
+      register: setup_vm
+      until: setup_vm is success
+      retries: 5
+      delay: 2
+      when:
+        - redhat_package_url is defined
+        - redhat_ca_certs_url is defined
+
+- name: Run OSP setup
+  hosts: "all"
+  any_errors_fatal: true
+  gather_facts: true
+  become: true
+  tags:
+    - upgrades
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Ensure local facts directory exists
+      file:
+        dest: "/etc/ansible/facts.d"
+        state: directory
+        group: "root"
+        owner: "root"
+        mode:  "0755"
+        recurse: no
+
+    - name: initialize local facts
+      ini_file:
+        dest: "/etc/ansible/facts.d/dsal.fact"
+        section: "setup"
+        option: "initialized"
+        value: "true"
+      register: hypervisor_initialized
+
+    - name: Reboot target
+      reboot:
+        reboot_timeout: 3600
+      when:
+        - hypervisor_initialized is changed
+
+    - name: tripleo client install
+      when:
+        - deploy_tripleoclient | default(true) | bool
+        - deploy_osp | default(true) | bool
+        - (ansible_distribution | lower) == 'redhat'
+      block:
+        - name: Install tripleo client
+          package:
+            name: "python3-tripleoclient"
+            state: "latest"
+            allow_downgrade: "{{ ((ansible_os_family | lower) == 'redhat') | ternary('yes', omit) }}"
+      rescue:
+        - name: Notice
+          debug:
+            msg: >-
+              The client installation has failed so OSP deployment will be disabled.
+
+        - name: Client install failed
+          set_fact:
+            deploy_osp: false
+
+    - name: Add the br-netfilter module
+      modprobe:
+        name: br-netfilter
+        state: present
+
+    - name: make module persistent
+      lineinfile:
+        path: /etc/modprobe.d/netfilter.conf
+        line: options br-netfilter
+        owner: root
+        group: root
+        mode: '0644'
+        create: true
+
+    - name: Create swap space
+      become: true
+      command: dd if=/dev/zero of=/swapfile bs=1M count=2048
+      register: mkswap_file
+      args:
+        creates: /swapfile
+
+    - name: set permissions on swap file
+      become: true
+      file:
+        path: /swapfile
+        mode: 0600
+
+    - name: format swap file
+      become: true
+      command: mkswap /swapfile
+      when:
+        - mkswap_file is changed
+
+    - name: add to fstab
+      become: true
+      lineinfile:
+        dest: /etc/fstab
+        regexp: "/swapfile"
+        line: "/swapfile none swap sw 0 0"
+
+    - name: turn on swap
+      become: true
+      command: swapon /swapfile
+      when:
+        - mkswap_file is changed
+
+    - name: set swapiness
+      become: true
+      sysctl:
+        name: vm.swappiness
+        value: "10"

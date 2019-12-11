@@ -5,8 +5,6 @@ all_machines:
     vm_image_path: /var/cache/images
     vm_image_shared_storage: false
     vm_cleanup: true
-    server_provisioning_device: BOND0-VLAN10
-    server_external_device: bond0
     ansible_become: yes
     ansible_become_user: "root"
     ansible_user: "root"
@@ -27,10 +25,11 @@ all_machines:
       -o ForwardX11=no
       -o ForwardAgent=no
     ansible_python_interpreter: "/usr/bin/python"
+    provisioned_vm_inventory_file: "{{ lookup('env', 'HOME') }}/vm-local-lab-inventory.yaml"
   children:
     all_hosts:
       children:
-        dsal_hosts:
+        hypervisor_hosts:
           children:
             libvirt_monitor:
               hosts:
@@ -40,50 +39,78 @@ all_machines:
             libvirt_hosts:
               hosts:
                 dell-r730-031.dsal.lab.eng.rdu2.redhat.com:
-                  server_uplink_device: em3
-                  server_provisioning_device: p1p1-VLAN151
-                  server_external_device: p1p2-VLAN160
+                  server_networks:
+                    uplink:
+                      interface: em3
+                    provisioning:
+                      interface: p1p1-VLAN151
+                    external:
+                      interface: p1p2-VLAN160
                   ansible_host: 10.1.8.41
-                  dsal_storage_drive: /dev/sdc1
+                  hypervisor_storage_drive: /dev/sdc1
                 dell-r730-033.dsal.lab.eng.rdu2.redhat.com:
-                  server_uplink_device: em3
-                  server_provisioning_device: p1p1-VLAN151
-                  server_external_device: p1p2-VLAN160
+                  server_networks:
+                    uplink:
+                      interface: em3
+                    provisioning:
+                      interface: p1p1-VLAN151
+                    external:
+                      interface: p1p2-VLAN160
                   ansible_host: 10.1.8.43
-                  dsal_storage_drive: /dev/sdc1
+                  hypervisor_storage_drive: /dev/sdc1
                 dell-r740-001.dsal.lab.eng.rdu2.redhat.com:
-                  server_uplink_device: em1
-                  server_provisioning_device: p4p1-VLAN151
-                  server_external_device: p4p2-VLAN160
+                  server_networks:
+                    uplink:
+                      interface: em1
+                    provisioning:
+                      interface: p4p1-VLAN151
+                    external:
+                      interface: p4p2-VLAN160
                   ansible_host: 10.1.8.62
-                  dsal_storage_drive: /dev/sdb1
+                  hypervisor_storage_drive: /dev/sdb1
                 dell-r730-034.dsal.lab.eng.rdu2.redhat.com:
-                  server_uplink_device: em3
-                  server_provisioning_device: p1p1-VLAN151
-                  server_external_device: p1p2-VLAN160
+                  server_networks:
+                    uplink:
+                      interface: em3
+                    provisioning:
+                      interface: p1p1-VLAN151
+                    external:
+                      interface: p1p2-VLAN160
                   ansible_host: 10.1.8.44
-                  dsal_storage_drive: /dev/sdc1
+                  hypervisor_storage_drive: /dev/sdc1
                 dell-r730-012.dsal.lab.eng.rdu2.redhat.com:
-                  server_uplink_device: em1
-                  server_provisioning_device: p5p1-VLAN151
-                  server_external_device: p5p2-VLAN160
+                  server_networks:
+                    uplink:
+                      interface: em1
+                    provisioning:
+                      interface: p5p1-VLAN151
+                    external:
+                      interface: p5p2-VLAN160
                   ansible_host: 10.1.8.22
-                  dsal_storage_drive: /dev/sdb1
+                  hypervisor_storage_drive: /dev/sdb1
                 dell-r630-001.dsal.lab.eng.rdu2.redhat.com:
-                  server_uplink_device: em1
-                  server_provisioning_device: p1p1-VLAN151
-                  server_external_device: p1p2-VLAN160
+                  server_networks:
+                    uplink:
+                      interface: em1
+                    provisioning:
+                      interface: p1p1-VLAN151
+                    external:
+                      interface: p1p2-VLAN160
                   ansible_host: 10.1.8.61
-                  dsal_storage_drive: /dev/sdb1
+                  hypervisor_storage_drive: /dev/sdb1
               children:
                 storage_hosts:
                   hosts:
                     dell-r730-035.dsal.lab.eng.rdu2.redhat.com:
-                      server_uplink_device: em1
-                      server_provisioning_device: p4p1-VLAN151
-                      server_external_device: p4p2-VLAN160
+                      server_networks:
+                        uplink:
+                          interface: em1
+                        provisioning:
+                          interface: p4p1-VLAN151
+                        external:
+                          interface: p4p2-VLAN160
                       ansible_host: 10.1.8.45
-                      dsal_storage_arrays:
+                      hypervisor_storage_arrays:
                         - name: 'md0'
                           level: 0
                           opts: 'noatime'
@@ -101,11 +128,15 @@ all_machines:
                             - /dev/sdf
                             - /dev/sda
                     dell-r730-036.dsal.lab.eng.rdu2.redhat.com:
-                      server_uplink_device: em1
-                      server_provisioning_device: p4p1-VLAN151
-                      server_external_device: p4p2-VLAN160
+                      server_networks:
+                        uplink:
+                          interface: em1
+                        provisioning:
+                          interface: p4p1-VLAN151
+                        external:
+                          interface: p4p2-VLAN160
                       ansible_host: 10.1.8.46
-                      dsal_storage_arrays:
+                      hypervisor_storage_arrays:
                         - name: 'md0'
                           level: 0
                           opts: 'noatime'
@@ -131,43 +162,46 @@ all_machines:
         vm_vbmc_password: secrete
         vm_internal_usage: true
       children:
-        osp_vms: {}
-        raw_vms:
+        bootable_vms: {}
+        provisioned_vms:
           vars:
             vm_virt_host: "10.1.8.62"
-            vm_cores: 4           # Number of cores
-            vm_ram: 8192          # Size in MiB
-            vm_disk_size: 48      # Size in GiB
+            vm_cores: 2           # Number of cores
+            vm_ram: 2048          # Size in MiB
+            vm_disk_size: 36      # Size in GiB
             vm_image_name: rhel8  # Set the base image used for raw vms
             vm_keys_links:
               - https://github.com/ekultails.keys
               - https://github.com/cloudnull.keys
-            vm_keys_files:
-              - /tmp/lshort.pub
+            vm_keys_files: []
           children:
-            raw_compute_hosts:
+            provisioned_compute_hosts:
+              vars:
+                vm_networks:
+                  provisioning:
+                    dhcp: false
+                    interface: eth1
+                    manager: nmcli
+                  external:
+                    dhcp: false
+                    interface: eth2
+                    manager: nmcli
+                  uplink:
+                    dhcp: true
+                    interface: eth0
+                    manager: nmcli
+                    # gateway: 10.1.11.254
+                    # netmask: 255.255.252.0
+                    # address: 10.10.10.10
+                    # dns:
+                    #   - 8.8.8.8
+                    #   - 8.8.4.4
               children:
                 undercloud_vms:
                   vars:
                     vm_image_name: rhel8  # Set the base image used for raw vms
-                    vm_protected: true
                   hosts:
-                    kecarter-1:
-                      vm_uplink_floats:
-                        gateway: 10.1.11.254
-                        netmask: 255.255.252.0
-                        address: 10.10.10.10
-                      vm_virt_host: "10.1.8.46"
-                      vm_cores: 6  # Number of cores
-                      vm_ram: 8192  # Size in MiB
-                      vm_disk_size: 96  # Size in GiB
-                      undercloud_target: true
-                      vm_image_name: centos7
                     lshort-1:
-                      vm_uplink_floats:
-                        gateway: 10.1.11.254
-                        netmask: 255.255.252.0
-                        address: 10.10.10.10
                       vm_virt_host: "10.1.8.62"
                       vm_cores: 16  # Number of cores
                       vm_ram: 49152  # Size in MiB
@@ -176,18 +210,23 @@ all_machines:
                       ansible_user: cloud-user
                       ansible_python_interpreter: /usr/bin/python3
                     monitor:
-                      vm_uplink_floats:
-                        gateway: 10.1.11.254
-                        netmask: 255.255.252.0
-                        address: 10.10.10.10
                       vm_virt_host: "10.1.8.62"
                       vm_cores: 8
                       vm_ram: 8192
                       vm_disk_size: 128
                       vm_image_name: centos7
-            osp_compute_hosts:
+            bootable_compute_hosts:
               vars:
                 ooo_type: novacompute
+                vm_networks:
+                  provisioning:
+                    dhcp: true
+                    interface: eth0
+                    manager: nmcli
+                  external:
+                    dhcp: false
+                    interface: eth1
+                    manager: nmcli
               children:
                 dell_r730_033_vms:
                   vars:
@@ -201,62 +240,44 @@ all_machines:
                       vm_ram: 16384  # Size in MiB
                       vm_disk_size: 96  # Size in GiB
                       vm_protected: true
-                    lshort-dell-r730-033-vm-2:
-                      vm_vbmc_port: 11002
-                      ooo_type: controller
-                      vm_cores: 8  # Number of cores
-                      vm_ram: 16384  # Size in MiB
-                      vm_disk_size: 96  # Size in GiB
-                      vm_protected: true
-                    lshort-dell-r730-033-vm-3:
-                      vm_vbmc_port: 11003
-                      ooo_type: controller
-                      vm_cores: 8  # Number of cores
-                      vm_ram: 16384  # Size in MiB
-                      vm_disk_size: 96  # Size in GiB
-                      vm_protected: true
-                    lshort-dell-r730-033-vm-4:
-                      vm_vbmc_port: 11004
-                    lshort-dell-r730-033-vm-5:
-                      vm_vbmc_port: 11005
-                    lshort-dell-r730-033-vm-6:
-                      vm_vbmc_port: 11006
-                    lshort-dell-r730-033-vm-7:
-                      vm_vbmc_port: 11007
-                    lshort-dell-r730-033-vm-8:
-                      vm_vbmc_port: 11008
-                    lshort-dell-r730-033-vm-9:
-                      vm_vbmc_port: 11009
-                    lshort-dell-r730-033-vm-10:
-                      vm_vbmc_port: 11010
-                    lshort-dell-r730-033-vm-11:
-                      vm_vbmc_port: 11011
-                    lshort-dell-r730-033-vm-12:
-                      vm_vbmc_port: 11012
-                    lshort-dell-r730-033-vm-13:
-                      vm_vbmc_port: 11013
-                    lshort-dell-r730-033-vm-14:
-                      vm_vbmc_port: 11014
-                    lshort-dell-r730-033-vm-15:
-                      vm_vbmc_port: 11015
-                    lshort-dell-r730-033-vm-16:
-                      vm_vbmc_port: 11016
-                    lshort-dell-r730-033-vm-18:
-                      vm_vbmc_port: 11018
-                    lshort-dell-r730-033-vm-19:
-                      vm_vbmc_port: 11019
-                    lshort-dell-r730-033-vm-20:
-                      vm_vbmc_port: 11020
-                    lshort-dell-r730-033-vm-21:
-                      vm_vbmc_port: 11021
-                    lshort-dell-r730-033-vm-22:
-                      vm_vbmc_port: 11022
-                    lshort-dell-r730-033-vm-23:
-                      vm_vbmc_port: 11023
-                    lshort-dell-r730-033-vm-24:
-                      vm_vbmc_port: 11024
-                    lshort-dell-r730-033-vm-25:
-                      vm_vbmc_port: 11025
+                    lshort-dell-r730-033-vm-2: {}
+                    lshort-dell-r730-033-vm-3: {}
+                    lshort-dell-r730-033-vm-4: {}
+                    lshort-dell-r730-033-vm-5: {}
+                    lshort-dell-r730-033-vm-6: {}
+                    lshort-dell-r730-033-vm-7: {}
+                    lshort-dell-r730-033-vm-8: {}
+                    lshort-dell-r730-033-vm-9: {}
+                    lshort-dell-r730-033-vm-10: {}
+                    lshort-dell-r730-033-vm-11: {}
+                    lshort-dell-r730-033-vm-12: {}
+                    lshort-dell-r730-033-vm-13: {}
+                    lshort-dell-r730-033-vm-14: {}
+                    lshort-dell-r730-033-vm-15: {}
+                    lshort-dell-r730-033-vm-16: {}
+                    lshort-dell-r730-033-vm-18: {}
+                    lshort-dell-r730-033-vm-19: {}
+                    lshort-dell-r730-033-vm-20: {}
+                    lshort-dell-r730-033-vm-21: {}
+                    lshort-dell-r730-033-vm-22: {}
+                    lshort-dell-r730-033-vm-23: {}
+                    lshort-dell-r730-033-vm-24: {}
+                    lshort-dell-r730-033-vm-25: {}
+                    lshort-dell-r730-033-vm-40: {}
+                    lshort-dell-r730-033-vm-41: {}
+                    lshort-dell-r730-033-vm-42: {}
+                    lshort-dell-r730-033-vm-43: {}
+                    lshort-dell-r730-033-vm-44: {}
+                    lshort-dell-r730-033-vm-45: {}
+                    lshort-dell-r730-033-vm-46: {}
+                    lshort-dell-r730-033-vm-47: {}
+                    lshort-dell-r730-033-vm-48: {}
+                    lshort-dell-r730-033-vm-49: {}
+                    lshort-dell-r730-033-vm-50: {}
+                    lshort-dell-r730-033-vm-51: {}
+                    lshort-dell-r730-033-vm-52: {}
+                    lshort-dell-r730-033-vm-53: {}
+                    lshort-dell-r730-033-vm-54: {}
                 dell_r740_001_vms:
                   vars:
                     vm_virt_host: "10.1.8.62"
@@ -300,303 +321,400 @@ all_machines:
                     lshort-dell-r740-001-vm-36: {}
                     lshort-dell-r740-001-vm-37: {}
                     lshort-dell-r740-001-vm-38: {}
+                    lshort-dell-r740-001-vm-39: {}
                 dell_r730_034_vms:
                   vars:
                     vm_virt_host: "10.1.8.44"
                     capabilities: boot_option:local,profile:undefined
                   hosts:
-                    lshort-dell-r730-034-vm-3:
-                      vm_vbmc_port: 13003
-                    lshort-dell-r730-034-vm-4:
-                      vm_vbmc_port: 13004
-                    lshort-dell-r730-034-vm-5:
-                      vm_vbmc_port: 13005
-                    lshort-dell-r730-034-vm-6:
-                      vm_vbmc_port: 13006
-                    lshort-dell-r730-034-vm-7:
-                      vm_vbmc_port: 13007
-                    lshort-dell-r730-034-vm-8:
-                      vm_vbmc_port: 13008
-                    lshort-dell-r730-034-vm-9:
-                      vm_vbmc_port: 13009
-                    lshort-dell-r730-034-vm-10:
-                      vm_vbmc_port: 13010
-                    lshort-dell-r730-034-vm-11:
-                      vm_vbmc_port: 13011
-                    lshort-dell-r730-034-vm-12:
-                      vm_vbmc_port: 13012
-                    lshort-dell-r730-034-vm-13:
-                      vm_vbmc_port: 13013
-                    lshort-dell-r730-034-vm-14:
-                      vm_vbmc_port: 13014
-                    lshort-dell-r730-034-vm-15:
-                      vm_vbmc_port: 13015
-                    lshort-dell-r730-034-vm-16:
-                      vm_vbmc_port: 13016
-                    lshort-dell-r730-034-vm-18:
-                      vm_vbmc_port: 13018
-                    lshort-dell-r730-034-vm-19:
-                      vm_vbmc_port: 13019
-                    lshort-dell-r730-034-vm-20:
-                      vm_vbmc_port: 13020
-                    lshort-dell-r730-034-vm-21:
-                      vm_vbmc_port: 13021
-                    lshort-dell-r730-034-vm-22:
-                      vm_vbmc_port: 13022
-                    lshort-dell-r730-034-vm-23:
-                      vm_vbmc_port: 13023
-                    lshort-dell-r730-034-vm-24:
-                      vm_vbmc_port: 13024
-                    lshort-dell-r730-034-vm-25:
-                      vm_vbmc_port: 13025
-                    lshort-dell-r730-034-vm-26:
-                      vm_vbmc_port: 13026
-                    lshort-dell-r730-034-vm-27:
-                      vm_vbmc_port: 13027
-                    lshort-dell-r730-034-vm-28:
-                      vm_vbmc_port: 13028
-                    lshort-dell-r730-034-vm-29:
-                      vm_vbmc_port: 13029
-                    lshort-dell-r730-034-vm-30:
-                      vm_vbmc_port: 13030
+                    lshort-dell-r730-034-vm-1: {}
+                    lshort-dell-r730-034-vm-2: {}
+                    lshort-dell-r730-034-vm-3: {}
+                    lshort-dell-r730-034-vm-4: {}
+                    lshort-dell-r730-034-vm-5: {}
+                    lshort-dell-r730-034-vm-6: {}
+                    lshort-dell-r730-034-vm-7: {}
+                    lshort-dell-r730-034-vm-8: {}
+                    lshort-dell-r730-034-vm-9: {}
+                    lshort-dell-r730-034-vm-10: {}
+                    lshort-dell-r730-034-vm-11: {}
+                    lshort-dell-r730-034-vm-12: {}
+                    lshort-dell-r730-034-vm-13: {}
+                    lshort-dell-r730-034-vm-14: {}
+                    lshort-dell-r730-034-vm-15: {}
+                    lshort-dell-r730-034-vm-16: {}
+                    lshort-dell-r730-034-vm-17: {}
+                    lshort-dell-r730-034-vm-18: {}
+                    lshort-dell-r730-034-vm-19: {}
+                    lshort-dell-r730-034-vm-20: {}
+                    lshort-dell-r730-034-vm-21: {}
+                    lshort-dell-r730-034-vm-22: {}
+                    lshort-dell-r730-034-vm-23: {}
+                    lshort-dell-r730-034-vm-24: {}
+                    lshort-dell-r730-034-vm-25: {}
+                    lshort-dell-r730-034-vm-26: {}
+                    lshort-dell-r730-034-vm-27: {}
+                    lshort-dell-r730-034-vm-28: {}
+                    lshort-dell-r730-034-vm-29: {}
+                    lshort-dell-r730-034-vm-30: {}
+                    lshort-dell-r730-034-vm-31: {}
+                    lshort-dell-r730-034-vm-32: {}
+                    lshort-dell-r730-034-vm-33: {}
+                    lshort-dell-r730-034-vm-34: {}
+                    lshort-dell-r730-034-vm-35: {}
+                    lshort-dell-r730-034-vm-36: {}
+                    lshort-dell-r730-034-vm-37: {}
+                    lshort-dell-r730-034-vm-38: {}
+                    lshort-dell-r730-034-vm-39: {}
+                    lshort-dell-r730-034-vm-40: {}
+                    lshort-dell-r730-034-vm-41: {}
+                    lshort-dell-r730-034-vm-42: {}
+                    lshort-dell-r730-034-vm-43: {}
+                    lshort-dell-r730-034-vm-44: {}
+                    lshort-dell-r730-034-vm-45: {}
+                    lshort-dell-r730-034-vm-46: {}
+                    lshort-dell-r730-034-vm-47: {}
+                    lshort-dell-r730-034-vm-48: {}
+                    lshort-dell-r730-034-vm-49: {}
+                    lshort-dell-r730-034-vm-50: {}
+                    lshort-dell-r730-034-vm-51: {}
+                    lshort-dell-r730-034-vm-52: {}
+                    lshort-dell-r730-034-vm-53: {}
+                    lshort-dell-r730-034-vm-54: {}
+                    lshort-dell-r730-034-vm-55: {}
+                    lshort-dell-r730-034-vm-56: {}
+                    lshort-dell-r730-034-vm-57: {}
+                    lshort-dell-r730-034-vm-58: {}
+                    lshort-dell-r730-034-vm-59: {}
                 dell_r730_012_vms:
                   vars:
                     vm_virt_host: "10.1.8.22"
                     capabilities: boot_option:local,profile:undefined
                   hosts:
-                    lshort-dell-r730-012-vm-4:
-                      vm_vbmc_port: 14004
-                    lshort-dell-r730-012-vm-5:
-                      vm_vbmc_port: 14005
-                    lshort-dell-r730-012-vm-6:
-                      vm_vbmc_port: 14006
-                    lshort-dell-r730-012-vm-7:
-                      vm_vbmc_port: 14007
-                    lshort-dell-r730-012-vm-8:
-                      vm_vbmc_port: 14008
-                    lshort-dell-r730-012-vm-9:
-                      vm_vbmc_port: 14009
-                    lshort-dell-r730-012-vm-10:
-                      vm_vbmc_port: 14010
-                    lshort-dell-r730-012-vm-11:
-                      vm_vbmc_port: 14011
-                    lshort-dell-r730-012-vm-12:
-                      vm_vbmc_port: 14012
-                    lshort-dell-r730-012-vm-13:
-                      vm_vbmc_port: 14013
-                    lshort-dell-r730-012-vm-14:
-                      vm_vbmc_port: 14014
-                    lshort-dell-r730-012-vm-15:
-                      vm_vbmc_port: 14015
+                    lshort-dell-r730-012-vm-1:
+                      vm_vbmc_port: 11002
+                      ooo_type: controller
+                      vm_cores: 8  # Number of cores
+                      vm_ram: 16384  # Size in MiB
+                      vm_disk_size: 96  # Size in GiB
+                      vm_protected: true
+                    lshort-dell-r730-012-vm-2: {}
+                    lshort-dell-r730-012-vm-3: {}
+                    lshort-dell-r730-012-vm-4: {}
+                    lshort-dell-r730-012-vm-5: {}
+                    lshort-dell-r730-012-vm-6: {}
+                    lshort-dell-r730-012-vm-7: {}
+                    lshort-dell-r730-012-vm-8: {}
+                    lshort-dell-r730-012-vm-9: {}
+                    lshort-dell-r730-012-vm-10: {}
+                    lshort-dell-r730-012-vm-11: {}
+                    lshort-dell-r730-012-vm-12: {}
+                    lshort-dell-r730-012-vm-13: {}
+                    lshort-dell-r730-012-vm-14: {}
+                    lshort-dell-r730-012-vm-15: {}
+                    lshort-dell-r730-012-vm-16: {}
+                    lshort-dell-r730-012-vm-17: {}
+                    lshort-dell-r730-012-vm-18: {}
                 dell_r630_001_vms:
                   vars:
                     vm_virt_host: "10.1.8.61"
                     capabilities: boot_option:local,profile:undefined
                   hosts:
-                    lshort-dell-r630-001-vm-3:
-                      vm_vbmc_port: 15003
-                    lshort-dell-r630-001-vm-4:
-                      vm_vbmc_port: 15004
-                    lshort-dell-r630-001-vm-5:
-                      vm_vbmc_port: 15005
-                    lshort-dell-r630-001-vm-6:
-                      vm_vbmc_port: 15006
-                    lshort-dell-r630-001-vm-7:
-                      vm_vbmc_port: 15007
-                    lshort-dell-r630-001-vm-8:
-                      vm_vbmc_port: 15008
-                    lshort-dell-r630-001-vm-9:
-                      vm_vbmc_port: 15009
-                    lshort-dell-r630-001-vm-10:
-                      vm_vbmc_port: 15010
-                    lshort-dell-r630-001-vm-11:
-                      vm_vbmc_port: 15011
-                    lshort-dell-r630-001-vm-12:
-                      vm_vbmc_port: 15012
-                    lshort-dell-r630-001-vm-13:
-                      vm_vbmc_port: 15013
-                    lshort-dell-r630-001-vm-14:
-                      vm_vbmc_port: 15014
-                    lshort-dell-r630-001-vm-15:
-                      vm_vbmc_port: 15015
+                    lshort-dell-r630-001-vm-1:
+                      vm_vbmc_port: 11003
+                      ooo_type: controller
+                      vm_cores: 8  # Number of cores
+                      vm_ram: 16384  # Size in MiB
+                      vm_disk_size: 96  # Size in GiB
+                      vm_protected: true
+                    lshort-dell-r630-001-vm-2: {}
+                    lshort-dell-r630-001-vm-3: {}
+                    lshort-dell-r630-001-vm-4: {}
+                    lshort-dell-r630-001-vm-5: {}
+                    lshort-dell-r630-001-vm-6: {}
+                    lshort-dell-r630-001-vm-7: {}
+                    lshort-dell-r630-001-vm-8: {}
+                    lshort-dell-r630-001-vm-9: {}
+                    lshort-dell-r630-001-vm-10: {}
+                    lshort-dell-r630-001-vm-11: {}
+                    lshort-dell-r630-001-vm-12: {}
+                    lshort-dell-r630-001-vm-13: {}
+                    lshort-dell-r630-001-vm-14: {}
+                    lshort-dell-r630-001-vm-15: {}
+                    lshort-dell-r630-001-vm-16: {}
+                    lshort-dell-r630-001-vm-17: {}
+                    lshort-dell-r630-001-vm-18: {}
                 dell_r730_035_vms:
                   vars:
                     vm_virt_host: "10.1.8.45"
                     capabilities: boot_option:local,profile:undefined
                   hosts:
-                    lshort-dell-r730-035-vm-3:
-                      vm_vbmc_port: 16003
-                    lshort-dell-r730-035-vm-4:
-                      vm_vbmc_port: 16004
-                    lshort-dell-r730-035-vm-5:
-                      vm_vbmc_port: 16005
-                    lshort-dell-r730-035-vm-6:
-                      vm_vbmc_port: 16006
-                    lshort-dell-r730-035-vm-7:
-                      vm_vbmc_port: 16007
-                    lshort-dell-r730-035-vm-8:
-                      vm_vbmc_port: 16008
-                    lshort-dell-r730-035-vm-9:
-                      vm_vbmc_port: 16009
-                    lshort-dell-r730-035-vm-10:
-                      vm_vbmc_port: 16010
-                    lshort-dell-r730-035-vm-11:
-                      vm_vbmc_port: 16011
-                    lshort-dell-r730-035-vm-12:
-                      vm_vbmc_port: 16012
-                    lshort-dell-r730-035-vm-13:
-                      vm_vbmc_port: 16013
-                    lshort-dell-r730-035-vm-14:
-                      vm_vbmc_port: 16014
-                    lshort-dell-r730-035-vm-15:
-                      vm_vbmc_port: 16015
-                    lshort-dell-r730-035-vm-16:
-                      vm_vbmc_port: 16016
-                    lshort-dell-r730-035-vm-18:
-                      vm_vbmc_port: 16018
-                    lshort-dell-r730-035-vm-19:
-                      vm_vbmc_port: 16019
-                    lshort-dell-r730-035-vm-20:
-                      vm_vbmc_port: 16020
-                    lshort-dell-r730-035-vm-21:
-                      vm_vbmc_port: 16021
-                    lshort-dell-r730-035-vm-22:
-                      vm_vbmc_port: 16022
-                    lshort-dell-r730-035-vm-23:
-                      vm_vbmc_port: 16023
-                    lshort-dell-r730-035-vm-24:
-                      vm_vbmc_port: 16024
-                    lshort-dell-r730-035-vm-25:
-                      vm_vbmc_port: 16025
-                    lshort-dell-r730-035-vm-26:
-                      vm_vbmc_port: 16026
-                    lshort-dell-r730-035-vm-27:
-                      vm_vbmc_port: 16027
-                    lshort-dell-r730-035-vm-28:
-                      vm_vbmc_port: 16028
-                    lshort-dell-r730-035-vm-29:
-                      vm_vbmc_port: 16029
+                    lshort-dell-r730-035-vm-1: {}
+                    lshort-dell-r730-035-vm-2: {}
+                    lshort-dell-r730-035-vm-3: {}
+                    lshort-dell-r730-035-vm-4: {}
+                    lshort-dell-r730-035-vm-5: {}
+                    lshort-dell-r730-035-vm-6: {}
+                    lshort-dell-r730-035-vm-7: {}
+                    lshort-dell-r730-035-vm-8: {}
+                    lshort-dell-r730-035-vm-9: {}
+                    lshort-dell-r730-035-vm-10: {}
+                    lshort-dell-r730-035-vm-11: {}
+                    lshort-dell-r730-035-vm-12: {}
+                    lshort-dell-r730-035-vm-13: {}
+                    lshort-dell-r730-035-vm-14: {}
+                    lshort-dell-r730-035-vm-15: {}
+                    lshort-dell-r730-035-vm-16: {}
+                    lshort-dell-r730-035-vm-17: {}
+                    lshort-dell-r730-035-vm-18: {}
+                    lshort-dell-r730-035-vm-19: {}
+                    lshort-dell-r730-035-vm-20: {}
+                    lshort-dell-r730-035-vm-21: {}
+                    lshort-dell-r730-035-vm-22: {}
+                    lshort-dell-r730-035-vm-23: {}
+                    lshort-dell-r730-035-vm-24: {}
+                    lshort-dell-r730-035-vm-25: {}
+                    lshort-dell-r730-035-vm-26: {}
+                    lshort-dell-r730-035-vm-27: {}
+                    lshort-dell-r730-035-vm-28: {}
+                    lshort-dell-r730-035-vm-29: {}
+                    lshort-dell-r730-035-vm-30: {}
+                    lshort-dell-r730-035-vm-31: {}
+                    lshort-dell-r730-035-vm-32: {}
+                    lshort-dell-r730-035-vm-33: {}
+                    lshort-dell-r730-035-vm-34: {}
+                    lshort-dell-r730-035-vm-35: {}
+                    lshort-dell-r730-035-vm-36: {}
+                    lshort-dell-r730-035-vm-37: {}
+                    lshort-dell-r730-035-vm-38: {}
+                    lshort-dell-r730-035-vm-39: {}
+                    lshort-dell-r730-035-vm-40: {}
+                    lshort-dell-r730-035-vm-41: {}
+                    lshort-dell-r730-035-vm-42: {}
+                    lshort-dell-r730-035-vm-43: {}
+                    lshort-dell-r730-035-vm-44: {}
+                    lshort-dell-r730-035-vm-45: {}
+                    lshort-dell-r730-035-vm-46: {}
+                    lshort-dell-r730-035-vm-47: {}
+                    lshort-dell-r730-035-vm-48: {}
+                    lshort-dell-r730-035-vm-49: {}
+                    lshort-dell-r730-035-vm-50: {}
+                    lshort-dell-r730-035-vm-51: {}
+                    lshort-dell-r730-035-vm-52: {}
+                    lshort-dell-r730-035-vm-53: {}
+                    lshort-dell-r730-035-vm-54: {}
+                    lshort-dell-r730-035-vm-55: {}
+                    lshort-dell-r730-035-vm-56: {}
+                    lshort-dell-r730-035-vm-57: {}
+                    lshort-dell-r730-035-vm-58: {}
+                    lshort-dell-r730-035-vm-59: {}
+                    lshort-dell-r730-035-vm-60: {}
+                    lshort-dell-r730-035-vm-61: {}
+                    lshort-dell-r730-035-vm-62: {}
+                    lshort-dell-r730-035-vm-63: {}
+                    lshort-dell-r730-035-vm-64: {}
+                    lshort-dell-r730-035-vm-65: {}
+                    lshort-dell-r730-035-vm-66: {}
+                    lshort-dell-r730-035-vm-67: {}
+                    lshort-dell-r730-035-vm-68: {}
+                    lshort-dell-r730-035-vm-69: {}
+                    lshort-dell-r730-035-vm-70: {}
+                    lshort-dell-r730-035-vm-71: {}
+                    lshort-dell-r730-035-vm-72: {}
+                    lshort-dell-r730-035-vm-73: {}
+                    lshort-dell-r730-035-vm-74: {}
+                    lshort-dell-r730-035-vm-75: {}
+                    lshort-dell-r730-035-vm-76: {}
+                    lshort-dell-r730-035-vm-77: {}
+                    lshort-dell-r730-035-vm-78: {}
+                    lshort-dell-r730-035-vm-79: {}
+                    lshort-dell-r730-035-vm-80: {}
+                    lshort-dell-r730-035-vm-81: {}
+                    lshort-dell-r730-035-vm-82: {}
+                    lshort-dell-r730-035-vm-83: {}
+                    lshort-dell-r730-035-vm-84: {}
+                    lshort-dell-r730-035-vm-85: {}
+                    lshort-dell-r730-035-vm-86: {}
+                    lshort-dell-r730-035-vm-87: {}
+                    lshort-dell-r730-035-vm-88: {}
+                    lshort-dell-r730-035-vm-89: {}
+                    lshort-dell-r730-035-vm-90: {}
+                    lshort-dell-r730-035-vm-91: {}
+                    lshort-dell-r730-035-vm-92: {}
+                    lshort-dell-r730-035-vm-93: {}
+                    lshort-dell-r730-035-vm-94: {}
+                    lshort-dell-r730-035-vm-95: {}
+                    lshort-dell-r730-035-vm-96: {}
+                    lshort-dell-r730-035-vm-97: {}
+                    lshort-dell-r730-035-vm-98: {}
+                    lshort-dell-r730-035-vm-99: {}
                 dell_r730_036_vms:
                   vars:
                     vm_virt_host: "10.1.8.46"
                     capabilities: boot_option:local,profile:undefined
                   hosts:
-                    lshort-minion-2-dell-r730-036-vm-1:
-                      vm_cores: 8  # Number of cores
-                      vm_ram: 16384  # Size in MiB
-                      vm_disk_size: 96  # Size in GiB
-                      vm_protected: true
-                    lshort-dell-r730-036-vm-1:
-                      vm_vbmc_port: 17001
-                    lshort-dell-r730-036-vm-2:
-                      vm_vbmc_port: 17002
-                    lshort-dell-r730-036-vm-3:
-                      vm_vbmc_port: 17003
-                    lshort-dell-r730-036-vm-4:
-                      vm_vbmc_port: 17004
-                    lshort-dell-r730-036-vm-5:
-                      vm_vbmc_port: 17005
-                    lshort-dell-r730-036-vm-6:
-                      vm_vbmc_port: 17006
-                    lshort-dell-r730-036-vm-7:
-                      vm_vbmc_port: 17007
-                    lshort-dell-r730-036-vm-8:
-                      vm_vbmc_port: 17008
-                    lshort-dell-r730-036-vm-9:
-                      vm_vbmc_port: 17009
-                    lshort-dell-r730-036-vm-10:
-                      vm_vbmc_port: 17010
-                    lshort-dell-r730-036-vm-11:
-                      vm_vbmc_port: 17011
-                    lshort-dell-r730-036-vm-12:
-                      vm_vbmc_port: 17012
-                    lshort-dell-r730-036-vm-13:
-                      vm_vbmc_port: 17013
-                    lshort-dell-r730-036-vm-14:
-                      vm_vbmc_port: 17014
-                    lshort-dell-r730-036-vm-15:
-                      vm_vbmc_port: 17015
-                    lshort-dell-r730-036-vm-16:
-                      vm_vbmc_port: 17016
-                    lshort-dell-r730-036-vm-18:
-                      vm_vbmc_port: 17018
-                    lshort-dell-r730-036-vm-19:
-                      vm_vbmc_port: 17019
-                    lshort-dell-r730-036-vm-20:
-                      vm_vbmc_port: 17020
-                    lshort-dell-r730-036-vm-21:
-                      vm_vbmc_port: 17021
-                    lshort-dell-r730-036-vm-22:
-                      vm_vbmc_port: 17022
-                    lshort-dell-r730-036-vm-23:
-                      vm_vbmc_port: 17023
-                    lshort-dell-r730-036-vm-24:
-                      vm_vbmc_port: 17024
-                    lshort-dell-r730-036-vm-25:
-                      vm_vbmc_port: 17025
+                    lshort-dell-r730-036-vm-1: {}
+                    lshort-dell-r730-036-vm-2: {}
+                    lshort-dell-r730-036-vm-3: {}
+                    lshort-dell-r730-036-vm-4: {}
+                    lshort-dell-r730-036-vm-5: {}
+                    lshort-dell-r730-036-vm-6: {}
+                    lshort-dell-r730-036-vm-7: {}
+                    lshort-dell-r730-036-vm-8: {}
+                    lshort-dell-r730-036-vm-9: {}
+                    lshort-dell-r730-036-vm-10: {}
+                    lshort-dell-r730-036-vm-11: {}
+                    lshort-dell-r730-036-vm-12: {}
+                    lshort-dell-r730-036-vm-13: {}
+                    lshort-dell-r730-036-vm-14: {}
+                    lshort-dell-r730-036-vm-15: {}
+                    lshort-dell-r730-036-vm-16: {}
+                    lshort-dell-r730-036-vm-17: {}
+                    lshort-dell-r730-036-vm-18: {}
+                    lshort-dell-r730-036-vm-19: {}
+                    lshort-dell-r730-036-vm-20: {}
+                    lshort-dell-r730-036-vm-21: {}
+                    lshort-dell-r730-036-vm-22: {}
+                    lshort-dell-r730-036-vm-23: {}
+                    lshort-dell-r730-036-vm-24: {}
+                    lshort-dell-r730-036-vm-25: {}
+                    lshort-dell-r730-036-vm-26: {}
+                    lshort-dell-r730-036-vm-27: {}
+                    lshort-dell-r730-036-vm-28: {}
+                    lshort-dell-r730-036-vm-29: {}
+                    lshort-dell-r730-036-vm-30: {}
+                    lshort-dell-r730-036-vm-31: {}
+                    lshort-dell-r730-036-vm-32: {}
+                    lshort-dell-r730-036-vm-33: {}
+                    lshort-dell-r730-036-vm-34: {}
+                    lshort-dell-r730-036-vm-35: {}
+                    lshort-dell-r730-036-vm-36: {}
+                    lshort-dell-r730-036-vm-37: {}
+                    lshort-dell-r730-036-vm-38: {}
+                    lshort-dell-r730-036-vm-39: {}
+                    lshort-dell-r730-036-vm-40: {}
+                    lshort-dell-r730-036-vm-41: {}
+                    lshort-dell-r730-036-vm-42: {}
+                    lshort-dell-r730-036-vm-43: {}
+                    lshort-dell-r730-036-vm-44: {}
+                    lshort-dell-r730-036-vm-45: {}
+                    lshort-dell-r730-036-vm-46: {}
+                    lshort-dell-r730-036-vm-47: {}
+                    lshort-dell-r730-036-vm-48: {}
+                    lshort-dell-r730-036-vm-49: {}
+                    lshort-dell-r730-036-vm-50: {}
+                    lshort-dell-r730-036-vm-51: {}
+                    lshort-dell-r730-036-vm-52: {}
+                    lshort-dell-r730-036-vm-53: {}
+                    lshort-dell-r730-036-vm-54: {}
+                    lshort-dell-r730-036-vm-55: {}
+                    lshort-dell-r730-036-vm-56: {}
+                    lshort-dell-r730-036-vm-57: {}
+                    lshort-dell-r730-036-vm-58: {}
+                    lshort-dell-r730-036-vm-59: {}
+                    lshort-dell-r730-036-vm-60: {}
+                    lshort-dell-r730-036-vm-61: {}
+                    lshort-dell-r730-036-vm-62: {}
+                    lshort-dell-r730-036-vm-63: {}
+                    lshort-dell-r730-036-vm-64: {}
+                    lshort-dell-r730-036-vm-65: {}
+                    lshort-dell-r730-036-vm-66: {}
+                    lshort-dell-r730-036-vm-67: {}
+                    lshort-dell-r730-036-vm-68: {}
+                    lshort-dell-r730-036-vm-69: {}
+                    lshort-dell-r730-036-vm-70: {}
+                    lshort-dell-r730-036-vm-71: {}
+                    lshort-dell-r730-036-vm-72: {}
+                    lshort-dell-r730-036-vm-73: {}
+                    lshort-dell-r730-036-vm-74: {}
+                    lshort-dell-r730-036-vm-75: {}
+                    lshort-dell-r730-036-vm-76: {}
+                    lshort-dell-r730-036-vm-77: {}
+                    lshort-dell-r730-036-vm-78: {}
+                    lshort-dell-r730-036-vm-79: {}
+                    lshort-dell-r730-036-vm-80: {}
+                    lshort-dell-r730-036-vm-81: {}
+                    lshort-dell-r730-036-vm-82: {}
+                    lshort-dell-r730-036-vm-83: {}
+                    lshort-dell-r730-036-vm-84: {}
+                    lshort-dell-r730-036-vm-85: {}
+                    lshort-dell-r730-036-vm-86: {}
+                    lshort-dell-r730-036-vm-87: {}
+                    lshort-dell-r730-036-vm-88: {}
+                    lshort-dell-r730-036-vm-89: {}
+                    lshort-dell-r730-036-vm-90: {}
+                    lshort-dell-r730-036-vm-91: {}
+                    lshort-dell-r730-036-vm-92: {}
+                    lshort-dell-r730-036-vm-93: {}
+                    lshort-dell-r730-036-vm-94: {}
+                    lshort-dell-r730-036-vm-95: {}
+                    lshort-dell-r730-036-vm-96: {}
+                    lshort-dell-r730-036-vm-97: {}
+                    lshort-dell-r730-036-vm-98: {}
+                    lshort-dell-r730-036-vm-99: {}
                 dell_r730_031_vms:
                   vars:
                     vm_virt_host: "10.1.8.41"
                     capabilities: boot_option:local,profile:undefined
                   hosts:
-                    lshort-minion-1-dell-r730-031-vm-1:
-                      vm_cores: 8  # Number of cores
-                      vm_ram: 16384  # Size in MiB
-                      vm_disk_size: 96  # Size in GiB
-                      vm_protected: true
-                    lshort-dell-r730-031-vm-1:
-                      vm_vbmc_port: 18001
-                    lshort-dell-r730-031-vm-2:
-                      vm_vbmc_port: 18002
-                    lshort-dell-r730-031-vm-3:
-                      vm_vbmc_port: 18003
-                    lshort-dell-r730-031-vm-4:
-                      vm_vbmc_port: 18004
-                    lshort-dell-r730-031-vm-5:
-                      vm_vbmc_port: 18005
-                    lshort-dell-r730-031-vm-6:
-                      vm_vbmc_port: 18006
-                    lshort-dell-r730-031-vm-7:
-                      vm_vbmc_port: 18007
-                    lshort-dell-r730-031-vm-8:
-                      vm_vbmc_port: 18008
-                    lshort-dell-r730-031-vm-9:
-                      vm_vbmc_port: 18009
-                    lshort-dell-r730-031-vm-10:
-                      vm_vbmc_port: 18010
-                    lshort-dell-r730-031-vm-11:
-                      vm_vbmc_port: 18011
-                    lshort-dell-r730-031-vm-12:
-                      vm_vbmc_port: 18012
-                    lshort-dell-r730-031-vm-13:
-                      vm_vbmc_port: 18013
-                    lshort-dell-r730-031-vm-14:
-                      vm_vbmc_port: 18014
-                    lshort-dell-r730-031-vm-15:
-                      vm_vbmc_port: 18015
-                    lshort-dell-r730-031-vm-16:
-                      vm_vbmc_port: 18016
-                    lshort-dell-r730-031-vm-18:
-                      vm_vbmc_port: 18018
-                    lshort-dell-r730-031-vm-19:
-                      vm_vbmc_port: 18019
-                    lshort-dell-r730-031-vm-20:
-                      vm_vbmc_port: 18020
-                    lshort-dell-r730-031-vm-21:
-                      vm_vbmc_port: 18021
-                    lshort-dell-r730-031-vm-22:
-                      vm_vbmc_port: 18022
-                    lshort-dell-r730-031-vm-23:
-                      vm_vbmc_port: 18023
-                    lshort-dell-r730-031-vm-24:
-                      vm_vbmc_port: 18024
-                    lshort-dell-r730-031-vm-25:
-                      vm_vbmc_port: 18025
-                    lshort-dell-r730-031-vm-26:
-                      vm_vbmc_port: 18026
-                    lshort-dell-r730-031-vm-27:
-                      vm_vbmc_port: 18027
-                    lshort-dell-r730-031-vm-28:
-                      vm_vbmc_port: 18028
-                    lshort-dell-r730-031-vm-29:
-                      vm_vbmc_port: 18029
+                    lshort-dell-r730-031-vm-1: {}
+                    lshort-dell-r730-031-vm-2: {}
+                    lshort-dell-r730-031-vm-3: {}
+                    lshort-dell-r730-031-vm-4: {}
+                    lshort-dell-r730-031-vm-5: {}
+                    lshort-dell-r730-031-vm-6: {}
+                    lshort-dell-r730-031-vm-7: {}
+                    lshort-dell-r730-031-vm-8: {}
+                    lshort-dell-r730-031-vm-9: {}
+                    lshort-dell-r730-031-vm-10: {}
+                    lshort-dell-r730-031-vm-11: {}
+                    lshort-dell-r730-031-vm-12: {}
+                    lshort-dell-r730-031-vm-13: {}
+                    lshort-dell-r730-031-vm-14: {}
+                    lshort-dell-r730-031-vm-15: {}
+                    lshort-dell-r730-031-vm-16: {}
+                    lshort-dell-r730-031-vm-17: {}
+                    lshort-dell-r730-031-vm-18: {}
+                    lshort-dell-r730-031-vm-19: {}
+                    lshort-dell-r730-031-vm-20: {}
+                    lshort-dell-r730-031-vm-21: {}
+                    lshort-dell-r730-031-vm-22: {}
+                    lshort-dell-r730-031-vm-23: {}
+                    lshort-dell-r730-031-vm-24: {}
+                    lshort-dell-r730-031-vm-25: {}
+                    lshort-dell-r730-031-vm-26: {}
+                    lshort-dell-r730-031-vm-27: {}
+                    lshort-dell-r730-031-vm-28: {}
+                    lshort-dell-r730-031-vm-29: {}
+                    lshort-dell-r730-031-vm-30: {}
+                    lshort-dell-r730-031-vm-31: {}
+                    lshort-dell-r730-031-vm-32: {}
+                    lshort-dell-r730-031-vm-33: {}
+                    lshort-dell-r730-031-vm-34: {}
+                    lshort-dell-r730-031-vm-35: {}
+                    lshort-dell-r730-031-vm-36: {}
+                    lshort-dell-r730-031-vm-37: {}
+                    lshort-dell-r730-031-vm-38: {}
+                    lshort-dell-r730-031-vm-39: {}
+                    lshort-dell-r730-031-vm-40: {}
+                    lshort-dell-r730-031-vm-41: {}
+                    lshort-dell-r730-031-vm-42: {}
+                    lshort-dell-r730-031-vm-43: {}
+                    lshort-dell-r730-031-vm-44: {}
+                    lshort-dell-r730-031-vm-45: {}
+                    lshort-dell-r730-031-vm-46: {}
+                    lshort-dell-r730-031-vm-47: {}
+                    lshort-dell-r730-031-vm-48: {}
+                    lshort-dell-r730-031-vm-49: {}
+                    lshort-dell-r730-031-vm-50: {}
+                    lshort-dell-r730-031-vm-51: {}
+                    lshort-dell-r730-031-vm-52: {}
+                    lshort-dell-r730-031-vm-53: {}
+                    lshort-dell-r730-031-vm-54: {}
+                    lshort-dell-r730-031-vm-55: {}
+                    lshort-dell-r730-031-vm-56: {}
+                    lshort-dell-r730-031-vm-57: {}
+                    lshort-dell-r730-031-vm-58: {}
+                    lshort-dell-r730-031-vm-59: {}
+                    lshort-dell-r730-031-vm-60: {}
+                    lshort-dell-r730-031-vm-61: {}

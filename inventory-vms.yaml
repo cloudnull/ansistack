@@ -18,15 +18,29 @@ all:
         vm_vbmc_username: admin
         vm_vbmc_password: secrete
       children:
-        raw_vms:
+        provisioned_vms:
+          vars:
+            vm_networks:
+              uplink:
+                dhcp: true
+                interface: eth0
+                manager: nmcli
+              provisioning:
+                dhcp: false
+                interface: eth1
+                manager: nmcli
+              external:
+                dhcp: false
+                interface: eth2
+                manager: nmcli
           children:
-            raw_compute_hosts:
+            provisioned_compute_hosts:
               children:
-                raw_compute2:
+                provisioned_compute2:
                   vars:
-                    vm_virt_host: "172.16.27.67"
-                    vm_cores: 8  # Number of cores
-                    vm_ram: 10240  # Size in MiB
+                    vm_virt_host: "compute2"
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 8192  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
                     vm_image_name: centos7  # Set the base image used for raw vms
                   hosts:
@@ -35,11 +49,11 @@ all:
                     compute2-vm-3: {}
                     compute2-vm-4: {}
                     compute2-vm-5: {}
-                raw_compute1:
+                provisioned_compute1:
                   vars:
-                    vm_virt_host: "172.16.27.220"
+                    vm_virt_host: "compute1"
                     vm_cores: 6  # Number of cores
-                    vm_ram: 10240  # Size in MiB
+                    vm_ram: 8192  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
                   hosts:
                     compute1-vm-1:
@@ -50,49 +64,59 @@ all:
                       vm_image_name: centos7
                     compute1-vm-4:
                       vm_image_name: centos7
-        osp_vms:
+        bootable_vms:
+          vars:
+            vm_networks:
+              provisioning:
+                dhcp: true
+                interface: eth0
+                manager: nmcli
+              external:
+                dhcp: false
+                interface: eth1
+                manager: nmcli
           children:
-            osp_compute_hosts:
+            bootable_compute_hosts:
               children:
-                osp_compute2:
+                bootable_compute2:
                   vars:
-                    vm_virt_host: "172.16.27.67"
+                    vm_virt_host: "compute2"
                     vm_cores: 8
                     vm_ram: 16384
                     vm_disk_size: 96
                   hosts:
-                    osp-compute2-vm-controller1:
+                    osp-compute2-vm-controller-1:
                       vm_vbmc_port: 16020
-                    osp-compute2-vm-controller2:
+                    osp-compute2-vm-controller-2:
                       vm_vbmc_port: 16021
-                    osp-compute2-vm-controller3:
+                    osp-compute2-vm-controller-3:
                       vm_vbmc_port: 16022
-                    osp-compute2-vm-compute1:
+                    osp-compute2-vm-compute-1:
                       vm_cores: 4
                       vm_ram: 4096
                       vm_vbmc_port: 16030
-                    osp-compute2-vm-compute2:
+                    osp-compute2-vm-compute-2:
                       vm_cores: 4
                       vm_ram: 4096
                       vm_vbmc_port: 16031
-                osp_compute1:
+                bootable_compute1:
                   vars:
-                    vm_virt_host: "172.16.27.220"
+                    vm_virt_host: "compute1"
                     vm_cores: 8
                     vm_ram: 16384
                     vm_disk_size: 96
                   hosts:
-                    osp-compute1-vm-controller1:
+                    osp-compute1-vm-controller-1:
                       vm_vbmc_port: 16020
-                    osp-compute1-vm-controller2:
+                    osp-compute1-vm-controller-2:
                       vm_vbmc_port: 16021
-                    osp-compute1-vm-controller3:
+                    osp-compute1-vm-controller-3:
                       vm_vbmc_port: 16022
-                    osp-compute1-vm-compute1:
+                    osp-compute1-vm-compute-1:
                       vm_cores: 4
                       vm_ram: 4096
                       vm_vbmc_port: 16030
-                    osp-compute1-vm-compute2:
+                    osp-compute1-vm-compute-2:
                       vm_cores: 4
                       vm_ram: 4096
                       vm_vbmc_port: 16031

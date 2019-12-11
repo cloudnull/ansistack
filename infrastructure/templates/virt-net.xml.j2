@@ -1,0 +1,6 @@
+<network>
+  <name>{{ item }}</name>
+  <forward mode="bridge">
+    <interface dev="{{ server_networks[item]['interface'] }}"/>
+  </forward>
+</network>
