@@ -71,7 +71,11 @@
     {%   endif %}
     {% endif %}
     {% for k, v in hostvars[inventory_hostname]['vm_networks'].items() %}
-      --network network:{{ k }},model=virtio,mac={{ v.mac | default(('52:54:01') | random_mac) }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
+    {%   if v.mac is defined %}
+      --network network:{{ k }},model=virtio,mac={{ v.mac  }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
+    {%   else %}
+      --network network:{{ k }},model=virtio,mac={{ v.mac_seed | default('52:54:01') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
+    {%   endif %}
     {% endfor %}
       --name {{ inventory_hostname }}
       {{ vm_flags }}

@@ -133,3 +133,31 @@ following command.
 ``` shell
 $ ansible-playbook -i inventory.yaml workflows/osp-deployment.yml
 ```
+
+##### VM Network setup
+
+VM Networking can be setup in a lot of ways. The entrypoint is `vm_networks`. Each
+key is the name of the network on the hypervisor. The options are as follows.
+
+``` yaml
+vm_networks:
+    uplink:
+        dhcp: true
+        interface: eth0
+        manager: nmcli
+        mac: '52:54:01:89:6e:81'
+    provisioning:
+        dhcp: false
+        interface: eth1
+        manager: nmcli
+        mac_seed: '52:54:02'
+    external:
+        interface: eth2
+        manager: nmcli
+        gateway: 10.1.11.254
+        netmask: 255.255.252.0
+        address: 10.10.10.10
+        dns:
+            - 8.8.8.8
+            - 8.8.4.4
+```
