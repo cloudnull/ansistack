@@ -54,10 +54,10 @@ timezone: UTC
 packages: {{ vm_packages }}
 
 {% set cmd_list = ["systemctl enable network", "systemctl restart network", "systemctl enable sshd", "systemctl restart sshd"] %}
-{% set _ = cmd_list.append('systemctl enable NetworkManager') %}
-{% set _ = cmd_list.append('systemctl start NetworkManager') %}
 {% for k, v in vm_networks.items() %}
 {%   if (v.manager is defined and v.manager == 'nmcli') %}
+{%     set _ = cmd_list.append('systemctl enable NetworkManager') %}
+{%     set _ = cmd_list.append('systemctl start NetworkManager') %}
 {%     if (v.interface is defined) and (v.address is defined) and (v.netmask is defined) and (v.gateway is defined) %}
 {%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ k ~ ' ifname ' ~ v.interface ~ ' ip4 ' ~ v.address ~ '/' ~ v.netmask ~ ' gw4 ' ~ v.gateway) %}
 {%     elif (v.interface is defined) and (v.dhcp is defined and v.dhcp | bool) %}
@@ -66,10 +66,24 @@ packages: {{ vm_packages }}
 {%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ k ~ ' ifname ' ~ v.interface ~ ' ipv4.method disabled ipv6.method ignore') %}
 {%     endif %}
 {%     if (v.dns is defined) %}
-{%       set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.dns ' ~ (v.dns | join(' ') | string) ) %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.dns ' ~ (v.dns | join(' ') | to_json) ) %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.ignore-auto-dns yes' ) %}
 {%     endif %}
 {%     set _ = cmd_list.append('nmcli con down ' ~ k) %}
 {%     set _ = cmd_list.append('nmcli con up ' ~ k) %}
+{%     if (v.manager is defined and v.manager == 'nmcli') %}
+{%       if v.router is defined %}
+{%         set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.method manual') %}
+{%         set _ = cmd_list.append("nmcli con mod " ~ k ~ " ipv4.addresses $(nmcli device show $(nmcli device | awk '/" ~ k ~ "/ {print $1}') | awk '/IP4.ADDRESS/ {print $2}' | tr '\n' ' ')") %}
+{%         set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.gateway ' ~ v.router | to_json) %}
+{%         if (v.dns is undefined) %}
+{%           set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.dns ' ~ v.router | to_json) %}
+{%           set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.ignore-auto-dns yes' ) %}
+{%         endif %}
+{%         set _ = cmd_list.append('nmcli con down ' ~ k) %}
+{%         set _ = cmd_list.append('nmcli con up ' ~ k) %}
+{%       endif %}
+{%     endif %}
 {%   endif %}
 {% endfor %}
 {% set _ = cmd_list.append('systemctl enable qemu-guest-agent') %}

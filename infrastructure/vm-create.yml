@@ -192,3 +192,13 @@
 - import_playbook: vm-inventory.yml
   when:
     - not (vm_purge | default(_vm_purge) | bool)
+
+# Generate a local instackenv
+- import_playbook: vm-bootable-env.yml
+  when:
+    - not (vm_purge | default(_vm_purge) | bool)
+
+# Generate a local instackenv
+- import_playbook: vm-vbmc-setup.yml
+  when:
+    - not (vm_purge | default(_vm_purge) | bool)

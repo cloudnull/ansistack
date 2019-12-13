@@ -75,7 +75,7 @@
 
         - name: Force packages to rebuild
           file:
-            path: "/opt/tripleo/delorean/{{ item.url | basename }}.created"
+            path: "/opt/tripleo/{{ item.url | basename }}.created"
             state: absent
           with_items: "{{ developer_patches }}"
           when:
@@ -99,8 +99,12 @@
             - item.install_in_venv | default(false) | bool
           with_items: "{{ developer_patches }}"
 
-        - name: Create run osp deploy script
+        - name: Create package build script
           template:
             src: rpm_build.sh.j2
             dest: "/opt/tripleo/build-packages.sh"
             mode: '0755'
+
+        - name: Notice
+          debug:
+            msg: 'Package build script is ready at: /opt/tripleo/build-packages.sh'
