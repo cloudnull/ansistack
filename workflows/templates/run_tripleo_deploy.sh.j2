@@ -11,11 +11,13 @@ tmux send-keys "/opt/rdo/bin/glances --disable-autodiscover --diskio-iops --disk
 
 tmux select-window -t 0
 {# Package building #}
-{% if False in (developer_patches | map(attribute='install_in_venv') | list) %}
+{% if (ansible_distribution | lower) != 'redhat' %}
+{%   if False in (developer_patches | map(attribute='install_in_venv') | list) %}
 tmux send-keys "/opt/tripleo/build-packages.sh" C-m
-{% endif %}
-{% if True in (developer_patches | map(attribute='install_in_venv') | list) %}
+{%   endif %}
+{%   if True in (developer_patches | map(attribute='install_in_venv') | list) %}
 tmux send-keys "source /opt/tripleo-patches/bin/activate" C-m
+{%   endif %}
 {% endif %}
 
 {# Create basic role list #}

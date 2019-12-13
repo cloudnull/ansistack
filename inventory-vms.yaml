@@ -67,8 +67,10 @@ all:
                   hosts:
                     compute1-rhel-vm-1:
                       vm_image_name: rhel8
+                      undercloud_target: true
                     compute1-rhel-vm-2:
                       vm_image_name: rhel8
+                      undercloud_target: true
         bootable_vms:
           vars:
             vm_networks:
@@ -89,13 +91,17 @@ all:
                     vm_cores: 8
                     vm_ram: 8192
                     vm_disk_size: 96
+                    capabilities: boot_option:local,profile:compute
                   hosts:
                     osp-compute2-vm-controller-1:
                       vm_vbmc_port: 16020
+                      capabilities: boot_option:local,profile:controller
                     osp-compute2-vm-controller-2:
                       vm_vbmc_port: 16021
+                      capabilities: boot_option:local,profile:controller
                     osp-compute2-vm-controller-3:
                       vm_vbmc_port: 16022
+                      capabilities: boot_option:local,profile:controller
                     osp-compute2-vm-compute-0:
                       vm_cores: 2
                       vm_ram: 4096

@@ -32,36 +32,17 @@
   vars_files:
     - vars/main.yml
 
-  pre_tasks:
-    - name: Run deployment block
-      when:
-        - (ansible_distribution | lower) == 'centos'
-      block:
-        - name: Install images packages
-          package:
-            name:
-              - "rhosp-director-images"
-              - "rhosp-director-images-ipa"
-            state: present
-          become: true
-
-        - name: Run image unpack command(s)
-          shell: |-
-            for i in overcloud-full.tar ironic-python-agent.tar; do
-              tar xf /usr/share/rhosp-director-images/$i
-            done
-          args:
-            chdir: "{{ ansible_env.HOME }}/images"
-
   tasks:
     - name: Create run osp deploy script
       template:
         src: run_tripleo_deploy.sh.j2
         dest: "{{ ansible_env.HOME }}/run-deploy.sh"
         mode: '0755'
+      become: false
 
     - name: Run deployment command(s)
       shell: "{{ ansible_env.HOME }}/run-deploy.sh"
+      become: false
 
     - name: Build notice
       debug:

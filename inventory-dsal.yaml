@@ -160,7 +160,6 @@ all_machines:
         ansible_user: "root"
         vm_vbmc_username: admin
         vm_vbmc_password: secrete
-        vm_internal_usage: true
       children:
         bootable_vms: {}
         provisioned_vms:
