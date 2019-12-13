@@ -38,6 +38,12 @@
       vars:
         ansible_python_interpreter: /opt/rdo/bin/python
       block:
+        - name: Install build packages
+          package:
+            name:
+              - "gcc"
+            state: present
+
         - name: Create delorian directories
           file:
             path: "/opt/tripleo/{{ item }}"

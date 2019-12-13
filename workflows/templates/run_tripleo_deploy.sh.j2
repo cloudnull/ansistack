@@ -1,27 +1,87 @@
+#!/usr/bin/env bash
+
+export THT="/usr/share/openstack-tripleo-heat-templates"
+
 tmux new-session -d -s standalone -n standalone || true
 tmux new-window -n deploy -t 0 || true
 tmux new-window -n glances -t 1 || true
+
+tmux select-window -t 1
+tmux send-keys "/opt/rdo/bin/glances --disable-autodiscover --diskio-iops --diskio-show-ramfs --enable-irq" C-m
+
 tmux select-window -t 0
+{# Package building #}
 {% if False in (developer_patches | map(attribute='install_in_venv') | list) %}
 tmux send-keys "/opt/tripleo/build-packages.sh" C-m
 {% endif %}
 {% if True in (developer_patches | map(attribute='install_in_venv') | list) %}
 tmux send-keys "source /opt/tripleo-patches/bin/activate" C-m
 {% endif %}
-tmux send-keys "openstack tripleo container image prepare default --output-env-file containers-prepare-parameter.yaml" C-m
-{% set environments = ['/usr/share/openstack-tripleo-heat-templates/environments/enable-swap.yaml'] %}
-{% set _ = environments.append('/usr/share/openstack-tripleo-heat-templates/environments/standalone/standalone-tripleo.yaml') %}
+
+{# Create basic role list #}
+{% set roles = [] %}
+
+{# Create basic environment list #}
+{% set environments = ['$THT/environments/enable-swap.yaml'] %}
+{% set _ = environments.append('$THT/environments/low-memory-usage.yaml') %}
+{% set _ = environments.append('$THT/environments/disable-telemetry.yaml') %}
+{% if (rh_it_ca_stat.stat.exists | bool) %}
+{%   set _ = environments.append('$THT/environments/ssl/inject-trust-anchor.yaml') %}
+{% endif %}
 {% set _ = environments.append(ansible_env.HOME ~ '/containers-prepare-parameter.yaml') %}
-{% set _ = environments.append(ansible_env.HOME ~ '/standalone_parameters.yaml') %}
+
+{# Deployment #}
+{% if (deploy_osp is defined) and (deploy_osp | bool) %}
+{# multi-node #}
+tmux send-keys "openstack undercloud install" C-m
+tmux send-keys "source ~/stackrc" C-m
+tmux send-keys "openstack subnet set ctlplane-subnet --dns-nameserver {{ redhat_dns_servers[0] }}" C-m
+tmux send-keys "pushd ~/images" C-m
+tmux send-keys "openstack overcloud image upload --update-existing" C-m
+tmux send-keys "popd" C-m
+{%   if (ansible_distribution | lower) == 'redhat' %}
+tmux send-keys "openstack tripleo container image prepare -e local_images.yaml --output-env-file containers-prepare-parameters.yaml" C-m
+{%   else %}
+tmux send-keys "openstack tripleo container image prepare default --local-push-destination --output-env-file containers-prepare-parameters.yaml" C-m
+{%   endif %}
+{%   set _ = environments.append('parameters.yaml') %}
+{%   if (deploy_pre_provisioned is defined) and (deploy_pre_provisioned | bool) %}
+{%     set _ = environments.append('$THT/environments/deployed-server-environment.yaml') %}
+{%     set _ = environments.append('pre-provisioned-parameters.yaml') %}
+{%     set _ = roles.append('$THT/roles/deployed-server-roles-data.yaml') %}
+{%   else %}
+tmux send-keys "openstack overcloud node import vm-instackenv.yaml" C-m
+tmux send-keys "openstack overcloud node introspect --all-manageable \
+                                                    --provide \
+                                                    --concurrency {{ (ansible_processor_vcpus | int) * 2  }} || openstack overcloud node introspect --all-manageable \
+                                                                                                                                                    --provide" C-m
+{%   endif %}
+tmux send-keys "sudo openstack overcloud deploy \
+                --templates $THT/ \
+                -r {{ roles | join(' -r ') }} \
+                -e {{ environments | join(' -e ') }} \
+                --log-file deploy.log \
+                --disable-validations  \
+                --overcloud-ssh-user cloud-user \
+                --overcloud-ssh-key /home/cloud-user/.ssh/id_rsa \
+                -e ~/container-image-prepare.yaml \
+                --log-file deploy.log \
+                --config-download-timeout 1024 \
+                --timeout 1024" C-m
+{% else %}
+{# Standalone #}
+tmux send-keys "openstack tripleo container image prepare default --output-env-file containers-prepare-parameter.yaml" C-m
+{%   set _ = environments.append('$THT/environments/standalone/standalone-tripleo.yaml') %}
+{%   set _ = environments.append(ansible_env.HOME ~ '/standalone_parameters.yaml') %}
+{%   set _ = roles.append('$THT/roles/Standalone.yaml') %}
 tmux send-keys "sudo --preserve-env=PATH,VIRTUAL_ENV openstack tripleo deploy  \
-                --templates /usr/share/openstack-tripleo-heat-templates \
+                --templates $THT \
                 --local-ip={{ tripleo_job_address }}/{{ tripleo_cidr | ipaddr('prefix') }} \
-                -r /usr/share/openstack-tripleo-heat-templates/roles/Standalone.yaml \
+                -r {{ roles | join(' -r ') }} \
                 -e {{ environments | join(' -e ') }} {{ (tripleo_ceph_enabled | bool) | ternary(tripleo_ceph_standalone_templates, '') }} \
                 --output-dir {{ ansible_env.HOME }} \
-                --standalone" C-m
-tmux select-window -t 1
-tmux send-keys "/opt/rdo/bin/glances --disable-autodiscover --diskio-iops --diskio-show-ramfs --enable-irq" C-m
-tmux select-window -t 0
+                --standalone \
+                --log-file deploy.log" C-m
+{% endif %}
 
 echo -e "Stack creation has been initiated."

@@ -23,12 +23,93 @@
   become: true
   vars_files:
     - vars/main.yml
-  tasks:
+
+  vars:
+    deploy_osp: true
+
+  pre_tasks:
     - name: set hostname properly
       lineinfile:
         dest: /etc/hosts
         line: "127.0.0.1 undercloud.{{ ansible_domain }} undercloud localhost localhost.localdomain"
         regexp: '^127\.0\.0\.1'
+
+    - name: Ensure local facts directory exists
+      become: true
+      file:
+        dest: "/etc/ansible/facts.d"
+        state: directory
+        group: "root"
+        owner: "root"
+        mode:  "0755"
+        recurse: no
+
+    - name: Initialize local facts
+      become: true
+      ini_file:
+        dest: "/etc/ansible/facts.d/tripleo.fact"
+        section: "setup"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+      loop:
+        - option: initialized
+          value: true
+        - option: tripleo_magic_number
+          value: "{{ (24 | random) }}"
+
+    - name: Set instackenv file fact
+      set_fact:
+        instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+      when:
+        - instackenv_file is undefined
+
+    - name: Copy instackenv into place
+      copy:
+        src: "{{ instackenv_file }}"
+        dest: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
+
+    - name: Read instackenv yaml
+      slurp:
+        src: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
+      register: instack_env
+
+    - name: Set Nodes
+      set_fact:
+        target_nodes: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] }}"
+
+    - name: CA certificate block
+      when:
+        - redhat_ca_certs_url is defined
+      block:
+        - name: Check for ca
+          stat:
+            path: "/etc/pki/ca-trust/source/anchors/{{ redhat_ca_certs_url | basename }}"
+          register: rh_it_ca_stat
+
+        - name: Read RH IT CA
+          slurp:
+            src: "/etc/pki/ca-trust/source/anchors/{{ redhat_ca_certs_url | basename }}"
+          register: rh_it_ca
+          when:
+            - rh_it_ca_stat.stat.exists | bool
+
+        - name: Set rh ca fact
+          set_fact:
+            ca_certificate_fact: "{{ rh_it_ca['content'] | b64decode }}"
+          when:
+            - rh_it_ca_stat.stat.exists | bool
+
+  tasks:
+    - name: Refresh local facts
+      setup:
+        gather_subset: "!all"
+
+    - name: Create undercloud config
+      template:
+        src: templates/undercloud.conf
+        dest: "{{ ansible_env.HOME }}/undercloud.conf"
+      when:
+        - deploy_osp | bool
 
     - name: Centos package setup
       when:
@@ -69,6 +150,15 @@
           package:
             name: "python-tripleoclient"
             state: present
+      rescue:
+        - name: Notice
+          debug:
+            msg: >-
+              The client installation has failed so OSP deployment will be disabled.
+
+        - name: Client install failed
+          set_fact:
+            deploy_osp: false
 
     - name: Fedora package setup
       when:
@@ -100,12 +190,39 @@
           package:
             name: "python3-tripleoclient"
             state: present
+      rescue:
+        - name: Notice
+          debug:
+            msg: >-
+              The client installation has failed so OSP deployment will be disabled.
+
+        - name: Client install failed
+          set_fact:
+            deploy_osp: false
 
     - name: Redhat package setup (internal)
       when:
         - (ansible_distribution | lower) == 'redhat'
         - vm_internal_usage | default(false) | bool
       block:
+        - name: Fetch params
+          uri:
+            url: "{{ redhat_puddle_local_images_url }}"
+            return_content: yes
+          register: compose_details
+          when:
+            - redhat_puddle_local_images_url is defined
+
+        - name: Create params yaml
+          template:
+            src: templates/parameters.yaml.j2
+            dest: "{{ ansible_env.HOME }}/parameters.yaml"
+
+        - name: Create local_images params
+          template:
+            src: templates/local_images.yaml.j2
+            dest: "{{ ansible_env.HOME }}/local_images.yaml"
+
         - name: Install tripleo packages (py3)
           package:
             name:
@@ -116,16 +233,27 @@
               - git
               - patchutils
               - iptables-services
-            state: present
+            allow_downgrade: true
+            state: latest
+      rescue:
+        - name: Notice
+          debug:
+            msg: >-
+              The client installation has failed so OSP deployment will be disabled.
 
-    - name: Ensure local facts directory exists
+        - name: Client install failed
+          set_fact:
+            deploy_osp: false
+
+    - name: Set global fact
+      set_fact:
+        deploy_osp: "{{ deploy_osp }}"
+
+    - name: Create images directory
       file:
-        dest: "/etc/ansible/facts.d"
+        path: "{{ ansible_env.HOME }}/images"
         state: directory
-        group: "root"
-        owner: "root"
-        mode:  "0755"
-        recurse: no
+      become: false
 
     - name: Set local ceph facts
       ini_file:
@@ -140,3 +268,55 @@
         section: "lab"
         option: "tripleo_package_fact"
         value: "{{ tripleo_package_fact }}"
+
+    - name: Add the br-netfilter module
+      modprobe:
+        name: br-netfilter
+        state: present
+
+    - name: make module persistent
+      lineinfile:
+        path: /etc/modprobe.d/netfilter.conf
+        line: options br-netfilter
+        owner: root
+        group: root
+        mode: '0644'
+        create: true
+
+    - name: Create swap space
+      become: true
+      command: dd if=/dev/zero of=/swapfile bs=1M count=2048
+      register: mkswap_file
+      args:
+        creates: /swapfile
+
+    - name: set permissions on swap file
+      become: true
+      file:
+        path: /swapfile
+        mode: 0600
+
+    - name: format swap file
+      become: true
+      command: mkswap /swapfile
+      when:
+        - mkswap_file is changed
+
+    - name: add to fstab
+      become: true
+      lineinfile:
+        dest: /etc/fstab
+        regexp: "/swapfile"
+        line: "/swapfile none swap sw 0 0"
+
+    - name: turn on swap
+      become: true
+      command: swapon /swapfile
+      when:
+        - mkswap_file is changed
+
+    - name: set swapiness
+      become: true
+      sysctl:
+        name: vm.swappiness
+        value: "10"
