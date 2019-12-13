@@ -15,7 +15,7 @@ parameter_defaults:
   NeutronBridgeMappings: datacentre:br-ctlplane
   NeutronPhysicalBridge: br-ctlplane
   StandaloneEnableRoutedNetworks: false
-  StandaloneHomeDir: /home/stack
+  StandaloneHomeDir: {{ ansible_env.HOME }}
   StandaloneLocalMtu: 1500
   NovaComputeLibvirtType: kvm
 

@@ -29,8 +29,8 @@ tripleo_version: stein
 # Enable ceph support on the deployment
 tripleo_ceph_enabled: false
 tripleo_loopback_ceph_size: 10
-tripleo_ceph_templates: >-
-  -e /home/stack/standalone_ceph_parameters.yaml
+tripleo_ceph_standalone_templates: >-
+  -e {{ ansible_env.HOME }}/standalone_ceph_parameters.yaml
   -e /usr/share/openstack-tripleo-heat-templates/environments/ceph-ansible/ceph-ansible.yaml
 
 # Basic standalone network information. Only used in standalone deployments.

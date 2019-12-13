@@ -35,7 +35,7 @@ parameter_defaults:
       {{ redhat_access_username }}: '{{ redhat_access_password }}'
 {% endif %}
 
-{% if rh_it_ca_fact is defined %}
+{% if ca_certificate_fact is defined %}
   SSLRootCertificatePath: /etc/pki/ca-trust/source/anchors/{{ redhat_ca_certs_url | basename }}
-  SSLRootCertificate: {{ rh_it_ca_fact | to_json }}
+  SSLRootCertificate: {{ ca_certificate_fact | to_json }}
 {% endif %}

@@ -1,4 +1,5 @@
 ---
+
 all:
   vars:
     provisioned_vm_inventory_file: "{{ lookup('env', 'HOME') }}/vm-local-lab-inventory.yaml"
@@ -20,10 +21,13 @@ all:
         server_networks:
           uplink:
             interface: bond0
+            type: macvlan
           provisioning:
             interface: BOND0-VLAN10
+            type: macvlan
           external:
             interface: BOND0-VLAN11
+            type: macvlan
       children:
         all_hosts:
           children:

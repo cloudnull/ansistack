@@ -1,14 +1,6 @@
+---
+
 all:
-  vars:
-    ansible_python_interpreter: "/usr/bin/python3"
-    ansible_ssh_common_args: >-
-      -o UserKnownHostsFile=/dev/null
-      -o StrictHostKeyChecking=no
-      -o Compression=no
-      -o TCPKeepAlive=yes
-      -o VerifyHostKeyDNS=no
-      -o ForwardX11=no
-      -o ForwardAgent=no
   children:
     all_vms:
       vars:
@@ -36,19 +28,6 @@ all:
           children:
             provisioned_compute_hosts:
               children:
-                provisioned_compute2:
-                  vars:
-                    vm_virt_host: "compute2"
-                    vm_cores: 6  # Number of cores
-                    vm_ram: 8192  # Size in MiB
-                    vm_disk_size: 72  # Size in GiB
-                    vm_image_name: centos7  # Set the base image used for raw vms
-                  hosts:
-                    compute2-vm-1: {}
-                    compute2-vm-2: {}
-                    compute2-vm-3: {}
-                    compute2-vm-4: {}
-                    compute2-vm-5: {}
                 provisioned_compute1:
                   vars:
                     vm_virt_host: "compute1"
@@ -63,7 +42,9 @@ all:
                     compute1-vm-3:
                       vm_image_name: centos7
                     compute1-vm-4:
-                      vm_image_name: centos7
+                      vm_image_name: rhel8
+                    compute1-vm-5:
+                      vm_image_name: rhel8
         bootable_vms:
           vars:
             vm_networks:
@@ -82,7 +63,7 @@ all:
                   vars:
                     vm_virt_host: "compute2"
                     vm_cores: 8
-                    vm_ram: 16384
+                    vm_ram: 8192
                     vm_disk_size: 96
                   hosts:
                     osp-compute2-vm-controller-1:
@@ -91,32 +72,53 @@ all:
                       vm_vbmc_port: 16021
                     osp-compute2-vm-controller-3:
                       vm_vbmc_port: 16022
+                    osp-compute2-vm-compute-0:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16023
+                      vm_disk_size: 32
                     osp-compute2-vm-compute-1:
-                      vm_cores: 4
+                      vm_cores: 2
                       vm_ram: 4096
-                      vm_vbmc_port: 16030
+                      vm_vbmc_port: 16024
+                      vm_disk_size: 32
                     osp-compute2-vm-compute-2:
-                      vm_cores: 4
+                      vm_cores: 2
                       vm_ram: 4096
-                      vm_vbmc_port: 16031
-                bootable_compute1:
-                  vars:
-                    vm_virt_host: "compute1"
-                    vm_cores: 8
-                    vm_ram: 16384
-                    vm_disk_size: 96
-                  hosts:
-                    osp-compute1-vm-controller-1:
-                      vm_vbmc_port: 16020
-                    osp-compute1-vm-controller-2:
-                      vm_vbmc_port: 16021
-                    osp-compute1-vm-controller-3:
-                      vm_vbmc_port: 16022
-                    osp-compute1-vm-compute-1:
-                      vm_cores: 4
+                      vm_vbmc_port: 16025
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-3:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16026
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-4:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16027
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-5:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16028
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-6:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16029
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-7:
+                      vm_cores: 2
                       vm_ram: 4096
                       vm_vbmc_port: 16030
-                    osp-compute1-vm-compute-2:
-                      vm_cores: 4
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-8:
+                      vm_cores: 2
                       vm_ram: 4096
                       vm_vbmc_port: 16031
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-9:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16032
+                      vm_disk_size: 32

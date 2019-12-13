@@ -47,21 +47,6 @@
   vars_files:
     - vars/main.yml
 
-  handlers:
-    - name: Deployment notice
-      debug:
-        msg: >-
-          VM(s) creation has completed. An instackenv file has been created for the generated nodes.
-          This file can be found here `{{ instackenv_file }}`.
-      run_once: true
-
-    - name: Raw deployment notice
-      debug:
-        msg: >-
-          VM(s) creation has completed. An inventory file has been created for the generated nodes.
-          This file can be found here `{{ provisioned_vm_inventory_file }}`.
-      run_once: true
-
   pre_tasks:
     - name: Check for required hostvars
       fail:

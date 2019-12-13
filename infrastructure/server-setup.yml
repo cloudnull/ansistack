@@ -51,28 +51,30 @@
         daemon_reload: true
         enabled: true
 
-    - name: check if Intel processor
+    - name: Check if Intel processor
       command: grep -q Intel /proc/cpuinfo
       ignore_errors: true
+      changed_when: false
       register: is_intel
 
-    - name: check if AMD processor
+    - name: Check if AMD processor
       command: grep -q AMD /proc/cpuinfo
       ignore_errors: true
+      changed_when: false
       register: is_amd
 
     - name: Add the kvm module
       modprobe:
-        name: "{{ (is_amd | bool) | ternary('kvm_amd', 'kvm_intel') }}"
+        name: "{{ ((is_amd.rc == 0) | bool) | ternary('kvm_amd', 'kvm_intel') }}"
         params: "nested=1"
         state: present
       when:
         - (is_amd.rc == 0) or (is_intel.rc == 0)
 
-    - name: make module persistent
+    - name: Make module persistent
       lineinfile:
         path: /etc/modprobe.d/kvm.conf
-        line: "options {{ (is_amd | bool) | ternary('kvm_amd', 'kvm_intel') }} nested=1"
+        line: "options {{ ((is_amd.rc == 0) | bool) | ternary('kvm_amd', 'kvm_intel') }} nested=1"
         owner: root
         group: root
         mode: '0644'
@@ -89,10 +91,10 @@
         - virtio-scsi
         - virtio-net
 
-    - name: make module persistent
+    - name: Make module persistent
       lineinfile:
-        path: /etc/modprobe.d/virtio.conf
-        line: "options {{ item }}"
+        path: /etc/modules-load.d/virtio.conf
+        line: "{{ item }}"
         owner: root
         group: root
         mode: '0644'
@@ -111,20 +113,20 @@
       virt_net:
         name: "{{ item }}"
         state: present
-        xml: "{{ lookup('template', 'virt-' ~ item ~'-net.xml.j2') }}"
-      loop: "{{ server_networks.keys() }}"
+        xml: "{{ lookup('template', 'virt-' ~ server_networks[item]['type'] ~ '-net.xml.j2') }}"
+      loop: "{{ server_networks.keys() | list }}"
 
     - name: Set virt network(s) to active
       virt_net:
         name: "{{ item }}"
         state: active
-      loop: "{{ server_networks.keys() }}"
+      loop: "{{ server_networks.keys() | list }}"
 
     - name: Set virt network(s) to autostart
       virt_net:
         name: "{{ item }}"
         autostart: true
-      loop: "{{ server_networks.keys() }}"
+      loop: "{{ server_networks.keys() | list }}"
 
     - name: Install vbmc
       pip:
