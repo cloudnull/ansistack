@@ -6,7 +6,9 @@ with open('vm-lab-inventory.yaml') as f:
 
 orig = {
     'resource_registry': {
-        'OS::TripleO::DeployedServer::ControlPlanePort': '/usr/share/openstack-tripleo-heat-templates/deployed-server/deployed-neutron-port.yaml'
+        'OS::TripleO::DeployedServer::ControlPlanePort': '/usr/share/openstack-tripleo-heat-templates/deployed-server/deployed-neutron-port.yaml',
+        'OS::TripleO::Controller::Net::SoftwareConfig': 'templates/net-config-static-bridge.yaml',
+        'OS::TripleO::Compute::Net::SoftwareConfig': 'templates/net-config-static-bridge.yaml'
     },
     'parameter_defaults': {
         'DeployedServerPortMap': {},
@@ -38,3 +40,8 @@ for k, v in vms['hosts'].items():
 
 with open('params-hosts.yml', 'w') as f:
     f.write(yaml.safe_dump(orig))
+
+resource_registry:
+  OS::TripleO::DeployedServer::ControlPlanePort: /usr/share/openstack-tripleo-heat-templates/deployed-server/deployed-neutron-port.yaml
+  OS::TripleO::Controller::Net::SoftwareConfig: templates/net-config-static-bridge.yaml
+  OS::TripleO::Compute::Net::SoftwareConfig: templates/net-config-static-bridge.yaml

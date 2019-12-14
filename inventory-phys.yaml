@@ -6,9 +6,6 @@ all:
   children:
     all_machines:
       vars:
-        ansible_become: yes
-        ansible_become_user: "root"
-        ansible_user: "root"
         ansible_ssh_extra_args: >-
           -o UserKnownHostsFile=/dev/null
           -o StrictHostKeyChecking=no

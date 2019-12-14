@@ -27,6 +27,19 @@ vm_image_data:
       - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python"
+    pkgmgr: yum
+    base_os: centos
+    base_packages:
+      - vim
+      - network-scripts
+      - patch
+      - git
+      - patchutils
+      - iptables-services
+      - python*-virtualenv
+      - tmux
+      - OpenIPMI
+      - ipmitool
   fedora28:
     url: https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
@@ -36,6 +49,19 @@ vm_image_data:
       - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
+    pkgmgr: dnf
+    base_os: fedora
+    base_packages:
+      - vim
+      - network-scripts
+      - patch
+      - git
+      - patchutils
+      - iptables-services
+      - python*-virtualenv
+      - tmux
+      - OpenIPMI
+      - ipmitool
   fedora30:
     url: https://download.fedoraproject.org/pub/fedora/linux/releases/30/Cloud/x86_64/images/Fedora-Cloud-Base-30-1.2.x86_64.qcow2
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
@@ -45,6 +71,19 @@ vm_image_data:
       - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
+    pkgmgr: dnf
+    base_os: fedora
+    base_packages:
+      - vim
+      - network-scripts
+      - patch
+      - git
+      - patchutils
+      - iptables-services
+      - python*-virtualenv
+      - tmux
+      - OpenIPMI
+      - ipmitool
   rhel7:
     url: "{{ redhat_7_cloud_image_url | default('undefined') }}"
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
@@ -54,6 +93,19 @@ vm_image_data:
       - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python"
+    pkgmgr: yum
+    base_os: rhel
+    base_packages:
+      - vim
+      - network-scripts
+      - patch
+      - git
+      - patchutils
+      - iptables-services
+      - python*-virtualenv
+      - tmux
+      - OpenIPMI
+      - ipmitool
   rhel8.0:
     url: "{{ redhat_80_cloud_image_url | default('undefined') }}"
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
@@ -63,6 +115,19 @@ vm_image_data:
       - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
+    pkgmgr: dnf
+    base_os: rhel
+    base_packages:
+      - vim
+      - network-scripts
+      - patch
+      - git
+      - patchutils
+      - iptables-services
+      - python*-virtualenv
+      - tmux
+      - OpenIPMI
+      - ipmitool
   rhel8:
     url: "{{ redhat_8_cloud_image_url | default('undefined') }}"
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
@@ -72,6 +137,19 @@ vm_image_data:
       - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
+    pkgmgr: dnf
+    base_os: rhel
+    base_packages:
+      - vim
+      - network-scripts
+      - patch
+      - git
+      - patchutils
+      - iptables-services
+      - python*-virtualenv
+      - tmux
+      - OpenIPMI
+      - ipmitool
   rhel8-ppc64le:
     url: "{{ redhat_8_ppc64le_cloud_image_url | default('undefined') }}"
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
@@ -82,6 +160,19 @@ vm_image_data:
       - NetworkManager
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
+    pkgmgr: dnf
+    base_os: rhel
+    base_packages:
+      - vim
+      - network-scripts
+      - patch
+      - git
+      - patchutils
+      - iptables-services
+      - python*-virtualenv
+      - tmux
+      - OpenIPMI
+      - ipmitool
   ubuntu1604:
     url: https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
@@ -90,6 +181,9 @@ vm_image_data:
     cloud_init_packages:
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
+    pkgmgr: apt
+    base_os: ubuntu
+    base_packages: []
   ubuntu1804:
     url: https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img
     path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
@@ -98,6 +192,9 @@ vm_image_data:
     cloud_init_packages:
       - qemu-guest-agent
     python_interpreter: "/usr/bin/python3"
+    pkgmgr: apt
+    base_os: ubuntu
+    base_packages: []
 
 # Enable image downloads
 vm_image_get: true

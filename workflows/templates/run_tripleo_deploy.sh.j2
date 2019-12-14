@@ -34,7 +34,7 @@ tmux send-keys "source /opt/tripleo-patches/bin/activate" C-m
 
 {# Deployment #}
 {% if (deploy_osp is defined) and (deploy_osp | bool) %}
-{# multi-node #}
+{#   multi-node #}
 tmux send-keys "openstack undercloud install" C-m
 tmux send-keys "source ~/stackrc" C-m
 tmux send-keys "openstack subnet set ctlplane-subnet --dns-nameserver {{ redhat_dns_servers[0] }}" C-m
@@ -47,18 +47,29 @@ tmux send-keys "openstack tripleo container image prepare -e local_images.yaml -
 tmux send-keys "openstack tripleo container image prepare default --local-push-destination --output-env-file containers-prepare-parameters.yaml" C-m
 {%   endif %}
 {%   set _ = environments.append('parameters.yaml') %}
+{#   pre-provisioned nodes #}
 {%   if (deploy_pre_provisioned is defined) and (deploy_pre_provisioned | bool) %}
+tmux send-keys "pushd $THT" C-m
+tmux send-keys "$THT/tools/process-templates.py --roles-data $THT/roles_data.yaml -o /tmp/templates/" C-m
+tmux send-keys "popd" C-m
+{%     set distro_map = {'redhat': 'rhel', 'centos': 'centos'} %}
+{%     set _ = environments.append('/tmp/templates/environments/deployed-server-bootstrap-environment-' ~ distro_map[(ansible_distribution | lower)] ~ '.yaml') %}
+{%     set _ = environments.append('/tmp/templates/environments/deployed-server-pacemaker-environment.yaml') %}
+{%     set _ = environments.append('/tmp/templates/environments/deployed-server-environment.yaml') %}
 {%     set _ = environments.append('$THT/environments/deployed-server-environment.yaml') %}
 {%     set _ = environments.append('pre-provisioned-parameters.yaml') %}
-{%     set _ = roles.append('$THT/roles/deployed-server-roles-data.yaml') %}
+{%     set _ = roles.append('$THT/roles_data.yaml') %}
 {%   else %}
+{#   ironic powered nodes #}
+{%     set _ = roles.append('$THT/roles_data.yaml') %}
 tmux send-keys "openstack overcloud node import vm-instackenv.yaml" C-m
 tmux send-keys "openstack overcloud node introspect --all-manageable \
                                                     --provide \
-                                                    --concurrency {{ (ansible_processor_vcpus | int) * 2  }} || openstack overcloud node introspect --all-manageable \
-                                                                                                                                                    --provide" C-m
+                                                    --concurrency {{ (ansible_processor_vcpus | int) * 2  }} \
+                                                    || openstack overcloud node introspect --all-manageable \
+                                                    --provide" C-m
 {%   endif %}
-tmux send-keys "sudo openstack overcloud deploy \
+tmux send-keys "sudo --preserve-env=PATH,VIRTUAL_ENV openstack overcloud deploy \
                 --templates $THT/ \
                 -r {{ roles | join(' -r ') }} \
                 -e {{ environments | join(' -e ') }} \
@@ -66,12 +77,11 @@ tmux send-keys "sudo openstack overcloud deploy \
                 --disable-validations  \
                 --overcloud-ssh-user cloud-user \
                 --overcloud-ssh-key /home/cloud-user/.ssh/id_rsa \
-                -e ~/container-image-prepare.yaml \
                 --log-file deploy.log \
                 --config-download-timeout 1024 \
                 --timeout 1024" C-m
 {% else %}
-{# Standalone #}
+{#   Standalone #}
 tmux send-keys "openstack tripleo container image prepare default --output-env-file containers-prepare-parameter.yaml" C-m
 {%   set _ = environments.append('$THT/environments/standalone/standalone-tripleo.yaml') %}
 {%   set _ = environments.append(ansible_env.HOME ~ '/standalone_parameters.yaml') %}

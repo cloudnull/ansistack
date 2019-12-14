@@ -7,7 +7,7 @@ chpasswd: { expire: False }
 # Hostname management
 preserve_hostname: False
 hostname: {{ inventory_hostname }}
-fqdn: {{ inventory_hostname }}.local
+fqdn: {{ inventory_hostname }}.localdomain
 
 # Setup Users with ssh keys so that I can log in into new machine
 users:
@@ -53,39 +53,59 @@ timezone: UTC
 
 packages: {{ vm_packages }}
 
-{% set cmd_list = ["systemctl enable network", "systemctl restart network", "systemctl enable sshd", "systemctl restart sshd"] %}
+{% set cmd_list = ["systemctl enable sshd", "systemctl restart sshd"] %}
+{% set _ = cmd_list.append('systemctl enable NetworkManager') %}
+{% set _ = cmd_list.append('systemctl start NetworkManager') %}
+{% set _ = cmd_list.append("nmcli con | egrep -wo '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}' | xargs -n 1 nmcli con del") %}
 {% for k, v in vm_networks.items() %}
 {%   if (v.manager is defined and v.manager == 'nmcli') %}
-{%     set _ = cmd_list.append('systemctl enable NetworkManager') %}
-{%     set _ = cmd_list.append('systemctl start NetworkManager') %}
 {%     if (v.interface is defined) and (v.address is defined) and (v.netmask is defined) and (v.gateway is defined) %}
-{%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ k ~ ' ifname ' ~ v.interface ~ ' ip4 ' ~ v.address ~ '/' ~ v.netmask ~ ' gw4 ' ~ v.gateway) %}
+{%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ v.interface ~ ' ifname ' ~ v.interface ~ ' ip4 ' ~ v.address ~ '/' ~ v.netmask ~ ' gw4 ' ~ v.gateway) %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.addresses ' ~ v.address ~ '/' ~ v.netmask) %}
 {%     elif (v.interface is defined) and (v.dhcp is defined and v.dhcp | bool) %}
-{%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ k ~ ' ifname ' ~ v.interface ~ ' ipv4.method auto ipv6.method auto') %}
+{%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ v.interface ~ ' ifname ' ~ v.interface ~ ' ipv4.method auto ipv6.method auto') %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.method auto ipv6.method auto') %}
 {%     elif (v.interface is defined) and (v.dhcp is defined and not (v.dhcp | bool)) %}
-{%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ k ~ ' ifname ' ~ v.interface ~ ' ipv4.method disabled ipv6.method ignore') %}
+{%       set _ = cmd_list.append('nmcli con add type ethernet con-name ' ~ v.interface ~ ' ifname ' ~ v.interface ~ ' ipv4.method disabled ipv6.method ignore') %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.method disabled ipv6.method ignore') %}
 {%     endif %}
 {%     if (v.dns is defined) %}
-{%       set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.dns ' ~ (v.dns | join(' ') | to_json) ) %}
-{%       set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.ignore-auto-dns yes' ) %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.dns ' ~ (v.dns | join(' ') | to_json) ) %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.ignore-auto-dns yes' ) %}
 {%     endif %}
-{%     set _ = cmd_list.append('nmcli con down ' ~ k) %}
-{%     set _ = cmd_list.append('nmcli con up ' ~ k) %}
+{%     set _ = cmd_list.append('nmcli con down ' ~ v.interface) %}
+{%     set _ = cmd_list.append('nmcli con up ' ~ v.interface) %}
 {%     if (v.manager is defined and v.manager == 'nmcli') %}
 {%       if v.router is defined %}
-{%         set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.method manual') %}
-{%         set _ = cmd_list.append("nmcli con mod " ~ k ~ " ipv4.addresses $(nmcli device show $(nmcli device | awk '/" ~ k ~ "/ {print $1}') | awk '/IP4.ADDRESS/ {print $2}' | tr '\n' ' ')") %}
-{%         set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.gateway ' ~ v.router | to_json) %}
+{%         set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.method manual') %}
+{%         set _ = cmd_list.append("nmcli con mod " ~ v.interface ~ " ipv4.addresses $(nmcli device show $(nmcli device | awk '/" ~ v.interface ~ "/ {print $1}') | awk '/IP4.ADDRESS/ {print $2}' | tr '\n' ' ')") %}
+{%         set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.gateway ' ~ v.router | to_json) %}
 {%         if (v.dns is undefined) %}
-{%           set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.dns ' ~ v.router | to_json) %}
-{%           set _ = cmd_list.append('nmcli con mod ' ~ k ~ ' ipv4.ignore-auto-dns yes' ) %}
+{%           set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.dns ' ~ v.router | to_json) %}
+{%           set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.ignore-auto-dns yes' ) %}
 {%         endif %}
-{%         set _ = cmd_list.append('nmcli con down ' ~ k) %}
-{%         set _ = cmd_list.append('nmcli con up ' ~ k) %}
+{%         set _ = cmd_list.append('nmcli con down ' ~ v.interface) %}
+{%         set _ = cmd_list.append('nmcli con up ' ~ v.interface) %}
 {%       endif %}
 {%     endif %}
 {%   endif %}
 {% endfor %}
 {% set _ = cmd_list.append('systemctl enable qemu-guest-agent') %}
 {% set _ = cmd_list.append('systemctl restart qemu-guest-agent') %}
+{% set pkgmgr = vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['pkgmgr'] %}
+{% if redhat_package_url is defined %}
+{%   set _ = cmd_list.append(pkgmgr ~ ' install -y ' ~ redhat_package_url) %}
+{%   set _ = cmd_list.append('rhos-release ' ~ redhat_rhos_release) %}
+{% endif %}
+{% set _ = cmd_list.append('update-ca-trust enable') %}
+{% if redhat_ca_certs_url is defined %}
+{%   set _ = cmd_list.append('curl -k ' ~ redhat_ca_certs_url ~ ' -o /etc/pki/ca-trust/source/anchors/' ~ (redhat_ca_certs_url | basename)) %}
+{%   set _ = cmd_list.append('update-ca-trust extract') %}
+{% endif %}
+{% if (vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['base_packages'] | length) > 0 %}
+{%   set _ = cmd_list.append(pkgmgr ~ ' install -y ' ~ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['base_packages'] | join(' ')) %}
+{% endif %}
+{% set _ = cmd_list.append('timedatectl set-timezone UTC') %}
+{% set _ = cmd_list.append('hostnamectl --static --transient set-hostname ' ~ inventory_hostname | replace('_', '-') ~ '.localdomain') %}
+
 runcmd: {{ cmd_list }}

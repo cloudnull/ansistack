@@ -38,11 +38,9 @@
         src: run_tripleo_deploy.sh.j2
         dest: "{{ ansible_env.HOME }}/run-deploy.sh"
         mode: '0755'
-      become: false
 
     - name: Run deployment command(s)
       shell: "{{ ansible_env.HOME }}/run-deploy.sh"
-      become: false
 
     - name: Build notice
       debug:

@@ -4,9 +4,6 @@ all:
   children:
     all_vms:
       vars:
-        ansible_become: true
-        ansible_become_user: "root"
-        ansible_user: "root"
         vm_vbmc_username: admin
         vm_vbmc_password: secrete
       children:

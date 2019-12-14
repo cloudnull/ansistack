@@ -5,9 +5,6 @@ all_machines:
     vm_image_path: /var/cache/images
     vm_image_shared_storage: false
     vm_cleanup: true
-    ansible_become: yes
-    ansible_become_user: "root"
-    ansible_user: "root"
     ansible_ssh_extra_args: >-
       -o UserKnownHostsFile=/dev/null
       -o StrictHostKeyChecking=no
@@ -155,9 +152,6 @@ all_machines:
                             - /dev/sdg
     all_vms:
       vars:
-        ansible_become: true
-        ansible_become_user: "root"
-        ansible_user: "root"
         vm_vbmc_username: admin
         vm_vbmc_password: secrete
       children:

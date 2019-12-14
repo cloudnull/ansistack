@@ -16,49 +16,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-- name: Run developer setup
-  hosts: "all"
-  any_errors_fatal: true
-  gather_facts: false
-  become: true
-  vars_files:
-    - vars/main.yml
-  tasks:
-    - name: Run raw setup commands
-      raw: |-
-        if egrep -qwo '(rhel|centos)' /etc/os-release; then
-          PKG_MGR=$(command -v dnf || command -v yum)
-        {% if redhat_package_url is defined %}
-          ${PKG_MGR} install -y {{ redhat_package_url }}
-          rhos-release {{ redhat_rhos_release }}
-        {% endif %}
-          update-ca-trust enable
-        {% if redhat_ca_certs_url is defined %}
-          curl -k {{ redhat_ca_certs_url }} -o /etc/pki/ca-trust/source/anchors/{{ redhat_ca_certs_url | basename }};
-          update-ca-trust extract
-        {% endif %}
-          ${PKG_MGR} install -y vim network-scripts patch git patchutils iptables-services python*-virtualenv tmux OpenIPMI ipmitool
-          if grep -qwo 'rhel' /etc/os-release; then
-            # Disable IPv6 for now.
-            if ! grep -q 'all.disable_ipv6' /etc/sysctl.conf; then
-              sysctl -w net.ipv6.conf.all.disable_ipv6=1 | tee -a /etc/sysctl.conf
-            fi
-            if ! grep -q 'default.disable_ipv6' /etc/sysctl.conf; then
-              sysctl -w net.ipv6.conf.default.disable_ipv6=1 | tee -a /etc/sysctl.conf
-            fi
-            if ! grep -q 'lo.disable_ipv6' /etc/sysctl.conf; then
-              sysctl -w net.ipv6.conf.lo.disable_ipv6=1 | tee -a /etc/sysctl.conf
-            fi
-          fi
-        fi
-        timedatectl set-timezone UTC
-        hostnamectl --static --transient set-hostname {{ inventory_hostname | replace('_', '-') }}.localdomain
-      register: setup_vm
-      until: setup_vm is success
-      retries: 3
-      delay: 2
-
-
 - name: Run virtual machine updates
   hosts: "all"
   any_errors_fatal: true

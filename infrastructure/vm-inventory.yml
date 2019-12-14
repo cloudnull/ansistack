@@ -186,7 +186,7 @@
                        'ansible_python_interpreter': vm_image_data[hostvars[node]['vm_image_name']]['python_interpreter'],
                        'vm_job_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
                        'vm_job_target': node,
-                       'vm_virt_host': hostvars[hostvars[node]['vm_virt_host']]['ansible_host'],
+                       'vm_virt_host': hostvars[node]['vm_virt_host'],
                        'ooo_type': hostvars[node]['ooo_type'] | default('undefined')
                      }
               %}
