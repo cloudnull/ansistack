@@ -51,7 +51,16 @@ ssh_authorized_keys: {{ keys }}
 # set timezone for VM
 timezone: UTC
 
+{# image lookup information #}
+{% set _image_name = hostvars[inventory_hostname]['vm_image_name'] %}
+{% set _image_data = vm_image_data[_image_name] %}
+
+{# Extra packages to install #}
+{% if (_image_data['base_packages'] | length) > 0 %}
+{%   set _ = vm_packages.extend(_image_data['base_packages']) %}
+{% endif %}
 packages: {{ vm_packages }}
+
 {# Basic start section #}
 {% set cmd_list = [
     "systemctl enable qemu-guest-agent"
@@ -61,7 +70,7 @@ packages: {{ vm_packages }}
   ]
 %}
 {# NetworkManager block #}
-{% if 'nmcli' in (vm_networks | map(attribute='manager') | list) %}
+{% if 'nmcli' in (vm_networks.values() | list | map(attribute='manager') | list) %}
 {%   set _ = cmd_list.append('systemctl enable NetworkManager') %}
 {%   set _ = cmd_list.append('systemctl start NetworkManager') %}
 {%   set _ = cmd_list.append("nmcli con | egrep -wo '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}' | xargs -n 1 nmcli con del") %}
@@ -97,13 +106,13 @@ packages: {{ vm_packages }}
 {%     endif %}
 {%   endif %}
 {% endfor %}
-{% if 'nmcli' in (vm_networks | map(attribute='manager') | list) %}
+{% if 'nmcli' in (vm_networks.values() | list | map(attribute='manager') | list) %}
 {%   set _ = cmd_list.append("nmcli con | grep -i 'wired connection' | egrep -wo '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}' | xargs -n 1 nmcli con del") %}
 {% endif %}
 {# Redhat developer setup #}
-{% if vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['base_os'] == 'rhel' %}
+{% if _image_data['base_os'] == 'rhel' %}
 {%   if redhat_package_url is defined %}
-{%     set _ = cmd_list.append(pkgmgr ~ ' install -y ' ~ redhat_package_url) %}
+{%     set _ = cmd_list.append(_image_data['pkgmgr'] ~ ' install -y ' ~ redhat_package_url) %}
 {%     set _ = cmd_list.append('rhos-release ' ~ redhat_rhos_release) %}
 {%   endif %}
 {%   set _ = cmd_list.append('update-ca-trust enable') %}
@@ -111,11 +120,6 @@ packages: {{ vm_packages }}
 {%     set _ = cmd_list.append('curl -k ' ~ redhat_ca_certs_url ~ ' -o /etc/pki/ca-trust/source/anchors/' ~ (redhat_ca_certs_url | basename)) %}
 {%     set _ = cmd_list.append('update-ca-trust extract') %}
 {%   endif %}
-{% endif %}
-{# Post boot packages to install #}
-{% set pkgmgr = vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['pkgmgr'] %}
-{% if (vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['base_packages'] | length) > 0 %}
-{%   set _ = cmd_list.append(pkgmgr ~ ' install -y ' ~ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['base_packages'] | join(' ')) %}
 {% endif %}
 {# Timezone info #}
 {% set _ = cmd_list.append('timedatectl set-timezone UTC') %}

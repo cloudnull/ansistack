@@ -1,17 +1,21 @@
-{% set default_details = {
-    'container-image-prepare': {
-      'prefix': 'openstack-',
-      'namespace': (redhat_docker_registry ~ '/' ~ redhat_osp_release),
-      'tag': 'latest'
+{% if (redhat_docker_registry is defined) and (redhat_osp_release is defined) %}
+{%   set default_details = {
+       'container-image-prepare': {
+         'prefix': 'openstack-',
+         'namespace': (redhat_docker_registry ~ '/' ~ redhat_osp_release),
+         'tag': 'latest'
+      }
     }
-  }
 %}
-{% set details = (compose_details.content is defined) | ternary((compose_details.content | from_yaml), default_details) %}
+{%   set details = (compose_details.content is defined) | ternary((compose_details.content | from_yaml), default_details) %}
+{% endif %}
 ---
 parameter_defaults:
   NeutronMechanismDrivers: ovn
+{% if (ansible_distribution | lower) == 'redhat' %}
   ContainerImagePrepare:
     - set:
         name_prefix: "{{ details['container-image-prepare']['prefix'] }}"
         namespace: "{{ details['container-image-prepare']['namespace'] }}"
         tag: "{{ details['container-image-prepare']['tag'] }}"
+{% endif %}

@@ -1,13 +1,6 @@
 ---
-
-{% set registries = redhat_docker_registries %}
-{% set _ = registries.append('192.168.' + ansible_local.tripleo.setup.tripleo_magic_number + '.1:8787') %}
-
 parameter_defaults:
-  DockerInsecureRegistryAddress: {{ registries }}
-
-  NovaComputeLibvirtType: qemu
-
+  NovaComputeLibvirtType: {{ tripleo_nova_virt_type }}
 {% if (preprov_target_nodes is defined) and ((tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool)) %}
   ControllerCount: {{ preprov_target_nodes | selectattr("ooo_type", "match", ".*control.*") | list | length }}
   ComputeCount: {{ preprov_target_nodes | selectattr("ooo_type", "match", ".*compute.*") | list | length }}
@@ -21,20 +14,20 @@ parameter_defaults:
   BlockStorageCount: {{ target_nodes | selectattr("capabilities", "match", ".*block.*") | list | length }}
   ObjectStorageCount: {{ target_nodes | selectattr("capabilities", "match", ".*swift.*") | list | length }}
 {% endif %}
-
   ControllerSchedulerHints:
     'capabilities:node': '%stack%-controller-%index%'
   ComputeSchedulerHints:
     'capabilities:node': '%stack%-compute-%index%'
   CephStorageSchedulerHints:
     'capabilities:node': '%stack%-ceph-%index%'
-
 {% if ca_certificate_fact is defined %}
   SSLRootCertificatePath: /etc/pki/ca-trust/source/anchors/{{ redhat_ca_certs_url | basename }}
   SSLRootCertificate: {{ ca_certificate_fact | to_json }}
 {% endif %}
-
 {% if (ansible_distribution | lower) == 'redhat' %}
+{%   set registries = redhat_docker_registries %}
+{%   set _ = registries.append('192.168.' + ansible_local.tripleo.setup.tripleo_magic_number + '.1:8787') %}
+  DockerInsecureRegistryAddress: {{ registries }}
   DnsServers: {{ redhat_dns_servers }}
   NtpServer: {{ redhat_ntp_servers }}
 {%   if (redhat_access_username is defined) and (redhat_access_password is defined )%}
@@ -42,4 +35,6 @@ parameter_defaults:
     registry.redhat.io:
       {{ redhat_access_username }}: '{{ redhat_access_password }}'
 {%   endif %}
+{% else %}
+  DockerInsecureRegistryAddress: ['192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.1:8787']
 {% endif %}

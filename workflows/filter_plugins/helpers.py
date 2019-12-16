@@ -23,22 +23,39 @@ from operator import itemgetter
 
 
 class FilterModule(object):
+    def __init__(self):
+        self.rendered_template_path = '/tmp/templates'
+
     def filters(self):
         return {
             'preprov_hosts': self.preprov_hosts
-            }
+        }
 
-    def preprov_hosts(self, inv, cidr):
-        tht = "/usr/share/openstack-tripleo-heat-templates"
+    @property
+    def _resource_registry(self):
+        return {
+            'OS::TripleO::DeployedServer::ControlPlanePort': os.path.join(
+                self.rendered_template_path,
+                'deployed-server/deployed-neutron-port.yaml'
+            ),
+            'OS::TripleO::Controller::Net::SoftwareConfig': os.path.join(
+                self.rendered_template_path,
+                'net-config-static-bridge.yaml'
+            ),
+            'OS::TripleO::Compute::Net::SoftwareConfig': os.path.join(
+                self.rendered_template_path,
+                'net-config-static-bridge.yaml'
+            ),
+        }
+
+    def preprov_hosts(self, inv, cidr, rendered_template_path=None):
+        # These resources are assumed to be generated and stored in the
+        # /tmp/templates directory.
+        if rendered_template_path:
+            self.rendered_template_path = rendered_template_path
+
         orig = {
-            'resource_registry': {
-                'OS::TripleO::DeployedServer::ControlPlanePort': os.path.join(
-                    tht, 'deployed-server/deployed-neutron-port.yaml'),
-                'OS::TripleO::Controller::Net::SoftwareConfig': os.path.join(
-                    tht, 'templates/net-config-static-bridge.yaml'),
-                'OS::TripleO::Compute::Net::SoftwareConfig': os.path.join(
-                    tht, 'templates/net-config-static-bridge.yaml')
-            },
+            'resource_registry': self._resource_registry,
             'parameter_defaults': {
                 'DeployedServerPortMap': {},
                 'HostnameMap': {}

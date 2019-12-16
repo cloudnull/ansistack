@@ -28,14 +28,17 @@ all:
                 provisioned_compute2:
                   vars:
                     vm_virt_host: "compute2"
-                    vm_cores: 6  # Number of cores
-                    vm_ram: 8192  # Size in MiB
+                    vm_cores: 4  # Number of cores
+                    vm_ram: 4096  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
                     ooo_type: compute
+                    overcloud_target: true
                   hosts:
                     compute2-vm-controller-1:
                       vm_image_name: centos7
                       ooo_type: controller
+                      vm_cores: 6  # Number of cores
+                      vm_ram: 16384  # Size in MiB
                     compute2-vm-compute-1:
                       vm_image_name: centos7
                     compute2-vm-compute-2:
@@ -46,18 +49,16 @@ all:
                   vars:
                     vm_virt_host: "compute1"
                     vm_cores: 6  # Number of cores
-                    vm_ram: 8192  # Size in MiB
+                    vm_ram: 16384  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
+                    undercloud_target: true
                   hosts:
                     compute1-vm-1:
                       vm_image_name: centos7
-                      undercloud_target: true
                     compute1-vm-2:
                       vm_image_name: centos7
-                      undercloud_target: true
                     compute1-vm-3:
                       vm_image_name: centos7
-                      undercloud_target: true
                 provisioned_rhel_compute1:
                   vars:
                     vm_virt_host: "compute1"
@@ -84,8 +85,6 @@ all:
                     undercloud_target: true
                   hosts:
                     compute1-rhel-vm-1:
-                      vm_image_name: rhel8
-                    compute1-rhel-vm-2:
                       vm_image_name: rhel8
         bootable_vms:
           vars:

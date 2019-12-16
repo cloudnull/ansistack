@@ -39,9 +39,6 @@ tmux send-keys "source /opt/tripleo-patches/bin/activate" C-m
 tmux send-keys "openstack undercloud install" C-m
 tmux send-keys "source ~/stackrc" C-m
 tmux send-keys "openstack subnet set ctlplane-subnet --dns-nameserver {{ redhat_dns_servers[0] }}" C-m
-tmux send-keys "pushd ~/images" C-m
-tmux send-keys "openstack overcloud image upload --update-existing" C-m
-tmux send-keys "popd" C-m
 {# {%   if (ansible_distribution | lower) == 'redhat' %}
 # tmux send-keys "openstack tripleo container image prepare -e local_images.yaml --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml" C-m
 {%   else %}
@@ -58,6 +55,7 @@ tmux send-keys "popd" C-m
 {%     set _ = environments.append('/tmp/templates/environments/deployed-server-bootstrap-environment-' ~ distro_map[(ansible_distribution | lower)] ~ '.yaml') %}
 {# {%     set _ = environments.append('/tmp/templates/environments/deployed-server-pacemaker-environment.yaml') %} #}
 {%     set _ = environments.append('/tmp/templates/environments/deployed-server-environment.yaml') %}
+{%     set _ = environments.append('/tmp/templates/net-config-static-bridge.yaml') %}
 {%     set _ = environments.append(ansible_env.HOME ~ '/pre-provisioned-parameters.yaml') %}
 {%     set _ = roles.append('$THT/roles_data.yaml') %}
 {%     if ((ansible_distribution | lower) == 'redhat') and (redhat_puddle_local_images_url is defined) %}
@@ -66,6 +64,12 @@ tmux send-keys "popd" C-m
 {%   else %}
 {#   ironic powered nodes #}
 {%     set _ = roles.append('$THT/roles_data.yaml') %}
+tmux send-keys "pushd ~/images" C-m
+{%     if (ansible_distribution | lower) != 'redhat' %}
+tmux send-keys "for i in overcloud-full.tar ironic-python-agent.tar; do tar xf /usr/share/rhosp-director-images/$i done" C-m
+{%     endif %}
+tmux send-keys "openstack overcloud image upload --update-existing" C-m
+tmux send-keys "popd" C-m
 tmux send-keys "openstack overcloud node import vm-instackenv.yaml" C-m
 tmux send-keys "openstack overcloud node introspect --all-manageable \
                                                     --provide \

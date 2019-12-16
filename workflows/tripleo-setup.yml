@@ -74,8 +74,6 @@
       set_fact:
         target_nodes: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] }}"
 
-    - debug: var=target_nodes
-
     - name: Prep-provisioned nodes
       when:
         - provisioned_vm_inventory_file is defined
@@ -93,8 +91,6 @@
         - name: Set pre-provisioned nodes
           set_fact:
             preprov_target_nodes: "{{ (preprov_targets['content'] | b64decode | from_yaml)['vms']['hosts'].values() | list }}"
-
-        - debug: var=preprov_target_nodes
 
     - name: CA certificate block
       when:
@@ -225,14 +221,6 @@
             state: latest
           become: true
 
-        - name: Run image unpack command(s)
-          shell: |-
-            for i in overcloud-full.tar ironic-python-agent.tar; do
-              tar xf /usr/share/rhosp-director-images/$i
-            done
-          args:
-            chdir: "{{ ansible_env.HOME }}/images"
-
       rescue:
         - name: Notice
           debug:
@@ -322,3 +310,18 @@
           sysctl:
             name: vm.swappiness
             value: "10"
+
+    - name: Ensure .ssh directory
+      file:
+        path: "{{ ansible_env.HOME }}/.ssh"
+        state: directory
+        owner: "{{ ansible_env.USER }}"
+        group: "{{ ansible_env.USER }}"
+        mode: "0700"
+
+    - name: Create ssh key pair
+      user:
+        name: "{{ ansible_env.USER }}"
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: "{{ ansible_env.HOME }}/.ssh/id_rsa"

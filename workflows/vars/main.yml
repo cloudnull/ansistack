@@ -43,6 +43,10 @@ tripleo_ntp_servers:
   - time2.google.com
   - time3.google.com
 
+# Nova virt type
+tripleo_nova_virt_type: kvm
+
+# Deployment type/enablement
 tripleo_deploy: true
 tripleo_deploy_run: true
 tripleo_deploy_pre_provisioned: true
