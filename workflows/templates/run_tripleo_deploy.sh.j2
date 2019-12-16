@@ -55,7 +55,6 @@ tmux send-keys "popd" C-m
 {%     set _ = environments.append('/tmp/templates/environments/deployed-server-bootstrap-environment-' ~ distro_map[(ansible_distribution | lower)] ~ '.yaml') %}
 {# {%     set _ = environments.append('/tmp/templates/environments/deployed-server-pacemaker-environment.yaml') %} #}
 {%     set _ = environments.append('/tmp/templates/environments/deployed-server-environment.yaml') %}
-{%     set _ = environments.append('/tmp/templates/net-config-static-bridge.yaml') %}
 {%     set _ = environments.append(ansible_env.HOME ~ '/pre-provisioned-parameters.yaml') %}
 {%     set _ = roles.append('$THT/roles_data.yaml') %}
 {%     if ((ansible_distribution | lower) == 'redhat') and (redhat_puddle_local_images_url is defined) %}
@@ -83,7 +82,6 @@ tmux send-keys "sudo --preserve-env=PATH,VIRTUAL_ENV \
                 -r {{ roles | join(' -r ') }} \
                 -e {{ environments | join(' -e ') }} \
                 --log-file {{ ansible_env.HOME }}/deploy.log \
-                --output-dir {{ ansible_env.HOME }} \
                 --disable-validations \
                 --overcloud-ssh-user {{ ansible_env.USER }} \
                 --overcloud-ssh-key {{ ansible_env.HOME }}/.ssh/id_rsa \
