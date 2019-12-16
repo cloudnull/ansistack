@@ -11,8 +11,9 @@ pushd /opt/tripleo
 {%   if not (patch.install_in_venv | default(false) | bool) %}
     export PKG_NAME="{{ patch.url | basename }}"
     if [[ ! -f "/opt/tripleo/${PKG_NAME}.created" ]]; then
+        sudo find /opt/tripleo/rpms/ -name '${PKG_NAME}*rpm' -exec rm -f {}  \;
         sudo --preserve-env=PATH,TRIPLEO_ROOT /opt/tripleo-ci/scripts/tripleo.sh --delorean-build ${PKG_NAME}
-        touch /opt/tripleo/delorean/${PKG_NAME}.created
+        touch /opt/tripleo/${PKG_NAME}.created
         sudo find /opt/tripleo/delorean -name '*rpm' -exec mv {} /opt/tripleo/rpms/ \;
     fi
 {%   endif %}

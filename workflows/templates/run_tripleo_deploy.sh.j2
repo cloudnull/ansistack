@@ -34,7 +34,7 @@ tmux send-keys "source /opt/tripleo-patches/bin/activate" C-m
 {%   set _ = environments.append('$THT/environments/ssl/inject-trust-anchor.yaml') %}
 {% endif %}
 {# Deployment #}
-{% if (deploy_osp is defined) and (deploy_osp | bool) %}
+{% if inventory_hostname in groups['undercloud'] %}
 {#   multi-node #}
 tmux send-keys "openstack undercloud install" C-m
 tmux send-keys "source ~/stackrc" C-m
@@ -42,25 +42,27 @@ tmux send-keys "openstack subnet set ctlplane-subnet --dns-nameserver {{ redhat_
 tmux send-keys "pushd ~/images" C-m
 tmux send-keys "openstack overcloud image upload --update-existing" C-m
 tmux send-keys "popd" C-m
-{%   if (ansible_distribution | lower) == 'redhat' %}
-tmux send-keys "openstack tripleo container image prepare -e local_images.yaml --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml" C-m
+{# {%   if (ansible_distribution | lower) == 'redhat' %}
+# tmux send-keys "openstack tripleo container image prepare -e local_images.yaml --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml" C-m
 {%   else %}
-tmux send-keys "openstack tripleo container image prepare default --local-push-destination --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml" C-m
+# tmux send-keys "openstack tripleo container image prepare default --local-push-destination --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml" C-m
 {%     set _ = environments.append(ansible_env.HOME ~ '/containers-prepare-parameters.yaml') %}
-{%   endif %}
-{%   set _ = environments.append('parameters.yaml') %}
+{%   endif %} #}
+{%   set _ = environments.append(ansible_env.HOME ~ '/parameters.yaml') %}
 {#   pre-provisioned nodes #}
-{%   if (deploy_pre_provisioned is defined) and (deploy_pre_provisioned | bool) %}
+{%   if (tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool) %}
 tmux send-keys "pushd $THT" C-m
 tmux send-keys "$THT/tools/process-templates.py --roles-data $THT/roles_data.yaml -o /tmp/templates/" C-m
 tmux send-keys "popd" C-m
 {%     set distro_map = {'redhat': 'rhel', 'centos': 'centos'} %}
 {%     set _ = environments.append('/tmp/templates/environments/deployed-server-bootstrap-environment-' ~ distro_map[(ansible_distribution | lower)] ~ '.yaml') %}
-{%     set _ = environments.append('/tmp/templates/environments/deployed-server-pacemaker-environment.yaml') %}
+{# {%     set _ = environments.append('/tmp/templates/environments/deployed-server-pacemaker-environment.yaml') %} #}
 {%     set _ = environments.append('/tmp/templates/environments/deployed-server-environment.yaml') %}
-{%     set _ = environments.append('$THT/environments/deployed-server-environment.yaml') %}
-{%     set _ = environments.append('pre-provisioned-parameters.yaml') %}
+{%     set _ = environments.append(ansible_env.HOME ~ '/pre-provisioned-parameters.yaml') %}
 {%     set _ = roles.append('$THT/roles_data.yaml') %}
+{%     if ((ansible_distribution | lower) == 'redhat') and (redhat_puddle_local_images_url is defined) %}
+{%       set _ = environments.append(ansible_env.HOME ~ '/container_image_prepare.yaml') %}
+{%     endif %}
 {%   else %}
 {#   ironic powered nodes #}
 {%     set _ = roles.append('$THT/roles_data.yaml') %}
@@ -76,7 +78,7 @@ tmux send-keys "sudo --preserve-env=PATH,VIRTUAL_ENV \
                 --templates $THT/ \
                 -r {{ roles | join(' -r ') }} \
                 -e {{ environments | join(' -e ') }} \
-                --log-file deploy.log \
+                --log-file {{ ansible_env.HOME }}/deploy.log \
                 --output-dir {{ ansible_env.HOME }} \
                 --disable-validations \
                 --overcloud-ssh-user {{ ansible_env.USER }} \
@@ -85,7 +87,6 @@ tmux send-keys "sudo --preserve-env=PATH,VIRTUAL_ENV \
                 --timeout 1024" C-m
 {% else %}
 {#   Standalone #}
-tmux send-keys "openstack tripleo container image prepare default --output-env-file containers-prepare-parameter.yaml" C-m
 {%   set _ = environments.append('$THT/environments/standalone/standalone-tripleo.yaml') %}
 {%   set _ = environments.append(ansible_env.HOME ~ '/standalone_parameters.yaml') %}
 {%   set _ = roles.append('$THT/roles/Standalone.yaml') %}
@@ -95,7 +96,7 @@ tmux send-keys "sudo --preserve-env=PATH,VIRTUAL_ENV \
                 --local-ip={{ tripleo_job_address }}/{{ tripleo_cidr | ipaddr('prefix') }} \
                 -r {{ roles | join(' -r ') }} \
                 -e {{ environments | join(' -e ') }} {{ (tripleo_ceph_enabled | bool) | ternary(tripleo_ceph_standalone_templates, '') }} \
-                --log-file deploy.log \
+                --log-file {{ ansible_env.HOME }}/deploy.log \
                 --output-dir {{ ansible_env.HOME }} \
                 --standalone" C-m
 {% endif %}

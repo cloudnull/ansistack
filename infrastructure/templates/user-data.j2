@@ -52,11 +52,20 @@ ssh_authorized_keys: {{ keys }}
 timezone: UTC
 
 packages: {{ vm_packages }}
-
-{% set cmd_list = ["systemctl enable sshd", "systemctl restart sshd"] %}
-{% set _ = cmd_list.append('systemctl enable NetworkManager') %}
-{% set _ = cmd_list.append('systemctl start NetworkManager') %}
-{% set _ = cmd_list.append("nmcli con | egrep -wo '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}' | xargs -n 1 nmcli con del") %}
+{# Basic start section #}
+{% set cmd_list = [
+    "systemctl enable qemu-guest-agent"
+    "systemctl restart qemu-guest-agent"
+    "systemctl enable sshd",
+    "systemctl restart sshd"
+  ]
+%}
+{# NetworkManager block #}
+{% if 'nmcli' in (vm_networks | map(attribute='manager') | list) %}
+{%   set _ = cmd_list.append('systemctl enable NetworkManager') %}
+{%   set _ = cmd_list.append('systemctl start NetworkManager') %}
+{%   set _ = cmd_list.append("nmcli con | egrep -wo '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}' | xargs -n 1 nmcli con del") %}
+{% endif %}
 {% for k, v in vm_networks.items() %}
 {%   if (v.manager is defined and v.manager == 'nmcli') %}
 {%     if (v.interface is defined) and (v.address is defined) and (v.netmask is defined) and (v.gateway is defined) %}
@@ -75,36 +84,40 @@ packages: {{ vm_packages }}
 {%     endif %}
 {%     set _ = cmd_list.append('nmcli con down ' ~ v.interface) %}
 {%     set _ = cmd_list.append('nmcli con up ' ~ v.interface) %}
-{%     if (v.manager is defined and v.manager == 'nmcli') %}
-{%       if v.router is defined %}
-{%         set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.method manual') %}
-{%         set _ = cmd_list.append("nmcli con mod " ~ v.interface ~ " ipv4.addresses $(nmcli device show $(nmcli device | awk '/" ~ v.interface ~ "/ {print $1}') | awk '/IP4.ADDRESS/ {print $2}' | tr '\n' ' ')") %}
-{%         set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.gateway ' ~ v.router | to_json) %}
-{%         if (v.dns is undefined) %}
-{%           set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.dns ' ~ v.router | to_json) %}
-{%           set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.ignore-auto-dns yes' ) %}
-{%         endif %}
-{%         set _ = cmd_list.append('nmcli con down ' ~ v.interface) %}
-{%         set _ = cmd_list.append('nmcli con up ' ~ v.interface) %}
+{%     if v.router is defined %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.method manual') %}
+{%       set _ = cmd_list.append("nmcli con mod " ~ v.interface ~ " ipv4.addresses $(nmcli device show $(nmcli device | awk '/" ~ v.interface ~ "/ {print $1}') | awk '/IP4.ADDRESS/ {print $2}' | tr '\n' ' ')") %}
+{%       set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.gateway ' ~ v.router | to_json) %}
+{%       if (v.dns is undefined) %}
+{%         set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.dns ' ~ v.router | to_json) %}
+{%         set _ = cmd_list.append('nmcli con mod ' ~ v.interface ~ ' ipv4.ignore-auto-dns yes' ) %}
 {%       endif %}
+{%       set _ = cmd_list.append('nmcli con down ' ~ v.interface) %}
+{%       set _ = cmd_list.append('nmcli con up ' ~ v.interface) %}
 {%     endif %}
 {%   endif %}
 {% endfor %}
-{% set _ = cmd_list.append('systemctl enable qemu-guest-agent') %}
-{% set _ = cmd_list.append('systemctl restart qemu-guest-agent') %}
+{% if 'nmcli' in (vm_networks | map(attribute='manager') | list) %}
+{%   set _ = cmd_list.append("nmcli con | grep -i 'wired connection' | egrep -wo '[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}' | xargs -n 1 nmcli con del") %}
+{% endif %}
+{# Redhat developer setup #}
+{% if vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['base_os'] == 'rhel' %}
+{%   if redhat_package_url is defined %}
+{%     set _ = cmd_list.append(pkgmgr ~ ' install -y ' ~ redhat_package_url) %}
+{%     set _ = cmd_list.append('rhos-release ' ~ redhat_rhos_release) %}
+{%   endif %}
+{%   set _ = cmd_list.append('update-ca-trust enable') %}
+{%   if redhat_ca_certs_url is defined %}
+{%     set _ = cmd_list.append('curl -k ' ~ redhat_ca_certs_url ~ ' -o /etc/pki/ca-trust/source/anchors/' ~ (redhat_ca_certs_url | basename)) %}
+{%     set _ = cmd_list.append('update-ca-trust extract') %}
+{%   endif %}
+{% endif %}
+{# Post boot packages to install #}
 {% set pkgmgr = vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['pkgmgr'] %}
-{% if redhat_package_url is defined %}
-{%   set _ = cmd_list.append(pkgmgr ~ ' install -y ' ~ redhat_package_url) %}
-{%   set _ = cmd_list.append('rhos-release ' ~ redhat_rhos_release) %}
-{% endif %}
-{% set _ = cmd_list.append('update-ca-trust enable') %}
-{% if redhat_ca_certs_url is defined %}
-{%   set _ = cmd_list.append('curl -k ' ~ redhat_ca_certs_url ~ ' -o /etc/pki/ca-trust/source/anchors/' ~ (redhat_ca_certs_url | basename)) %}
-{%   set _ = cmd_list.append('update-ca-trust extract') %}
-{% endif %}
 {% if (vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['base_packages'] | length) > 0 %}
 {%   set _ = cmd_list.append(pkgmgr ~ ' install -y ' ~ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['base_packages'] | join(' ')) %}
 {% endif %}
+{# Timezone info #}
 {% set _ = cmd_list.append('timedatectl set-timezone UTC') %}
 {% set _ = cmd_list.append('hostnamectl --static --transient set-hostname ' ~ inventory_hostname | replace('_', '-') ~ '.localdomain') %}
 

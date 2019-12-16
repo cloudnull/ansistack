@@ -23,9 +23,6 @@
   vars_files:
     - vars/main.yml
 
-  vars:
-    deploy_osp: true
-
   pre_tasks:
     - name: set hostname properly
       become: true
@@ -73,9 +70,31 @@
         src: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
       register: instack_env
 
-    - name: Set Nodes
+    - name: Set ironic nodes
       set_fact:
         target_nodes: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] }}"
+
+    - debug: var=target_nodes
+
+    - name: Prep-provisioned nodes
+      when:
+        - provisioned_vm_inventory_file is defined
+      block:
+        - name: Copy instackenv into place
+          copy:
+            src: "{{ provisioned_vm_inventory_file }}"
+            dest: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
+
+        - name: Read pre-provisioned node yaml
+          slurp:
+            src: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
+          register: preprov_targets
+
+        - name: Set pre-provisioned nodes
+          set_fact:
+            preprov_target_nodes: "{{ (preprov_targets['content'] | b64decode | from_yaml)['vms']['hosts'].values() | list }}"
+
+        - debug: var=preprov_target_nodes
 
     - name: CA certificate block
       when:
@@ -109,7 +128,7 @@
         src: templates/undercloud.conf
         dest: "{{ ansible_env.HOME }}/undercloud.conf"
       when:
-        - deploy_osp | bool
+        - tripleo_deploy | bool
 
     - name: Create images directory
       file:
@@ -142,6 +161,7 @@
             section: "lab"
             option: "tripleo_package_fact"
             value: "{{ tripleo_package_fact }}"
+          become: true
 
         - name: Enable tripleo repository (dev)
           command: >-
@@ -166,92 +186,28 @@
             name: "python-tripleoclient"
             state: present
           become: true
-
-        - name: Create params yaml
-          template:
-            src: templates/parameters.yaml.j2
-            dest: "{{ ansible_env.HOME }}/parameters.yaml"
       rescue:
         - name: Notice
           debug:
             msg: >-
-              The client installation has failed so OSP deployment will be disabled.
+              The client installation has failed so TripleO deployment will be disabled.
 
         - name: Client install failed
           set_fact:
-            deploy_osp: false
+            tripleo_deploy: false
 
-    - name: Fedora package setup
-      when:
-        - (ansible_distribution | lower) == 'fedora'
-      block:
-        - name: fetch latest repo version
-          uri:
-            url: https://trunk.rdoproject.org/fedora/current/
-            return_content: yes
-          register: tripleo_packages
-
-        - name: Set package fact
-          set_fact:
-            tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python3-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
-
-        - name: install tripleo repository (fedora)
-          package:
-            name: "https://trunk.rdoproject.org/fedora/current/{{ tripleo_package_fact }}"
-            state: present
-          become: true
-
-        - name: Set local package facts
-          ini_file:
-            dest: "/etc/ansible/facts.d/tripleo.fact"
-            section: "lab"
-            option: "tripleo_package_fact"
-            value: "{{ tripleo_package_fact }}"
-          become: true
-
-        - name: Enable tripleo repository (fedora)
-          command: >-
-            tripleo-repos -d fedora current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
-          args:
-            creates: /etc/yum.repos.d/fedora-stable.repo
-          changed_when: false
-
-        - name: Install tripleo packages (py3)
-          package:
-            name: "python3-tripleoclient"
-            state: present
-          become: true
-      rescue:
-        - name: Notice
-          debug:
-            msg: >-
-              The client installation has failed so OSP deployment will be disabled.
-
-        - name: Client install failed
-          set_fact:
-            deploy_osp: false
-
-    - name: Redhat package setup (internal)
+    - name: Redhat package setup
       when:
         - (ansible_distribution | lower) == 'redhat'
       block:
         - name: Fetch params
           uri:
             url: "{{ redhat_puddle_local_images_url }}"
+            dest: "{{ ansible_env.HOME }}/container_image_prepare.yaml"
             return_content: yes
           register: compose_details
           when:
             - redhat_puddle_local_images_url is defined
-
-        - name: Create params yaml
-          template:
-            src: templates/parameters.yaml.j2
-            dest: "{{ ansible_env.HOME }}/parameters.yaml"
-
-        - name: Create local_images params
-          template:
-            src: templates/local_images.yaml.j2
-            dest: "{{ ansible_env.HOME }}/local_images.yaml"
 
         - name: Install tripleo packages (py3)
           package:
@@ -285,11 +241,30 @@
 
         - name: Client install failed
           set_fact:
-            deploy_osp: false
+            tripleo_deploy: false
+
+    - name: Create local_images params
+      template:
+        src: templates/local_images.yaml.j2
+        dest: "{{ ansible_env.HOME }}/local_images.yaml"
+
+    - name: Create params yaml
+      template:
+        src: templates/parameters.yaml.j2
+        dest: "{{ ansible_env.HOME }}/parameters.yaml"
+
+    - name: Run pre-provisioned node parameter create
+      copy:
+        content: |-
+          {{ lookup('file', provisioned_vm_inventory_file) | default('---') | from_yaml | preprov_hosts(22) | to_nice_yaml }}
+        dest: "{{ ansible_env.HOME }}/pre-provisioned-parameters.yaml"
+      when:
+        - provisioned_vm_inventory_file is defined
+        - tripleo_deploy_pre_provisioned | bool
 
     - name: Set global fact
       set_fact:
-        deploy_osp: "{{ deploy_osp }}"
+        tripleo_deploy: "{{ tripleo_deploy }}"
 
     - name: Set local ceph facts
       ini_file:

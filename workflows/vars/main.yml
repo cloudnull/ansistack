@@ -42,3 +42,7 @@ tripleo_ntp_servers:
   - time.google.com
   - time2.google.com
   - time3.google.com
+
+tripleo_deploy: true
+tripleo_deploy_run: true
+tripleo_deploy_pre_provisioned: true

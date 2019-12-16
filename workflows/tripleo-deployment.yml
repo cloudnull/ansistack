@@ -22,13 +22,14 @@
 - import_playbook: tripleo-developer-packages.yml
 - import_playbook: tripleo-standalone-setup.yml
   when:
-    - not (deploy_osp | default(true) | bool)
+    - not (tripleo_deploy | default(true) | bool)
 
 
-- name: Run tripleo standalone deployment
+- name: Run tripleo deployment
   hosts: "undercloud"
   any_errors_fatal: true
   gather_facts: true
+
   vars_files:
     - vars/main.yml
 
@@ -41,6 +42,8 @@
 
     - name: Run deployment command(s)
       shell: "{{ ansible_env.HOME }}/run-deploy.sh"
+      when:
+        tripleo_deploy_run | bool
 
     - name: Build notice
       debug:

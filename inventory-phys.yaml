@@ -27,6 +27,8 @@ all:
             type: macvlan
       children:
         all_hosts:
+          vars:
+            ansible_user: root
           children:
             compute_hosts:
               children:
