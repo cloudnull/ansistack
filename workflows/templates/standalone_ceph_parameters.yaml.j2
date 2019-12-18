@@ -1,19 +1,32 @@
 ---
-
-parameter_defaults:
-  CephAnsibleDisksConfig:
-    osd_scenario: lvm
-    osd_objectstore: bluestore
-    lvm_volumes:
-      - data: data-lv2
-        data_vg: vg2
-        db: db-lv2
-        db_vg: vg2
-        wal: wal-lv2
-        wal_vg: vg2
-  LocalCephAnsibleFetchDirectoryBackup: /root/ceph_ansible_fetch
-  CephAnsibleExtraConfig:
-    cluster_network: {{ tripleo_cidr }}
-    public_network: {{ tripleo_cidr }}
-  CephPoolDefaultPgNum: 32
-  CephPoolDefaultSize: 1
+{% set pd = {'parameter_defaults': {}} %}
+{% set _ = pd['parameter_defaults'].__setitem__(
+    'CephAnsibleDisksConfig', {
+      'osd_scenario': 'lvm'
+      'osd_objectstore': 'bluestore'
+      'lvm_volumes': [
+        {
+          'data': 'data-lv2'
+          'data_vg': 'vg2'
+          'db': 'db-lv2'
+          'db_vg': 'vg2'
+          'wal': 'wal-lv2'
+          'wal_vg': 'vg2'
+        }
+      ]
+    }
+   )
+%}
+{% set _ = pd['parameter_defaults'].__setitem__('LocalCephAnsibleFetchDirectoryBackup', '/root/ceph_ansible_fetch') %}
+{% set _ = pd['parameter_defaults'].__setitem__('CephPoolDefaultPgNum', 32) %}
+{% set _ = pd['parameter_defaults'].__setitem__('CephPoolDefaultSize', 1) %}
+{% set _ = pd['parameter_defaults'].__setitem__(
+     'CephAnsibleExtraConfig',
+     {
+       'cluster_network': tripleo_cidr,
+       'public_network': tripleo_cidr
+     }
+   )
+%}
+---
+{{ pd | to_nice_yaml }}

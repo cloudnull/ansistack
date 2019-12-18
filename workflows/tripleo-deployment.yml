@@ -52,6 +52,18 @@
           delegate_to: "{{ item }}"
           with_items: "{{ groups['overcloud'] }}"
 
+        - name: Synchronize repos
+          command: >-
+            rsync -avz
+            --rsync-path="sudo rsync"
+            --rsh="/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+            /etc/yum.repos.d/
+            {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }}:/etc/yum.repos.d/
+          run_once: true
+          with_items: "{{ groups['overcloud'] }}"
+          when:
+            - (ansible_distribution | lower) != 'redhat'
+
     - name: Create run osp deploy script
       template:
         src: run_tripleo_deploy.sh.j2
