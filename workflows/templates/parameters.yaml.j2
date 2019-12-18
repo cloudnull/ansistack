@@ -1,51 +1,51 @@
 {% set pd = {'parameter_defaults': {}} %}
-{% set _ = pd['parameter_defaults'].__setitem__('NovaComputeLibvirtType', tripleo_nova_virt_type) %}
-{% if (preprov_target_nodes is defined) and ((tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*control.*") | list | length)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*compute.*") | list | length)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*ceph.*") | list | length)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*block.*") | list | length)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*swift.*") | list | length)) %}
-{% elif (target_nodes is defined) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (target_nodes | selectattr("capabilities", "match", ".*control.*") | list | length)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (target_nodes | selectattr("capabilities", "match", ".*compute.*") | list | length)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (target_nodes | selectattr("capabilities", "match", ".*ceph.*") | list | length)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (target_nodes | selectattr("capabilities", "match", ".*block.*") | list | length)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (target_nodes | selectattr("capabilities", "match", ".*swift.*") | list | length)) %}
-{% endif %}
-{% set _ = pd['parameter_defaults'].__setitem__(
+{% if tripleo_deploy | default(true) | bool %}
+{%   if (preprov_target_nodes is defined) and ((tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*control.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*compute.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*ceph.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*block.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*swift.*") | list | length)) %}
+{%   elif (target_nodes is defined) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (target_nodes | selectattr("capabilities", "match", ".*control.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (target_nodes | selectattr("capabilities", "match", ".*compute.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (target_nodes | selectattr("capabilities", "match", ".*ceph.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (target_nodes | selectattr("capabilities", "match", ".*block.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (target_nodes | selectattr("capabilities", "match", ".*swift.*") | list | length)) %}
+{%   endif %}
+{%   set _ = pd['parameter_defaults'].__setitem__(
      'ControllerSchedulerHints',
      {
        'capabilities:node': '%stack%-controller-%index%'
      }
    )
 %}
-{% set _ = pd['parameter_defaults'].__setitem__(
+{%   set _ = pd['parameter_defaults'].__setitem__(
      'ComputeSchedulerHints',
      {
        'capabilities:node': '%stack%-compute-%index%'
      }
    )
 %}
-{% set _ = pd['parameter_defaults'].__setitem__(
+{%   set _ = pd['parameter_defaults'].__setitem__(
      'CephStorageSchedulerHints',
      {
        'capabilities:node': '%stack%-ceph-%index%'
      }
    )
 %}
-{% if ca_certificate_fact is defined %}
-{%   set _ = pd['parameter_defaults'].__setitem__('SSLRootCertificatePath', '/etc/pki/ca-trust/source/anchors/' ~ (redhat_ca_certs_url | basename)) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('SSLRootCertificate', (ca_certificate_fact | to_json)) %}
-{% endif %}
-{% if (ansible_distribution | lower) == 'redhat' %}
-{%   set registries = redhat_docker_registries %}
-{%   set _ = registries.append('192.168.' + ansible_local.tripleo.setup.tripleo_magic_number + '.1:8787') %}
-{%   set _ = pd['parameter_defaults'].__setitem__('DockerInsecureRegistryAddress', registries) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('DnsServers', redhat_dns_servers) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('NtpServer', redhat_ntp_servers) %}
-{%   if (redhat_access_username is defined) and (redhat_access_password is defined )%}
-{%     set _ = pd['parameter_defaults'].__setitem__(
+{%   if ca_certificate_fact is defined %}
+{%     set _ = pd['parameter_defaults'].__setitem__('SSLRootCertificatePath', '/etc/pki/ca-trust/source/anchors/' ~ (redhat_ca_certs_url | basename)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('SSLRootCertificate', (ca_certificate_fact | to_json)) %}
+{%   endif %}
+{%   if (ansible_distribution | lower) == 'redhat' %}
+{%     set registries = redhat_docker_registries %}
+{%     set _ = registries.append('192.168.' + ansible_local.tripleo.setup.tripleo_magic_number + '.1:8787') %}
+{%     set _ = pd['parameter_defaults'].__setitem__('DockerInsecureRegistryAddress', registries) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('DnsServers', redhat_dns_servers) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('NtpServer', redhat_ntp_servers) %}
+{%     if (redhat_access_username is defined) and (redhat_access_password is defined )%}
+{%       set _ = pd['parameter_defaults'].__setitem__(
          'ContainerImageRegistryCredentials',
          {
            'registry.redhat.io': {
@@ -54,15 +54,48 @@
          }
        )
 %}
+{%     endif %}
+{%   else %}
+{%   if tripleo_dns_servers is defined %}
+{%     set _ = pd['parameter_defaults'].__setitem__('DnsServers', tripleo_dns_servers) %}
+{%   endif %}
+{%   if tripleo_default_route is defined %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ControlPlaneDefaultRoute', tripleo_default_route) %}
+{%   endif %}
+{%   set _ = pd['parameter_defaults'].__setitem__('DockerInsecureRegistryAddress', ['192.168.' ~ ansible_local.tripleo.setup.tripleo_magic_number ~ '.1:8787']) %}
 {%   endif %}
 {% else %}
-{% if tripleo_dns_servers is defined %}
-{%   set _ = pd['parameter_defaults'].__setitem__('DnsServers', tripleo_dns_servers) %}
+{%   set _ = pd['parameter_defaults'].__setitem__('CloudName', tripleo_job_address) %}
+{%   set _ = pd['parameter_defaults'].__setitem__('ControlPlaneStaticRoutes', []) %}
+{%   set _ = pd['parameter_defaults'].__setitem__('Debug', true) %}
+{%   set _ = pd['parameter_defaults'].__setitem__('DeploymentUser', ansible_env.USER) %}
+{%   set _ = pd['parameter_defaults'].__setitem__(
+     'DnsServers',
+     [
+       '208.67.222.222',
+       '8.8.8.8'
+     ]
+   )
+%}
+{%   set _ = pd['parameter_defaults'].__setitem__(
+     'DockerInsecureRegistryAddress',
+     [
+       (tripleo_job_address | string) ~ ':8787'
+     ]
+   )
+%}
+{%   set _ = pd['parameter_defaults'].__setitem__('NeutronPublicInterface', 'eth1') %}
+{%   set _ = pd['parameter_defaults'].__setitem__('NeutronDnsDomain', 'localdomain') %}
+{%   set _ = pd['parameter_defaults'].__setitem__('NeutronBridgeMappings', 'datacentre:br-ctlplane') %}
+{%   set _ = pd['parameter_defaults'].__setitem__('NeutronPhysicalBridge', 'br-ctlplane') %}
+{%   set _ = pd['parameter_defaults'].__setitem__('StandaloneEnableRoutedNetworks', ansible_env.HOME) %}
+{%   set _ = pd['parameter_defaults'].__setitem__('StandaloneLocalMtu', 1500) %}
+{%   set _ = pd['parameter_defaults'].__setitem__('SELinuxMode', 'permissive') %}
+{%   set _ = pd['parameter_defaults'].__setitem__('ContainerImagePrepareDebug', true) %}
+{%   set _ = pd['parameter_defaults'].__setitem__('PythonInterpreter', ansible_python_interpreter) %}
 {% endif %}
-{% if tripleo_default_route is defined %}
-{%   set _ = pd['parameter_defaults'].__setitem__('ControlPlaneDefaultRoute', tripleo_default_route) %}
-{% endif %}
-{% set _ = pd['parameter_defaults'].__setitem__('DockerInsecureRegistryAddress', ['192.168.' ~ ansible_local.tripleo.setup.tripleo_magic_number ~ '.1:8787']) %}
-{% endif %}
+{% set _ = pd['parameter_defaults'].__setitem__('ContainerCli', 'podman') %}
+{% set _ = pd['parameter_defaults'].__setitem__('NtpServer', (tripleo_ntp_servers | to_yaml)) %}
+{% set _ = pd['parameter_defaults'].__setitem__('NovaComputeLibvirtType', 'kvm') %}
 ---
 {{ pd | to_nice_yaml }}

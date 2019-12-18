@@ -25,12 +25,6 @@
     - vars/main.yml
 
   tasks:
-    - name: Setup basic standalone deployment
-      template:
-        src: "standalone_parameters.yaml.j2"
-        dest: "{{ ansible_env.HOME }}/standalone_parameters.yaml"
-        owner: "{{ ansible_env.USER }}"
-
     - name: Ceph block
       when:
         - tripleo_ceph_enabled | bool

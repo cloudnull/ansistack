@@ -34,6 +34,7 @@ tmux send-keys "source /opt/tripleo-patches/bin/activate" C-m
 {%   set _ = environments.append('$THT/environments/ssl/inject-trust-anchor.yaml') %}
 {% endif %}
 {# Deployment #}
+{% set _ = environments.append(ansible_env.HOME ~ '/parameters.yaml') %}
 {% if inventory_hostname in groups['undercloud'] %}
 {#   multi-node #}
 tmux send-keys "openstack undercloud install" C-m
@@ -45,7 +46,6 @@ tmux send-keys "openstack subnet set ctlplane-subnet --dns-nameserver {{ redhat_
 # tmux send-keys "openstack tripleo container image prepare default --local-push-destination --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml" C-m
 {%     set _ = environments.append(ansible_env.HOME ~ '/containers-prepare-parameters.yaml') %}
 {%   endif %} #}
-{%   set _ = environments.append(ansible_env.HOME ~ '/parameters.yaml') %}
 {#   pre-provisioned nodes #}
 {%   if (tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool) %}
 tmux send-keys "pushd $THT" C-m
@@ -90,7 +90,6 @@ tmux send-keys "sudo --preserve-env=PATH,VIRTUAL_ENV \
 {% else %}
 {#   Standalone #}
 {%   set _ = environments.append('$THT/environments/standalone/standalone-tripleo.yaml') %}
-{%   set _ = environments.append(ansible_env.HOME ~ '/standalone_parameters.yaml') %}
 {%   set _ = roles.append('$THT/roles/Standalone.yaml') %}
 tmux send-keys "sudo --preserve-env=PATH,VIRTUAL_ENV \
                 openstack --os-cloud undercloud tripleo deploy  \

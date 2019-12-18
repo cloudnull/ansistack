@@ -43,6 +43,16 @@ tripleo_ntp_servers:
   - time2.google.com
   - time3.google.com
 
+# Set the default route, which defaults to the undercloud
+tripleo_default_route: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+
+# Set the DNS servers
+tripleo_dns_servers:
+  - 208.67.222.222
+  - 208.67.220.220
+  - 8.8.8.8
+  - 8.8.4.4
+
 # Nova virt type
 tripleo_nova_virt_type: kvm
 
