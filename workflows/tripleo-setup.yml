@@ -136,7 +136,7 @@
 
     - name: Create undercloud config
       template:
-        src: templates/undercloud.conf
+        src: templates/undercloud.conf.j2
         dest: "{{ ansible_env.HOME }}/undercloud.conf"
       when:
         - tripleo_deploy | bool
