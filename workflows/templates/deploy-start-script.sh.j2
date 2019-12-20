@@ -2,7 +2,7 @@
 
 set -e
 
-export THT="%{THT:-/usr/share/openstack-tripleo-heat-templates}"
+export THT="${THT:-/usr/share/openstack-tripleo-heat-templates}"
 
 tmux new-session -d -s standalone -n standalone || true
 tmux new-window -n deploy -t 0 || true
