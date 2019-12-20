@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -ev
+
+export THT="%{THT:-/usr/share/openstack-tripleo-heat-templates}"
+
+tmux new-session -d -s standalone -n standalone || true
+tmux new-window -n deploy -t 0 || true
+tmux new-window -n glances -t 1 || true
+
+# Start Monitoring
+tmux select-window -t 1
+tmux send-keys "/opt/rdo/bin/glances --disable-autodiscover --diskio-iops --diskio-show-ramfs --enable-irq" C-m
+
+# Start deployment
+tmux select-window -t 0
+{% if tripleo_undercloud_deploy | default(true) | bool %}
+tmux send-keys "{{ ansible_env.HOME }}/run-undercloud-deploy.sh" C-m
+{% endif %}
+{% if tripleo_overcloud_deploy | default(true) | bool %}
+tmux send-keys "{{ ansible_env.HOME }}/run-overcloud-deploy.sh" C-m
+{% endif %}
+
+echo -e "Stack creation has been initiated."

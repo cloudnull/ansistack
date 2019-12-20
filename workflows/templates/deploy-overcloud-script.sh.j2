@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+set -ev
+
+export THT="${THT:-/usr/share/openstack-tripleo-heat-templates}"
+
+{# Create basic role list #}
+{% set roles = [] %}
+{# Create basic environment list #}
+{% set environments = [
+    '$THT/environments/enable-swap.yaml',
+    '$THT/environments/low-memory-usage.yaml',
+    '$THT/environments/disable-telemetry.yaml'
+   ]
+%}
+{% if (rh_it_ca_stat is defined) and (rh_it_ca_stat.stat.exists | bool) %}
+{%   set _ = environments.append('$THT/environments/ssl/inject-trust-anchor.yaml') %}
+{% endif %}
+{# Deployment #}
+{% set _ = environments.append(ansible_env.HOME ~ '/parameters.yaml') %}
+{% if inventory_hostname in groups['undercloud'] %}
+{#   multi-node #}
+source ~/stackrc
+{%   if (ansible_distribution | lower) == 'redhat' %}
+openstack subnet set ctlplane-subnet --dns-nameserver {{ redhat_dns_servers[0] }} || true
+{# openstack tripleo container image prepare -e local_images.yaml --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml #}
+{%   else %}
+openstack subnet set ctlplane-subnet --dns-nameserver {{ tripleo_dns_servers[0] }} || true
+{# openstack tripleo container image prepare default --local-push-destination --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml #}
+{# {%     set _ = environments.append(ansible_env.HOME ~ '/containers-prepare-parameters.yaml') %} #}
+{%   endif %}
+{#   pre-provisioned nodes #}
+{%   if (tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool) %}
+pushd $THT
+  $THT/tools/process-templates.py --roles-data $THT/roles_data.yaml -o /tmp/templates/
+popd
+{%     set distro_map = {'redhat': 'rhel', 'centos': 'centos'} %}
+{%     set _ = environments.append('/tmp/templates/environments/deployed-server-bootstrap-environment-' ~ distro_map[(ansible_distribution | lower)] ~ '.yaml') %}
+{%     set _ = environments.append('/tmp/templates/environments/deployed-server-environment.yaml') %}
+{%     set _ = environments.append(ansible_env.HOME ~ '/pre-provisioned-parameters.yaml') %}
+{%     set _ = roles.append('$THT/roles_data.yaml') %}
+{%     if ((ansible_distribution | lower) == 'redhat') and (redhat_puddle_local_images_url is defined) %}
+{%       set _ = environments.append(ansible_env.HOME ~ '/container_image_prepare.yaml') %}
+{%     endif %}
+{%   else %}
+{#     ironic powered nodes #}
+{%     set _ = roles.append('$THT/roles_data.yaml') %}
+pushd ~/images
+{%     if (ansible_distribution | lower) != 'redhat' %}
+  for i in overcloud-full.tar ironic-python-agent.tar; do
+    tar xf /usr/share/rhosp-director-images/$i
+  done
+{%     endif %}
+  openstack overcloud image upload --update-existing
+popd
+openstack overcloud node import vm-instackenv.yaml
+openstack overcloud node introspect --all-managea
+                                    --provide \
+                                    --concurrency {{ (ansible_processor_vcpus | int) * 2  }} \
+                                    || openstack overcloud node introspect --all-manageable \
+                                                                           --provide
+{%   endif %}
+{#   Setup Non-HA architecture #}
+{%   if not ((preprov_target_nodes | selectattr("ooo_type", "match", ".*control.*") | list | length) > 1) %}
+{%     set _ = environments.append('/tmp/templates/environments/podman.yaml') %}
+{%   endif %}
+sudo --preserve-env=PATH,VIRTUAL_ENV openstack --os-cloud undercloud overcloud deploy \
+                                               --templates $THT/ \
+                                               -r {{ roles | join(' -r ') }} \
+                                               -e {{ environments | join(' -e ') }} \
+                                               --log-file {{ ansible_env.HOME }}/deploy.log \
+                                               --disable-validations \
+                                               --overcloud-ssh-user {{ ansible_env.USER }} \
+                                               --overcloud-ssh-key {{ ansible_env.HOME }}/.ssh/id_rsa \
+                                               --config-download-timeout 1024 \
+                                               --timeout 1024
+{% else %}
+{#   Standalone #}
+{%   set _ = environments.append('$THT/environments/standalone/standalone-tripleo.yaml') %}
+{%   set _ = roles.append('$THT/roles/Standalone.yaml') %}
+sudo --preserve-env=PATH,VIRTUAL_ENV openstack --os-cloud undercloud tripleo deploy  \
+                                               --templates $THT \
+                                               --local-ip={{ tripleo_job_address }}/{{ tripleo_cidr | ipaddr('prefix') }} \
+                                               -r {{ roles | join(' -r ') }} \
+                                               -e {{ environments | join(' -e ') }} {{ (tripleo_ceph_enabled | bool) | ternary(tripleo_ceph_standalone_templates, '') }} \
+                                               --log-file {{ ansible_env.HOME }}/deploy.log \
+                                               --output-dir {{ ansible_env.HOME }} \
+                                               --standalone
+{% endif %}
