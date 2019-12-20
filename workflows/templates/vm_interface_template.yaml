@@ -164,6 +164,7 @@ parameters:
     default: []
     description: A list of DNS search domains to be added (in order) to resolv.conf.
     type: comma_delimited_list
+
 resources:
   OsNetConfigImpl:
     type: OS::Heat::SoftwareConfig
@@ -180,22 +181,20 @@ resources:
                 name: nic1
                 use_dhcp: true
                 primary: true
-
-              - type: ovs_bridge
-                name: bridge_name
-                mtu:
-                  get_param: ControlPlaneMtu
                 dns_servers:
                   get_param: DnsServers
                 domain:
                   get_param: DnsSearchDomains
+
+              - type: ovs_bridge
+                name: bridge_name
                 use_dhcp: false
+                primary: false
+                mtu:
+                  get_param: ControlPlaneMtu
                 addresses:
                 - ip_netmask:
-                    list_join:
-                    - /
-                    - - get_param: ControlPlaneIp
-                      - get_param: ControlPlaneSubnetCidr
+                    get_param: ControlPlaneSubnetCidr
                 - ip_netmask:
                     get_param: InternalApiIpSubnet
                 - ip_netmask:
@@ -211,18 +210,17 @@ resources:
                 members:
                 - type: interface
                   name: nic2
-                  mtu:
-                    get_param: ControlPlaneMtu
                   use_dhcp: false
                   primary: false
+                  mtu:
+                    get_param: ControlPlaneMtu
 
               - type: ovs_bridge
                 name: br-ex
+                use_dhcp: false
+                primary: false
                 mtu:
                   get_param: ExternalMtu
-                dns_servers:
-                  get_param: DnsServers
-                use_dhcp: false
                 addresses:
                 - ip_netmask:
                     get_param: ExternalIpSubnet
@@ -231,17 +229,15 @@ resources:
                 routes:
                   list_concat_unique:
                     - get_param: ExternalInterfaceRoutes
-                    - - default: true
-                        next_hop:
-                          get_param: ExternalInterfaceDefaultRoute
+                    - get_param: ExternalInterfaceDefaultRoute
                     - get_param: TenantInterfaceRoutes
                 members:
                 - type: interface
                   name: nic3
-                  mtu:
-                    get_param: ExternalMtu
                   use_dhcp: false
                   primary: false
+                  mtu:
+                    get_param: ExternalMtu
 
 outputs:
   OS::stack_id:

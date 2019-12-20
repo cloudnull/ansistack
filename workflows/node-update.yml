@@ -43,11 +43,18 @@
         state: "latest"
         update_cache: "{{ ((ansible_os_family | lower) == 'debian') | ternary('yes', omit) }}"
       register: package_updates
+      until: package_updates is success
+      retries: 4
+      delay: 16
 
     - name: Install developer packages
       package:
         name: "{{ developer_system_packages }}"
         state: present
+      register: package_installs
+      until: package_installs is success
+      retries: 4
+      delay: 16
 
     - name: Generate a keypair
       openssh_keypair:

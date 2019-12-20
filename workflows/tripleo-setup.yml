@@ -48,6 +48,10 @@
         section: "setup"
         option: "{{ item.option }}"
         value: "{{ item.value }}"
+      when:
+        - (ansible_local.tripleo is undefined) or
+          (ansible_local.tripleo.setup is undefined) or
+          (ansible_local.tripleo.setup.tripleo_magic_number is undefined)
       loop:
         - option: initialized
           value: true
