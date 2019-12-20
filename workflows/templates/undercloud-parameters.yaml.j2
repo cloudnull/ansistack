@@ -2,7 +2,7 @@
 {% set _ = pd['parameter_defaults'].__setitem__(
      'resource_registry',
      {
-       'OS::TripleO::Undercloud::Net::SoftwareConfig': (ansible_env.HOME ~ '/vm_interface_template.conf')
+       'OS::TripleO::Undercloud::Net::SoftwareConfig': '/tmp/templates/vm_interface_template.yaml'
      }
    )
 %}
