@@ -1,0 +1,10 @@
+{% set pd = {'parameter_defaults': {}} %}
+{% set _ = pd['parameter_defaults'].__setitem__(
+     'resource_registry',
+     {
+       'OS::TripleO::Undercloud::Net::SoftwareConfig': (ansible_env.HOME ~ '/vm_interface_template.conf')
+     }
+   )
+%}
+---
+{{ pd | to_nice_yaml }}

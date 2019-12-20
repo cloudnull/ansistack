@@ -12,28 +12,28 @@
 {%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (target_nodes | selectattr("capabilities", "match", ".*ceph.*") | list | length)) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (target_nodes | selectattr("capabilities", "match", ".*block.*") | list | length)) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (target_nodes | selectattr("capabilities", "match", ".*swift.*") | list | length)) %}
-{%   endif %}
-{%   set _ = pd['parameter_defaults'].__setitem__(
+{%     set _ = pd['parameter_defaults'].__setitem__(
      'ControllerSchedulerHints',
      {
        'capabilities:node': '%stack%-controller-%index%'
      }
    )
 %}
-{%   set _ = pd['parameter_defaults'].__setitem__(
+{%     set _ = pd['parameter_defaults'].__setitem__(
      'ComputeSchedulerHints',
      {
-       'capabilities:node': '%stack%-compute-%index%'
+       'capabilities:node': '%stack%-novacompute-%index%'
      }
    )
 %}
-{%   set _ = pd['parameter_defaults'].__setitem__(
+{%     set _ = pd['parameter_defaults'].__setitem__(
      'CephStorageSchedulerHints',
      {
        'capabilities:node': '%stack%-ceph-%index%'
      }
    )
 %}
+{%   endif %}
 {%   if ca_certificate_fact is defined %}
 {%     set _ = pd['parameter_defaults'].__setitem__('SSLRootCertificatePath', '/etc/pki/ca-trust/source/anchors/' ~ (redhat_ca_certs_url | basename)) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('SSLRootCertificate', (ca_certificate_fact | to_json)) %}
@@ -84,6 +84,7 @@
      ]
    )
 %}
+{%   set _ = pd['parameter_defaults'].__setitem__('NeutronGlobalPhysnetMtu', 1350) %}
 {%   set _ = pd['parameter_defaults'].__setitem__('NeutronPublicInterface', 'eth1') %}
 {%   set _ = pd['parameter_defaults'].__setitem__('NeutronDnsDomain', 'localdomain') %}
 {%   set _ = pd['parameter_defaults'].__setitem__('NeutronBridgeMappings', 'datacentre:br-ctlplane') %}
@@ -93,9 +94,10 @@
 {%   set _ = pd['parameter_defaults'].__setitem__('SELinuxMode', 'permissive') %}
 {%   set _ = pd['parameter_defaults'].__setitem__('ContainerImagePrepareDebug', true) %}
 {%   set _ = pd['parameter_defaults'].__setitem__('PythonInterpreter', ansible_python_interpreter) %}
+{%   set _ = pd['parameter_defaults'].__setitem__('ContainerCli', 'podman') %}
 {% endif %}
-{% set _ = pd['parameter_defaults'].__setitem__('ContainerCli', 'podman') %}
-{% set _ = pd['parameter_defaults'].__setitem__('NtpServer', (tripleo_ntp_servers | to_yaml)) %}
+{% set _ = pd['parameter_defaults'].__setitem__('NtpServer', tripleo_ntp_servers) %}
 {% set _ = pd['parameter_defaults'].__setitem__('NovaComputeLibvirtType', 'kvm') %}
+{% set _ = pd['parameter_defaults'].__setitem__('ContainerHealthcheckDisabled', true) %}
 ---
 {{ pd | to_nice_yaml }}

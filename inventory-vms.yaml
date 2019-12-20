@@ -31,7 +31,7 @@ all:
                     vm_cores: 4  # Number of cores
                     vm_ram: 4096  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
-                    ooo_type: compute
+                    ooo_type: novacompute
                     overcloud_target: true
                   hosts:
                     compute2-vm-controller-1:

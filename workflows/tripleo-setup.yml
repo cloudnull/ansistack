@@ -78,7 +78,7 @@
       when:
         - provisioned_vm_inventory_file is defined
       block:
-        - name: Copy instackenv into place
+        - name: Copy pre-provisioned node yaml into place
           copy:
             src: "{{ provisioned_vm_inventory_file }}"
             dest: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
@@ -88,9 +88,13 @@
             src: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
           register: preprov_targets
 
+        - name: Read pre-provisioned nodes data
+          set_fact:
+            preprov_data: "{{ preprov_targets['content'] | b64decode | from_yaml }}"
+
         - name: Set pre-provisioned nodes
           set_fact:
-            preprov_target_nodes: "{{ (preprov_targets['content'] | b64decode | from_yaml)['vms']['hosts'].values() | list }}"
+            preprov_target_nodes: "{{ preprov_data['vms']['hosts'].values() | list }}"
 
     - name: CA certificate block
       when:
@@ -118,6 +122,13 @@
     - name: Refresh local facts
       setup:
         gather_subset: "!all"
+
+    - name: Create undercloud config
+      template:
+        src: templates/undercloud-parameters.yaml.j2
+        dest: "{{ ansible_env.HOME }}/undercloud-parameters.yaml"
+      when:
+        - tripleo_deploy | bool
 
     - name: Create undercloud config
       template:
@@ -241,14 +252,52 @@
         src: templates/parameters.yaml.j2
         dest: "{{ ansible_env.HOME }}/parameters.yaml"
 
-    - name: Run pre-provisioned node parameter create
-      copy:
-        content: |-
-          {{ lookup('file', provisioned_vm_inventory_file) | default('---') | from_yaml | preprov_hosts(22) | to_nice_yaml }}
-        dest: "{{ ansible_env.HOME }}/pre-provisioned-parameters.yaml"
+    - name: pre-provisioned block
       when:
         - provisioned_vm_inventory_file is defined
         - tripleo_deploy_pre_provisioned | bool
+      block:
+        - name: Run pre-provisioned node parameter create
+          copy:
+            content: |-
+              {{ lookup('file', provisioned_vm_inventory_file) | default('---') | from_yaml | preprov_hosts(cidr=(ansible_default_ipv4.network ~ '/' ~ ansible_default_ipv4.netmask) | ipaddr('net')) | to_nice_yaml }}
+            dest: "{{ ansible_env.HOME }}/pre-provisioned-parameters.yaml"
+
+        - name: Read pre-provisioned parameter yaml
+          slurp:
+            src: "{{ ansible_env.HOME }}/pre-provisioned-parameters.yaml"
+          register: preprov_params
+
+        - name: Read pre-provisioned nodes data
+          set_fact:
+            preprov_param_data: "{{ preprov_params['content'] | b64decode | from_yaml }}"
+
+        - name: Write host entry for node map
+          lineinfile:
+              path: /etc/hosts
+              state: present
+              line: "{{ item }}"
+          become: true
+          loop: "{{ preprov_param_data['parameter_defaults'] | preprov_host_entry }}"
+
+        - name: Write non-ha params
+          copy:
+            content: "{{ preprov_param_data | non_ha | to_nice_yaml }}"
+            dest: "{{ ansible_env.HOME }}/pre-provisioned-parameters.yaml"
+          when:
+            - not ((preprov_target_nodes | selectattr("ooo_type", "match", ".*control.*") | list | length) > 1)
+
+        - name: Ensure templates temp path exists
+          file:
+            path: /tmp/templates
+            state: directory
+
+        - name: Create network interface template
+          template:
+            src: templates/vm_interface_template.yaml
+            dest: "/tmp/templates/vm_interface_template.yaml"
+          when:
+            - tripleo_deploy | bool
 
     - name: Set global fact
       set_fact:

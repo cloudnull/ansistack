@@ -28,27 +28,116 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            'preprov_hosts': self.preprov_hosts
+            'preprov_hosts': self.preprov_hosts,
+            'preprov_host_entry': self.preprov_host_entry,
+            'non_ha': self.non_ha
         }
+
+    def preprov_host_entry(self, data, anchor='ctlplane'):
+        """
+         data = DeployedServerPortMap:
+                    compute2-vm-compute-1-ctlplane:
+                        fixed_ips:
+                        -   ip_address: 172.16.27.165
+                        subnets:
+                        -   cidr: 22
+                    compute2-vm-compute-2-ctlplane:
+                        fixed_ips:
+                        -   ip_address: 172.16.27.207
+                        subnets:
+                        -   cidr: 22
+                    compute2-vm-compute-3-ctlplane:
+                        fixed_ips:
+                        -   ip_address: 172.16.27.189
+                        subnets:
+                        -   cidr: 22
+                    compute2-vm-controller-1-ctlplane:
+                        fixed_ips:
+                        -   ip_address: 172.16.27.16
+                        subnets:
+                        -   cidr: 22
+                HostnameMap:
+                    overcloud-compute-0: compute2-vm-compute-1
+                    overcloud-compute-1: compute2-vm-compute-2
+                    overcloud-compute-2: compute2-vm-compute-3
+                    overcloud-controller-0: compute2-vm-controller-1
+        """
+        return_data = list()
+        for k, v in data['HostnameMap'].items():
+            orig_server = '{}-{}'.format(v, anchor)
+            server = data['DeployedServerPortMap'][orig_server]
+            for ip in server['fixed_ips']:
+                return_data.append('{} {} {} {}'.format(ip['ip_address'], k, v, orig_server))
+        else:
+            return return_data
 
     @property
     def _resource_registry(self):
-        return {
+        """
+        Type data pulled from THT
+            OS::TripleO::.*::Net::SoftwareConfig
+        """
+        resource_registry = {
             'OS::TripleO::DeployedServer::ControlPlanePort': os.path.join(
                 self.rendered_template_path,
                 'deployed-server/deployed-neutron-port.yaml'
-            ),
-            'OS::TripleO::Controller::Net::SoftwareConfig': os.path.join(
-                self.rendered_template_path,
-                'net-config-static-bridge.yaml'
-            ),
-            'OS::TripleO::Compute::Net::SoftwareConfig': os.path.join(
-                self.rendered_template_path,
-                'net-config-static-bridge.yaml'
-            ),
+            )
         }
+        software_types = [
+            'OS::TripleO::BlockStorage::Net::SoftwareConfig',
+            'OS::TripleO::CephStorage::Net::SoftwareConfig',
+            'OS::TripleO::ComputeDVR::Net::SoftwareConfig',
+            'OS::TripleO::Compute::Net::SoftwareConfig',
+            'OS::TripleO::ControllerApi::Net::SoftwareConfig',
+            'OS::TripleO::ControllerDeployedServer::Net::SoftwareConfig',
+            'OS::TripleO::Controller::Net::SoftwareConfig',
+            'OS::TripleO::ObjectStorage::Net::SoftwareConfig',
+            'OS::TripleO::Standalone::Net::SoftwareConfig',
+            'OS::TripleO::UndercloudMinion::Net::SoftwareConfig',
+            'OS::TripleO::Undercloud::Net::SoftwareConfig'
+        ]
+        for software_type in software_types:
+            resource_registry[software_type] = os.path.join(
+                    self.rendered_template_path,
+                    'vm_interface_template.yaml'
+            )
+        else:
+            return resource_registry
 
-    def preprov_hosts(self, inv, cidr, rendered_template_path=None):
+    def non_ha(self, data):
+        resource_registry = {
+            'OS::TripleO::Services::CinderVolume': os.path.join(
+                self.rendered_template_path,
+                'deployment/cinder/cinder-volume-container-puppet.yaml'
+            ),
+            'OS::TripleO::Services::RabbitMQ': os.path.join(
+                self.rendered_template_path,
+                'deployment/rabbitmq/rabbitmq-container-puppet.yaml'
+            ),
+            'OS::TripleO::Services::HAproxy': os.path.join(
+                self.rendered_template_path,
+                'deployment/haproxy/haproxy-container-puppet.yaml'
+            ),
+            'OS::TripleO::Services::Redis': os.path.join(
+                self.rendered_template_path,
+                'deployment/database/redis-container-puppet.yaml'
+            ),
+            'OS::TripleO::Services::MySQL': os.path.join(
+                self.rendered_template_path,
+                'deployment/database/mysql-container-puppet.yaml'
+            ),
+            'OS::TripleO::Services::Keepalived': os.path.join(
+                self.rendered_template_path,
+                'deployment/keepalived/keepalived-container-puppet.yaml'
+            ),
+            'OS::TripleO::Services::Pacemaker': 'OS::Heat::None',
+            'OS::TripleO::Services::PacemakerRemote': 'OS::Heat::None'
+        }
+        data['resource_registry'].update(resource_registry)
+        return data
+
+    def preprov_hosts(self, inv, cidr, rendered_template_path=None,
+                      anchor='ctlplane'):
         # These resources are assumed to be generated and stored in the
         # /tmp/templates directory.
         if rendered_template_path:
@@ -69,7 +158,7 @@ class FilterModule(object):
                 if v['ooo_type'] != 'undefined':
                     ooo_type_name = 'overcloud-%s' % v['ooo_type']
                     port_map = orig['parameter_defaults']['DeployedServerPortMap']
-                    port_map[k + '-ctlplane'] = {
+                    port_map[k + '-' + anchor] = {
                         'fixed_ips': [
                             {
                                 'ip_address': v['ansible_host']
@@ -79,7 +168,12 @@ class FilterModule(object):
                             {
                                 'cidr': cidr
                             }
-                        ]
+                        ],
+                        'network': {
+                            'tags': [
+                                cidr
+                            ]
+                        }
                     }
                     host_map = orig['parameter_defaults']['HostnameMap']
                     host_map['%s-%s' % (ooo_type_name, index[ooo_type_name])] = k

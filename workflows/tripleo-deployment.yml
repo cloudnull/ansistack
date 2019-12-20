@@ -15,16 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-# These playbooks use the "vms" group to control deployment nodes.
-# All of these playbooks will control flow using user input variables.
-- import_playbook: node-update.yml
-- import_playbook: tripleo-setup.yml
-- import_playbook: tripleo-developer-packages.yml
-- import_playbook: tripleo-standalone-setup.yml
-  when:
-    - not (tripleo_deploy | default(true) | bool)
-
-
 - name: Run tripleo deployment
   hosts: "undercloud"
   any_errors_fatal: true
@@ -64,14 +54,27 @@
           when:
             - (ansible_distribution | lower) != 'redhat'
 
-    - name: Create run osp deploy script
+    - name: Read pre-provisioned node yaml
+      slurp:
+        src: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
+      register: preprov_targets
+
+    - name: Read pre-provisioned nodes data
+      set_fact:
+        preprov_target_nodes: "{{ (preprov_targets['content'] | b64decode | from_yaml)['vms']['hosts'].values() | list }}"
+
+    - name: Create deploy script(s)
       template:
-        src: run_tripleo_deploy.sh.j2
-        dest: "{{ ansible_env.HOME }}/run-deploy.sh"
+        src: templates/{{ item }}.j2
+        dest: "{{ ansible_env.HOME }}/{{ item }}"
         mode: '0755'
+      loop:
+        - deploy-undercloud-script.sh
+        - deploy-overcloud-script.sh
+        - deploy-start-script.sh
 
     - name: Run deployment command(s)
-      shell: "{{ ansible_env.HOME }}/run-deploy.sh"
+      shell: "{{ ansible_env.HOME }}/deploy-start-script.sh"
       when:
         tripleo_deploy_run | bool
 
