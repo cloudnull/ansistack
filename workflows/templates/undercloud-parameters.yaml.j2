@@ -2,7 +2,7 @@
 {% set _ = pd['parameter_defaults'].__setitem__(
      'resource_registry',
      {
-       'OS::TripleO::Undercloud::Net::SoftwareConfig': '/tmp/templates/vm_interface_template.yaml'
+       'OS::TripleO::Undercloud::Net::SoftwareConfig': '/usr/share/openstack-tripleo-heat-templates/ci/common/net-config-simple-bridge.yaml'
      }
    )
 %}

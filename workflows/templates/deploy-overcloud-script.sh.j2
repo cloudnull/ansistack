@@ -7,6 +7,7 @@ export THT="${THT:-/usr/share/openstack-tripleo-heat-templates}"
 {# Create basic role list #}
 {% set roles = [] %}
 {# Create basic environment list #}
+{% set environments_user = [] %}
 {% set environments = [
     '$THT/environments/enable-swap.yaml',
     '$THT/environments/low-memory-usage.yaml',
@@ -17,7 +18,6 @@ export THT="${THT:-/usr/share/openstack-tripleo-heat-templates}"
 {%   set _ = environments.append('$THT/environments/ssl/inject-trust-anchor.yaml') %}
 {% endif %}
 {# Deployment #}
-{% set _ = environments.append(ansible_env.HOME ~ '/parameters.yaml') %}
 {% if inventory_hostname in groups['undercloud'] %}
 {#   multi-node #}
 source ~/stackrc
@@ -37,10 +37,12 @@ popd
 {%     set distro_map = {'redhat': 'rhel', 'centos': 'centos'} %}
 {%     set _ = environments.append('/tmp/templates/environments/deployed-server-bootstrap-environment-' ~ distro_map[(ansible_distribution | lower)] ~ '.yaml') %}
 {%     set _ = environments.append('/tmp/templates/environments/deployed-server-environment.yaml') %}
-{%     set _ = environments.append(ansible_env.HOME ~ '/pre-provisioned-parameters.yaml') %}
+{# Include the network-isolation template when we work out the bugs #}
+{# {%     set _ = environments.append('/tmp/templates/environments/network-isolation.yaml') %} #}
+{%     set _ = environments_user.append(ansible_env.HOME ~ '/pre-provisioned-parameters.yaml') %}
 {%     set _ = roles.append('$THT/roles_data.yaml') %}
 {%     if ((ansible_distribution | lower) == 'redhat') and (redhat_puddle_local_images_url is defined) %}
-{%       set _ = environments.append(ansible_env.HOME ~ '/container_image_prepare.yaml') %}
+{%       set _ = environments_user.append(ansible_env.HOME ~ '/container_image_prepare.yaml') %}
 {%     endif %}
 {%   else %}
 {#     ironic powered nodes #}
@@ -64,10 +66,13 @@ openstack overcloud node introspect --all-managea
 {%   if not ((preprov_target_nodes | selectattr("ooo_type", "match", ".*control.*") | list | length) > 1) %}
 {%     set _ = environments.append('/tmp/templates/environments/podman.yaml') %}
 {%   endif %}
+{%   set _ = environments_user.append(ansible_env.HOME ~ '/parameters.yaml') %}
+{%   set sorted_base_env_files = (environments | sort | list) %}
+{%   set _ = sorted_base_env_files.extend(environments_user) %}
 sudo --preserve-env=PATH,VIRTUAL_ENV openstack --os-cloud undercloud overcloud deploy \
                                                --templates $THT/ \
                                                -r {{ roles | join(' -r ') }} \
-                                               -e {{ environments | join(' -e ') }} \
+                                               -e {{ sorted_base_env_files | join(' -e ') }} \
                                                --log-file {{ ansible_env.HOME }}/deploy.log \
                                                --disable-validations \
                                                --overcloud-ssh-user {{ ansible_env.USER }} \
@@ -78,11 +83,16 @@ sudo --preserve-env=PATH,VIRTUAL_ENV openstack --os-cloud undercloud overcloud d
 {#   Standalone #}
 {%   set _ = environments.append('$THT/environments/standalone/standalone-tripleo.yaml') %}
 {%   set _ = roles.append('$THT/roles/Standalone.yaml') %}
+{% if tripleo_ceph_enabled | bool %}
+{%   set _ = environments.extend(tripleo_ceph_standalone_templates) %}
+{% endif %}
+{%   set sorted_base_env_files = (environments | sort | list) %}
+{%   set _ = sorted_base_env_files.extend(environments_user) %}
 sudo --preserve-env=PATH,VIRTUAL_ENV openstack --os-cloud undercloud tripleo deploy  \
                                                --templates $THT \
                                                --local-ip={{ tripleo_job_address }}/{{ tripleo_cidr | ipaddr('prefix') }} \
                                                -r {{ roles | join(' -r ') }} \
-                                               -e {{ environments | join(' -e ') }} {{ (tripleo_ceph_enabled | bool) | ternary(tripleo_ceph_standalone_templates, '') }} \
+                                               -e {{ sorted_base_env_files | join(' -e ') }} \
                                                --log-file {{ ansible_env.HOME }}/deploy.log \
                                                --output-dir {{ ansible_env.HOME }} \
                                                --standalone

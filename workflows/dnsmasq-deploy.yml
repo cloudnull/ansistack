@@ -20,7 +20,6 @@
   hosts: routers
   any_errors_fatal: true
   gather_facts: true
-  user: root
   vars:
     dnsmasq_domain: localdomain
     dnsmasq_server_address: 192.168.19.1

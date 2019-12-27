@@ -14,11 +14,15 @@ tmux send-keys "/opt/rdo/bin/glances --disable-autodiscover --diskio-iops --disk
 
 # Start deployment
 tmux select-window -t 0
+{% set cmd = [] %}
 {% if tripleo_undercloud_deploy | default(true) | bool %}
-tmux send-keys "{{ ansible_env.HOME }}/deploy-undercloud-script.sh" C-m
+{%   set _ = cmd.append(ansible_env.HOME ~ '/deploy-undercloud-script.sh') %}
 {% endif %}
 {% if tripleo_overcloud_deploy | default(true) | bool %}
-tmux send-keys "{{ ansible_env.HOME }}/deploy-overcloud-script.sh" C-m
+{%   set _ = cmd.append(ansible_env.HOME ~ '/deploy-overcloud-script.sh') %}
 {% endif %}
+{% if (cmd | length) > 0 %}
+tmux send-keys "{{ cmd | join(' && ') }}" C-m
 
 echo -e "Stack creation has been initiated."
+{% endif %}

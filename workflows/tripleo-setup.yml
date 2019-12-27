@@ -297,7 +297,7 @@
             state: directory
 
         - name: Create network interface template
-          template:
+          copy:
             src: templates/vm_interface_template.yaml
             dest: "/tmp/templates/vm_interface_template.yaml"
           when:
@@ -378,3 +378,14 @@
         generate_ssh_key: yes
         ssh_key_bits: 2048
         ssh_key_file: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+
+    - name: Accept ssh on all devices
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: 22
+        ctstate: NEW
+        syn: match
+        jump: ACCEPT
+        comment: "100 ssh on all"
+      become: yes
