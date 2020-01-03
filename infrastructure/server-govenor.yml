@@ -1,0 +1,79 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Configure Linux CPU governor
+  hosts: hypervisor_hosts
+  vars:
+    governor: "{{ server_cpu_governor | default('performance') }}"
+  handlers:
+    - name: Run tmpfiles.d reload
+      command: /usr/bin/systemd-tmpfiles --create --remove /etc/tmpfiles.d/cpu-govenor.conf
+  tasks:
+    - name: Install sysfsutils
+      package:
+        name:
+          - sysfsutils
+        state: present
+
+    - name: Check for governor
+      stat:
+        path: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+      register: scaling_governor_check
+
+    - name: setup cpu_scaling_governor
+      block:
+        - name: Find cpus scaling governor
+          shell: ls -1 /sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_governor
+          changed_when: false
+          register: cpus_scaling_governor
+
+        - name: Persist cpus scaling governor
+          lineinfile:
+            dest: "/etc/tmpfiles.d/cpu-govenor.conf"
+            line: "w- {{ item }} - - - - {{ governor }}"
+            regexp: "^{{ item }}.*"
+            create: true
+          with_items: "{{ cpus_scaling_governor.stdout_lines }}"
+          notify:
+            - Run tmpfiles.d reload
+      when:
+        - scaling_governor_check.stat.exists
+
+    - name: Check for cpuidle
+      stat:
+        path: /sys/devices/system/cpu/cpu0/cpuidle
+      register: cpuidle_check
+
+    - name: setup cpuidle
+      block:
+        - name: Find cpus cpuidle
+          shell: ls -1 /sys/devices/system/cpu/cpu[0-9]*/cpuidle/state[2-4]/disable
+          changed_when: false
+          register: cpus_cpuidle
+
+        - name: Persist cpus scaling governor
+          lineinfile:
+            dest: "/etc/tmpfiles.d/cpu-govenor.conf"
+            line: "w- {{ item }} - - - - 1"
+            regexp: "^{{ item }}.*"
+            create: true
+          with_items: "{{ cpus_cpuidle.stdout_lines }}"
+          notify:
+            - Run tmpfiles.d reload
+      when:
+        - cpuidle_check.stat.exists
