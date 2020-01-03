@@ -186,7 +186,7 @@
           command: >-
             tripleo-repos -b {{ tripleo_version }} current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
           args:
-            creates: "/etc/yum.repos.d/{{ tripleo_version }}-stable.repo"
+            creates: "/etc/yum.repos.d/delorean-{{ tripleo_version }}-stable.repo"
           changed_when: false
           become: true
           when:

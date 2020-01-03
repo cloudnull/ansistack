@@ -19,6 +19,7 @@
 - name: Cloud-init block
   when:
     - inventory_hostname in groups['provisioned_vms']
+    - vm_bootable_iso is undefined
   block:
     - name: Copy meta file
       template:
@@ -49,17 +50,64 @@
   delay: 1
   ignore_errors: true
 
+- name: Passthrough pci block
+  block:
+    - name: Passthrough PCI lookup
+      command: "lspci"
+      changed_when: false
+      register: pci_devices
+
+    - name: Vm node list lookup
+      command: "virsh nodedev-list"
+      changed_when: false
+      register: virsh_nodedev
+
+    - name: Set passthrough devices fact
+      set_fact:
+        pci_passthrough_devices: "{{ pci_devices.stdout | regex_findall(vm_passthrough_lookup_regex, multiline=True, ignorecase=True) | list }}"
+
+    - name: Set vm passthrough devices fact
+      set_fact:
+        vm_pci_passthrough_devices: |-
+          {% set devices = [] %}
+          {% for device in pci_passthrough_devices %}
+          {%   set node_dev = device.split()[0] | replace(":", "_") | replace(".", "_") %}
+          {%   set node_lookup = virsh_nodedev.stdout | regex_search('.*' ~ node_dev, multiline=True, ignorecase=True) %}
+          {%   if node_lookup %}
+          {%     set _ = devices.append(node_lookup) %}
+          {%   endif %}
+          {% endfor %}
+          {{ devices }}
+
+    - name: Show discovered devices
+      debug:
+        var: pci_passthrough_devices
+
+    - name: Show discovered nodes
+      debug:
+        var: vm_pci_passthrough_devices
+  when:
+    - vm_passthrough_lookup_regex is defined
+    - vm_pci_passthrough_devices is undefined
+
 - name: Create virt xml
   command: >-
     virt-install
       --ram {{ vm_ram }}
       --vcpus={{ vm_cores }},sockets=1,cores={{ vm_cores }}
       --os-variant {{ vm_variant | default('rhel7') }}
-      --os-type=linux
-      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }}
-    {% if inventory_hostname in groups['provisioned_vms'] %}
+      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }},cache=none
+    {% if vm_bootable_iso is defined %}
+      --disk {{ vm_iso_path }}/{{ vm_bootable_iso }},device=cdrom
+      --boot hd,cdrom,menu=on,useserial=on
+    {% elif inventory_hostname in groups['provisioned_vms'] %}
       --disk /var/lib/libvirt/images/{{ inventory_hostname }}/cidata.iso,device=cdrom
       --import
+    {% endif %}
+    {% if vm_additional_isos is defined %}
+    {%   for iso in vm_additional_isos %}
+      --disk {{ vm_iso_path }}/{{ iso }},device=cdrom
+    {%   endfor %}
     {% endif %}
     {% if vm_image_name is defined %}
     {%   if vm_image_data[vm_image_name] is defined %}
@@ -77,11 +125,17 @@
       --network network:{{ k }},model=virtio,mac={{ v.mac_seed | default('52:54:01') | random_mac }},driver_name=vhost,driver_queues=3,trustGuestRxFilters=yes
     {%   endif %}
     {% endfor %}
+    {% for device in (vm_pci_passthrough_devices | default([])) %}
+      --host-device={{ device }}
+    {% endfor %}
       --name {{ inventory_hostname }}
       {{ vm_flags }}
+      --watchdog default,action=poweroff
+      --cpu host-passthrough,cache.mode=passthrough
       --dry-run
       --print-xml
       --check path_in_use=off
+      --noautoconsole
   changed_when: false
   register: vm_xml
   until: vm_xml.rc == 0
@@ -116,6 +170,7 @@
   when:
     - vm_image_name is defined
     - vm_image_data[vm_image_name] is defined
+    - vm_bootable_iso is undefined
 
 - name: Define the VM
   virt:

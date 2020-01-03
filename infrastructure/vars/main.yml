@@ -17,10 +17,13 @@ vm_flags: >-
   --rng /dev/urandom
 
 # Images to pull from for local builds
+vm_image_path: '/mnt/rhv/images'
+vm_iso_path: '/mnt/rhv/template/iso'
+
 vm_image_data:
   centos7:
     url: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
-    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    path: "{{ vm_image_path }}"
     name: CentOS-7-x86_64-GenericCloud.qcow2
     access_user: 'centos'
     cloud_init_packages:
@@ -42,7 +45,7 @@ vm_image_data:
       - ipmitool
   fedora28:
     url: https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2
-    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    path: "{{ vm_image_path }}"
     name: Fedora-Cloud-Base-28-1.1.x86_64.qcow2
     access_user: 'fedora'
     cloud_init_packages:
@@ -64,7 +67,7 @@ vm_image_data:
       - ipmitool
   fedora30:
     url: https://download.fedoraproject.org/pub/fedora/linux/releases/30/Cloud/x86_64/images/Fedora-Cloud-Base-30-1.2.x86_64.qcow2
-    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    path: "{{ vm_image_path }}"
     name: Fedora-Cloud-Base-30-1.2.x86_64.qcow2
     access_user: 'fedora'
     cloud_init_packages:
@@ -86,7 +89,7 @@ vm_image_data:
       - ipmitool
   rhel7:
     url: "{{ redhat_7_cloud_image_url | default('undefined') }}"
-    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    path: "{{ vm_image_path }}"
     name: rhel-server-7-x86_64-kvm.qcow2
     access_user: 'cloud-user'
     cloud_init_packages:
@@ -108,7 +111,7 @@ vm_image_data:
       - ipmitool
   rhel8.0:
     url: "{{ redhat_80_cloud_image_url | default('undefined') }}"
-    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    path: "{{ vm_image_path }}"
     name: rhel-8.0-x86_64-kvm.qcow2
     access_user: 'cloud-user'
     cloud_init_packages:
@@ -130,7 +133,7 @@ vm_image_data:
       - ipmitool
   rhel8:
     url: "{{ redhat_8_cloud_image_url | default('undefined') }}"
-    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    path: "{{ vm_image_path }}"
     name: rhel-8-x86_64-kvm.qcow2
     access_user: 'cloud-user'
     cloud_init_packages:
@@ -152,7 +155,7 @@ vm_image_data:
       - ipmitool
   rhel8-ppc64le:
     url: "{{ redhat_8_ppc64le_cloud_image_url | default('undefined') }}"
-    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    path: "{{ vm_image_path }}"
     name: rhel-8-ppc64le-kvm.qcow2
     access_user: 'cloud-user'
     arch: ppc64le
@@ -175,7 +178,7 @@ vm_image_data:
       - ipmitool
   ubuntu1604:
     url: https://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
-    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    path: "{{ vm_image_path }}"
     name: xenial-server-cloudimg-amd64-disk1.img
     access_user: 'ubuntu'
     cloud_init_packages:
@@ -186,7 +189,7 @@ vm_image_data:
     base_packages: []
   ubuntu1804:
     url: https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img
-    path: "{{ vm_image_path | default('/mnt/rhv/images') }}"
+    path: "{{ vm_image_path }}"
     name: bionic-server-cloudimg-amd64.img
     access_user: 'ubuntu'
     cloud_init_packages:

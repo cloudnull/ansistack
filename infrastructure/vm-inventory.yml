@@ -28,6 +28,8 @@
       debug:
         msg: >-
           VM {{ inventory_hostname }} is online. IP address {{ vm_ip_address }}
+      when:
+        - vm_bootable_iso is undefined
 
   tasks:
     - name: Set inventory file path
@@ -67,16 +69,31 @@
           until: vm_ip.rc == 0
           retries: 72
           delay: 5
+          when:
+            - vm_bootable_iso is undefined
 
         - name: Set ip fact
           set_fact:
             vm_ip_address: "{{ vm_ip.stdout.split()[3].split('/')[0] }}"
           vars:
             ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['python_interpreter'] }}"
+          when:
+            - vm_bootable_iso is undefined
+
+        - name: Get console address
+          command: >-
+            virsh domdisplay {{ inventory_hostname }}
+          changed_when: false
+          register: vm_console
+
+        - name: Set console fact
+          set_fact:
+            vm_console_address: "{{ vm_console.stdout | replace('localhost', hostvars[vm_virt_host]['ansible_host']) }}"
 
     - name: Fact block
       delegate_to: "{{ vm_ip_address }}"
       when:
+        - vm_bootable_iso is undefined
         - not (hostvars[inventory_hostname]['vm_image_name'] | regex_search('(rhel)'))
       vars:
         ansible_user: "{{ vm_job_user }}"
@@ -166,7 +183,6 @@
               {%   if node in groups['provisioned_vms'] %}
               {%
                      set entry = {
-                       'ansible_host': hostvars[node]['vm_ip_address'],
                        'ansible_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
                        'ansible_python_interpreter': vm_image_data[hostvars[node]['vm_image_name']]['python_interpreter'],
                        'vm_job_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
@@ -175,6 +191,12 @@
                        'ooo_type': hostvars[node]['ooo_type'] | default('undefined')
                      }
               %}
+              {%     if 'vm_ip_address' in hostvars[node] %}
+              {%       set _ = entry.__setitem__('ansible_host', hostvars[node]['vm_ip_address']) %}
+              {%     endif %}
+              {%     if 'vm_console_address' in hostvars[node] %}
+              {%       set _ = entry.__setitem__('vm_console_uri', hostvars[node]['vm_console_address']) %}
+              {%     endif %}
               {%     set _ = inventory['vms']['hosts'].__setitem__(node, entry) %}
               {%     if hostvars[node]['undercloud_target'] | default(false) | bool %}
               {%       set _ = inventory['vms']['children']['undercloud']['hosts'].__setitem__(node, {}) %}
@@ -206,6 +228,7 @@
           The OS image is `{{ hostvars[item]['vm_image_name'] }}`.
           The access user is `{{ vm_image_data[hostvars[item]['vm_image_name']]['access_user'] }}`
       when:
+        - hostvars[item]['vm_ip_address'] is defined
         - item in groups['provisioned_vms']
       with_items: "{{ vm_limit_group }}"
       run_once: true

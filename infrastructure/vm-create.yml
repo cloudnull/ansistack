@@ -187,7 +187,6 @@
 
         - include_tasks: task-files/_vm-create.yml
 
-
 # Generate a local inventory
 - import_playbook: vm-inventory.yml
   when:
