@@ -120,6 +120,7 @@
       --arch {{ vm_image_data[vm_image_name]['arch'] }}
     {%     else %}
       --hvm
+      --cpu host-passthrough,cache.mode=passthrough
     {%     endif %}
     {%   endif %}
     {% endif %}
@@ -136,7 +137,6 @@
       --name {{ inventory_hostname }}
       {{ vm_flags }}
       --watchdog default,action=poweroff
-      --cpu host-passthrough,cache.mode=passthrough
       --dry-run
       --print-xml
       --check all=off
