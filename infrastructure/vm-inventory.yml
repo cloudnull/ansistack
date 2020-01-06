@@ -42,24 +42,14 @@
 
     - name: VM start block
       delegate_to: "{{ vm_virt_host }}"
-      vars:
-        ansible_user: root
+      become: true
       block:
-        - name: Check VM
-          command: >-
-            virsh domifaddr {{ inventory_hostname }} --source agent
-          failed_when: false
-          changed_when: false
-          register: vm_domifaddr
-
         - name: Start VM
           virt:
             name: "{{ inventory_hostname }}"
             state: running
             autostart: true
           notify: Display ip address
-          when:
-            - (vm_domifaddr.rc != 0)
 
         - name: Get IP address
           shell: >-

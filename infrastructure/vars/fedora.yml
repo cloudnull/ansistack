@@ -2,12 +2,15 @@
 
 server_system_packages:
   - "@virtualization"
-  - "libselinux-python"
   - "libguestfs-tools"
+  - "libvirt-client"
   - "OpenIPMI"
+  - "python*-libselinux"
+  - "python*-libvirt"
   - "python*-lxml"
-  - "python3-virtualenv"
+  - "python*-virtualenv"
   - "ipmitool"
   - "nfs-utils"
+  - "virt-install"
 
 server_libvirt_service_name: libvirtd

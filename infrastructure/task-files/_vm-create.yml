@@ -17,6 +17,7 @@
 
 
 - name: Cloud-init block
+  become: true
   when:
     - inventory_hostname in groups['provisioned_vms']
     - vm_bootable_iso is undefined
@@ -40,15 +41,19 @@
         chdir: "/var/lib/libvirt/images/{{ inventory_hostname }}"
         creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/cidata.iso"
 
-- name: Undefine running VM
+- name: Destroy and undefine running VM
+  become: true
   virt:
     name: "{{ inventory_hostname }}"
-    command: undefine
+    command: "{{ item }}"
   register: undefine
   until: undefine is success
   retries: 2
   delay: 1
   ignore_errors: true
+  loop:
+    - destroy
+    - undefine
 
 - name: Passthrough pci block
   block:
@@ -134,7 +139,7 @@
       --cpu host-passthrough,cache.mode=passthrough
       --dry-run
       --print-xml
-      --check path_in_use=off
+      --check all=off
       --noautoconsole
   changed_when: false
   register: vm_xml
@@ -143,6 +148,7 @@
   delay: 2
 
 - name: Create disk image
+  become: true
   command: >-
     qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
   args:
@@ -155,6 +161,7 @@
   delay: 2
 
 - name: Resize virt image
+  become: true
   command: >-
     virt-resize
     --expand /dev/sda1
@@ -173,6 +180,7 @@
     - vm_bootable_iso is undefined
 
 - name: Define the VM
+  become: true
   virt:
     command: define
     xml: >-

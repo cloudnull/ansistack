@@ -20,7 +20,7 @@
   hosts: libvirt_hosts
   any_errors_fatal: true
   gather_facts: true
-  user: root
+  become: true
   vars_files:
     - vars/main.yml
   tasks:

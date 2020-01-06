@@ -17,6 +17,7 @@
 
 
 - name: Cleanup block
+  become: true
   delegate_to: "{{ vm_virt_host }}"
   block:
     - name: Stop running VM

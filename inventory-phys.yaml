@@ -51,10 +51,12 @@ all:
                 libvirt_hosts:
                   hosts:
                     compute1:
-                      ansible_host: 172.16.27.216
+                      ansible_host: 172.16.27.215
+                      ansible_user: carter
 
                     compute2:
                       ansible_host: 172.16.27.67
+                      ansible_user: carter
 
             infra_hosts:
               hosts:

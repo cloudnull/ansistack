@@ -92,6 +92,7 @@
       run_once: true
 
     - name: Setup block
+      become: true
       when:
         - not (vm_purge | default(_vm_purge) | bool)
       block:
@@ -171,6 +172,7 @@
 
     - name: Create block
       delegate_to: "{{ vm_virt_host }}"
+      become: true
       when:
         - (vm_cleanup | default(_vm_cleanup) | bool) or
           (vm_dominfo.rc != 0)

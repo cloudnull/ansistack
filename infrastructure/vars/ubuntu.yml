@@ -1,5 +1,9 @@
 ---
 
-server_system_packages: []
+server_system_packages:
+  - libvirt-bin
+  - python*-libvirt
+  - python*-lxml
+  - python*-virtualenv
 
 server_libvirt_service_name: libvirt-bin
