@@ -56,7 +56,7 @@
         - option: initialized
           value: true
         - option: tripleo_magic_number
-          value: "{{ (24 | random) }}"
+          value: "{{ tripleo_magic_number | default(24 | random) }}"
 
     - name: Set instackenv file fact
       set_fact:
@@ -261,10 +261,15 @@
         - provisioned_vm_inventory_file is defined
         - tripleo_deploy_pre_provisioned | bool
       block:
+        - name: Set network facts
+          set_fact:
+            tripleo_network_cidr: "{{ vm_management_net | default(null) | ipaddr('network/prefix') }}"
+            tripleo_default_network_cidr: "{{ (ansible_default_ipv4.network ~ '/' ~ ansible_default_ipv4.netmask) | ipaddr('net') }}"
+
         - name: Run pre-provisioned node parameter create
           copy:
             content: |-
-              {{ lookup('file', provisioned_vm_inventory_file) | default('---') | from_yaml | preprov_hosts(cidr=(ansible_default_ipv4.network ~ '/' ~ ansible_default_ipv4.netmask) | ipaddr('net')) | to_nice_yaml }}
+              {{ lookup('file', provisioned_vm_inventory_file) | default('---') | from_yaml | preprov_hosts(cidr=(tripleo_network_cidr | default(tripleo_default_network_cidr))) | to_nice_yaml }}
             dest: "{{ ansible_env.HOME }}/pre-provisioned-parameters.yaml"
 
         - name: Read pre-provisioned parameter yaml
@@ -389,3 +394,17 @@
         jump: ACCEPT
         comment: "100 ssh on all"
       become: yes
+
+    - name: Run vm pre-prov networks setup
+      shell: |-
+        set -o pipefail
+        {% for k, v in hostvars[item]['vm_preprov_networks'].items() %}
+        nmcli connection | awk '/{{ k }}/ {print $2}' | xargs -n 1 nmcli connection delete
+        nmcli con add type ethernet ifname {{ k }} ipv4.method manual ipv6.method ignore con-name {{ k }} ipv4.address {{ v | join(',') }}
+        {% endfor %}
+      become: true
+      run_once: true
+      delegate_to: "{{ item }}"
+      when:
+        - "'vm_preprov_networks' in hostvars[item]"
+      with_items: "{{ groups['overcloud'] }}"

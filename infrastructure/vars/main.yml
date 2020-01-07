@@ -204,3 +204,11 @@ vm_image_get: true
 
 # Set the vm job user, by default this obtained from the image details
 vm_job_user: "{{ vm_image_data[vm_image_name]['access_user'] }}"
+
+# Management network address
+#
+# Example network setup in inventory
+#  vm_preprov_networks:
+#    eth1:
+#      - 192.168.1.1/22
+vm_management_net: "{{ vm_preprov_networks['eth1'][0] | ipaddr('address') }}"

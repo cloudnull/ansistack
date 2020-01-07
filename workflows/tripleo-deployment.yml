@@ -24,7 +24,7 @@
     - vars/main.yml
 
   tasks:
-    - name: Sync keys to overcloud targets
+    - name: Pre-provisioned node setup
       when:
         - (tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool)
       block:
@@ -54,14 +54,14 @@
           when:
             - (ansible_distribution | lower) != 'redhat'
 
-    - name: Read pre-provisioned node yaml
-      slurp:
-        src: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
-      register: preprov_targets
+        - name: Read pre-provisioned node yaml
+          slurp:
+            src: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
+          register: preprov_targets
 
-    - name: Read pre-provisioned nodes data
-      set_fact:
-        preprov_target_nodes: "{{ (preprov_targets['content'] | b64decode | from_yaml)['vms']['hosts'].values() | list }}"
+        - name: Read pre-provisioned nodes data
+          set_fact:
+            preprov_target_nodes: "{{ (preprov_targets['content'] | b64decode | from_yaml)['vms']['hosts'].values() | list }}"
 
     - name: Create deploy script(s)
       template:

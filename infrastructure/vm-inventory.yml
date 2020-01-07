@@ -184,6 +184,12 @@
               {%     if 'vm_ip_address' in hostvars[node] %}
               {%       set _ = entry.__setitem__('ansible_host', hostvars[node]['vm_ip_address']) %}
               {%     endif %}
+              {%     if 'vm_preprov_networks' in hostvars[node] %}
+              {%       set _ = entry.__setitem__('vm_preprov_networks', hostvars[node]['vm_preprov_networks']) %}
+              {%     endif %}
+              {%     if 'vm_management_net' in hostvars[node] %}
+              {%       set _ = entry.__setitem__('vm_management_net', hostvars[node]['vm_management_net']) %}
+              {%     endif %}
               {%     if 'vm_console_address' in hostvars[node] %}
               {%       set _ = entry.__setitem__('vm_console_uri', hostvars[node]['vm_console_address']) %}
               {%     endif %}

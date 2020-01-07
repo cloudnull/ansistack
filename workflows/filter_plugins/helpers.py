@@ -158,10 +158,11 @@ class FilterModule(object):
                 if v['ooo_type'] != 'undefined':
                     ooo_type_name = 'overcloud-%s' % v['ooo_type']
                     port_map = orig['parameter_defaults']['DeployedServerPortMap']
+                    network_address = v.get('vm_management_net', v['ansible_host'])
                     port_map[k + '-' + anchor] = {
                         'fixed_ips': [
                             {
-                                'ip_address': v['ansible_host']
+                                'ip_address': network_address
                             }
                         ],
                         'subnets': [
