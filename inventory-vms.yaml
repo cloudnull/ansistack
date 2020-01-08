@@ -66,7 +66,7 @@ all:
                 provisioned_compute1:
                   vars:
                     vm_virt_host: "compute1"
-                    vm_cores: 6  # Number of cores
+                    vm_cores: 8  # Number of cores
                     vm_ram: 16384  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
                     undercloud_target: true
