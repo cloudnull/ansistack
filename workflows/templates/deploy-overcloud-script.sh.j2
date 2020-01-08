@@ -69,16 +69,16 @@ openstack overcloud node introspect --all-managea
 {%   set _ = environments_user.append(ansible_env.HOME ~ '/parameters.yaml') %}
 {%   set sorted_base_env_files = (environments | sort | list) %}
 {%   set _ = sorted_base_env_files.extend(environments_user) %}
-sudo --preserve-env=PATH,VIRTUAL_ENV openstack --os-cloud undercloud overcloud deploy \
-                                               --templates $THT/ \
-                                               -r {{ roles | join(' -r ') }} \
-                                               -e {{ sorted_base_env_files | join(' -e ') }} \
-                                               --log-file {{ ansible_env.HOME }}/deploy.log \
-                                               --disable-validations \
-                                               --overcloud-ssh-user {{ ansible_env.USER }} \
-                                               --overcloud-ssh-key {{ ansible_env.HOME }}/.ssh/id_rsa \
-                                               --config-download-timeout 1024 \
-                                               --timeout 1024
+openstack --os-cloud undercloud overcloud deploy \
+          --templates $THT/ \
+          -r {{ roles | join(' -r ') }} \
+          -e {{ sorted_base_env_files | join(' -e ') }} \
+          --log-file {{ ansible_env.HOME }}/deploy.log \
+          --disable-validations \
+          --overcloud-ssh-user {{ ansible_env.USER }} \
+          --overcloud-ssh-key {{ ansible_env.HOME }}/.ssh/id_rsa \
+          --config-download-timeout 1024 \
+          --timeout 1024
 {% else %}
 {#   Standalone #}
 {%   set _ = environments.append('$THT/environments/standalone/standalone-tripleo.yaml') %}

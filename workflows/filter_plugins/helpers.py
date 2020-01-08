@@ -136,7 +136,7 @@ class FilterModule(object):
         data['resource_registry'].update(resource_registry)
         return data
 
-    def preprov_hosts(self, inv, cidr, rendered_template_path=None,
+    def preprov_hosts(self, inv, cidr, net, rendered_template_path=None,
                       anchor='ctlplane'):
         # These resources are assumed to be generated and stored in the
         # /tmp/templates directory.
