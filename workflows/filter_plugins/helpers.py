@@ -22,6 +22,9 @@ from collections import OrderedDict
 from operator import itemgetter
 
 
+from ansible.plugins.filter import ipaddr
+
+
 class FilterModule(object):
     def __init__(self):
         self.rendered_template_path = '/tmp/templates'
@@ -136,7 +139,7 @@ class FilterModule(object):
         data['resource_registry'].update(resource_registry)
         return data
 
-    def preprov_hosts(self, inv, cidr, net, rendered_template_path=None,
+    def preprov_hosts(self, inv, rendered_template_path=None,
                       anchor='ctlplane'):
         # These resources are assumed to be generated and stored in the
         # /tmp/templates directory.
@@ -162,17 +165,32 @@ class FilterModule(object):
                     port_map[k + '-' + anchor] = {
                         'fixed_ips': [
                             {
-                                'ip_address': network_address
+                                'ip_address': ipaddr.ipaddr(
+                                    network_address,
+                                    query='address',
+                                    version=False,
+                                    alias='ipaddr'
+                                )
                             }
                         ],
                         'subnets': [
                             {
-                                'cidr': cidr
+                                'cidr': ipaddr.ipaddr(
+                                    network_address,
+                                    query='prefix',
+                                    version=False,
+                                    alias='ipaddr'
+                                )
                             }
                         ],
                         'network': {
                             'tags': [
-                                cidr
+                                ipaddr.ipaddr(
+                                    network_address,
+                                    query='network/prefix',
+                                    version=False,
+                                    alias='ipaddr'
+                                )
                             ]
                         }
                     }

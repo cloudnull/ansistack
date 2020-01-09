@@ -261,17 +261,10 @@
         - provisioned_vm_inventory_file is defined
         - tripleo_deploy_pre_provisioned | bool
       block:
-        - name: Set network facts
-          set_fact:
-            tripleo_network_cidr: "{{ (vm_management_net | default(null)) | ipaddr('network/prefix') }}"
-            tripleo_network_net: "{{ (vm_management_net | default(null)) | ipaddr('prefix') }}"
-            tripleo_default_network_cidr: "{{ (ansible_default_ipv4.network ~ '/' ~ ansible_default_ipv4.netmask) | ipaddr('net') }}"
-            tripleo_default_network_net: "{{ (ansible_default_ipv4.network ~ '/' ~ ansible_default_ipv4.netmask) | ipaddr('prefix') }}"
-
         - name: Run pre-provisioned node parameter create
           copy:
             content: |-
-              {{ lookup('file', provisioned_vm_inventory_file) | default('---') | from_yaml | preprov_hosts(cidr=(tripleo_network_cidr | default(tripleo_default_network_cidr)), net=(tripleo_network_net | default(tripleo_default_network_cidr))) | to_nice_yaml }}
+              {{ lookup('file', provisioned_vm_inventory_file) | default('---') | from_yaml | preprov_hosts | to_nice_yaml }}
             dest: "{{ ansible_env.HOME }}/pre-provisioned-parameters.yaml"
 
         - name: Read pre-provisioned parameter yaml

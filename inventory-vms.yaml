@@ -7,7 +7,7 @@ all:
         tripleo_magic_number: 4
         vm_vbmc_username: admin
         vm_vbmc_password: secrete
-        vm_management_net: "{{ vm_preprov_networks['eth1'][0] | ipaddr('address') }}"
+        vm_management_net: "{{ vm_preprov_networks['eth1'][0] }}"
       children:
         provisioned_vms:
           vars:
