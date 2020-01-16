@@ -19,9 +19,8 @@
 - name: Configure Linux CPU governor
   hosts: all
   become: true
-
-  vars:
-    governor: "{{ server_cpu_governor | default('performance') }}"
+  vars_files:
+    - vars/main.yml
 
   handlers:
     - name: Run tmpfiles.d reload
@@ -43,7 +42,7 @@
         - name: Persist cpus scaling governor
           lineinfile:
             dest: "/etc/tmpfiles.d/cpu-govenor.conf"
-            line: "w {{ item }} - - - - {{ governor }}"
+            line: "w {{ item }} - - - - {{ server_cpu_governor }}"
             regexp: "^w.*{{ item }}.*"
             create: true
           with_items: "{{ cpus_scaling_governor.stdout_lines }}"
@@ -66,7 +65,7 @@
 
         - name: Persist cpus scaling governor
           lineinfile:
-            dest: "/etc/tmpfiles.d/cpu-govenor.conf"
+            dest: "/etc/tmpfiles.d/cpu-scaling.conf"
             line: "w {{ item }} - - - - 1"
             regexp: "^w.*{{ item }}.*"
             create: true

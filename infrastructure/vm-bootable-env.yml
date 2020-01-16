@@ -76,9 +76,9 @@
           {%     set _ = node_info.__setitem__('pm_password', hostvars[node]['vm_vbmc_password']) %}
           {%     set _ = node_info.__setitem__('pm_addr', hostvars[hostvars[node]['vm_virt_host']]['ansible_host']) %}
           {%     set _ = node_info.__setitem__('pm_port', hostvars[node]['vm_vbmc_port']) %}
-          {%     if 'capabilities' in hostvars[node] %}
-          {%       set capabilities = hostvars[node]['capabilities'] ~ ',node:' ~ node_name %}
-          {%       set _ = node_info.__setitem__('capabilities', capabilities) %}
+          {%     if 'tripleo_capabilities' in hostvars[node] %}
+          {%       set tripleo_capabilities = hostvars[node]['tripleo_capabilities'] ~ ',node:' ~ node_name %}
+          {%       set _ = node_info.__setitem__('tripleo_capabilities', tripleo_capabilities) %}
           {%     endif %}
           {%     set _ = node_info.__setitem__('_comment', 'original target hostname [ ' ~ hostvars[node]['inventory_hostname'] ~ ' ]. This is a KVM VM controlled with VBMC.') %}
           {%     set _ = nodes_list.append(node_info) %}

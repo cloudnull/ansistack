@@ -16,14 +16,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-- name: Setup DSAL monitoring
+- name: Setup monitoring
   hosts: monitors
   any_errors_fatal: true
   gather_facts: true
   become: true
-  user: root
-  vars:
-    hypervisor_destroy_array: false
   vars_files:
     - vars/main.yml
   tasks:
@@ -54,14 +51,11 @@
         state: started
         enabled: true
 
-- name: Setup DSAL metric collection
+- name: Setup metric collection
   hosts: "all"
   any_errors_fatal: true
   gather_facts: true
   become: true
-  user: root
-  vars:
-    hypervisor_destroy_array: false
   vars_files:
     - vars/main.yml
   handlers:

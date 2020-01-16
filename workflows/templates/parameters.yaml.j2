@@ -7,29 +7,29 @@
 {%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*block.*") | list | length)) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*swift.*") | list | length)) %}
 {%   elif (target_nodes is defined) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (target_nodes | selectattr("capabilities", "match", ".*control.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (target_nodes | selectattr("capabilities", "match", ".*compute.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (target_nodes | selectattr("capabilities", "match", ".*ceph.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (target_nodes | selectattr("capabilities", "match", ".*block.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (target_nodes | selectattr("capabilities", "match", ".*swift.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (target_nodes | selectattr("tripleo_capabilities", "match", ".*control.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (target_nodes | selectattr("tripleo_capabilities", "match", ".*compute.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (target_nodes | selectattr("tripleo_capabilities", "match", ".*ceph.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (target_nodes | selectattr("tripleo_capabilities", "match", ".*block.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (target_nodes | selectattr("tripleo_capabilities", "match", ".*swift.*") | list | length)) %}
 {%     set _ = pd['parameter_defaults'].__setitem__(
      'ControllerSchedulerHints',
      {
-       'capabilities:node': '%stack%-controller-%index%'
+       'tripleo_capabilities:node': '%stack%-controller-%index%'
      }
    )
 %}
 {%     set _ = pd['parameter_defaults'].__setitem__(
      'ComputeSchedulerHints',
      {
-       'capabilities:node': '%stack%-novacompute-%index%'
+       'tripleo_capabilities:node': '%stack%-novacompute-%index%'
      }
    )
 %}
 {%     set _ = pd['parameter_defaults'].__setitem__(
      'CephStorageSchedulerHints',
      {
-       'capabilities:node': '%stack%-ceph-%index%'
+       'tripleo_capabilities:node': '%stack%-ceph-%index%'
      }
    )
 %}

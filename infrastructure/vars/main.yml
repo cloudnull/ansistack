@@ -212,3 +212,5 @@ vm_job_user: "{{ vm_image_data[vm_image_name]['access_user'] }}"
 #    eth1:
 #      - 192.168.1.1/22
 vm_management_net: "{{ vm_preprov_networks['eth1'][0] }}"
+
+server_cpu_governor: performance
