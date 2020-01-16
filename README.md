@@ -16,3 +16,24 @@ At this time AnsiStack has two different code paths, **Infrastructure** and
 setup hypervisors and build virtualized infrastructure. The workflows driectory
 contains playbooks that are used to deploy solutions within virtualized
 infrastructure.
+
+## Deployment Particulars
+
+The process to build virtual machines has been broken up into three primary types.
+
+1. Image based deployment using QCOW2 images. These deployments will reside
+   within a qcow2 container that can be dynamically expanded as needed. Image
+   based deployments are pre-configured using cloud-init allowing the deployer
+   to provide additional packages, script based automation, and static IP
+   addresses.
+
+2. ISO based deployment. These deployments will setup the instance using a
+   QCOW2 container that can be dynamically expanded as needed. The instance will
+   bootup with the ISO attached to it and allow the operator to console to the VM
+   to continue the installation or use-case.
+
+3. No OS based deployment. These deployments will setup the instance using a
+   QCOW2 container that can be dynamically expanded as needed. The install will
+   power-on, then wait for a boot protocol over the network. These instances will
+   be connected to a vBMC controller, which will allow the instances to be
+   controlled via iPMI.
