@@ -9,8 +9,8 @@ possible footprint, AnsiStack builds, tests, runs, and develops machine based
 workloads that are able to bind to any hardware, attach to any network, and
 emulate most any architecture.
 
-> In a world where there are seemingly millions of over engineered cloud
-  solutions, AnsiStack aims to be **NOT** that.
+In a world where there are seemingly millions of over engineered cloud and
+infrastructure solutions, AnsiStack aims to be, **NOT** that.
 
 ## Infrastructure vs Workflows
 
