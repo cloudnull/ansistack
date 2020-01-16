@@ -10,10 +10,12 @@ export THT="${THT:-/usr/share/openstack-tripleo-heat-templates}"
 {% set environments_user = [] %}
 {% set environments = [
     '$THT/environments/enable-swap.yaml',
-    '$THT/environments/low-memory-usage.yaml',
     '$THT/environments/disable-telemetry.yaml'
    ]
 %}
+{% if tripleo_low_memory | bool %}
+{%   set _ = environments.append('$THT/environments/low-memory-usage.yaml') %}
+{% endif %}
 {% if (rh_it_ca_stat is defined) and (rh_it_ca_stat.stat.exists | bool) %}
 {%   set _ = environments.append('$THT/environments/ssl/inject-trust-anchor.yaml') %}
 {% endif %}

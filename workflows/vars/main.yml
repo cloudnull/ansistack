@@ -60,3 +60,34 @@ tripleo_nova_virt_type: kvm
 tripleo_deploy: true
 tripleo_deploy_run: true
 tripleo_deploy_pre_provisioned: true
+
+# Enable low memory mode
+tripleo_low_memory: false
+
+# Define the default undercloud configuration file options.
+tripleo_undercloud_config:
+  DEFAULT:
+    undercloud_hostname: undercloud.localdomain
+    cleanup: False
+    deployment_user: "{{ ansible_user }}"
+    undercloud_debug: true
+    local_interface: eth1
+    local_ip: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.1/22"
+    local_mtu: 1500
+    generate_service_certificate: false
+    container_images_file: "{{ ansible_env.HOME }}/local_images.yaml"
+    container_insecure_registries: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_docker_registry, '') }}"
+    undercloud_public_host: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.2"
+    undercloud_admin_host: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.3"
+    undercloud_nameservers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_dns_servers, tripleo_dns_servers) | join(',') }}"
+    undercloud_ntp_servers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_ntp_servers, tripleo_ntp_servers) | join(',') }}"
+    undercloud_enable_selinux: False
+    mtu: 1500
+    undercloud_enable_paunch: False
+  ctlplane-subnet:
+    gateway: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.1"
+    cidr: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.0/22"
+    masquerade: true
+    dhcp_start: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.1"
+    dhcp_end: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.254"
+    inspection_iprange: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.1,192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.254"

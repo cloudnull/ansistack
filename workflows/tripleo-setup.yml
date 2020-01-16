@@ -134,13 +134,6 @@
       when:
         - tripleo_deploy | bool
 
-    - name: Create undercloud config
-      template:
-        src: templates/undercloud.conf.j2
-        dest: "{{ ansible_env.HOME }}/undercloud.conf"
-      when:
-        - tripleo_deploy | bool
-
     - name: Create images directory
       file:
         path: "{{ ansible_env.HOME }}/images"
@@ -306,6 +299,35 @@
     - name: Set global fact
       set_fact:
         tripleo_deploy: "{{ tripleo_deploy }}"
+      run_once: true
+
+    - name: Create undercloud config
+      copy:
+        src: /usr/share/python-tripleoclient/undercloud.conf.sample
+        dest: "{{ ansible_env.HOME }}/undercloud.conf"
+        remote_src: true
+
+    - name: Update the undercloud config
+      ini_file:
+        path: "{{ ansible_env.HOME }}/undercloud.conf"
+        section: "{{ item.section }}"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        backup: false
+      loop: |-
+        {% set items = [] %}
+        {% for k, v in tripleo_undercloud_config.items() %}
+        {%   for _k, _v in v.items() %}
+        {%     set value = {} %}
+        {%     set _ = value.__setitem__('section', k) %}
+        {%     set _ = value.__setitem__('option', _k) %}
+        {%     set _ = value.__setitem__('value', _v) %}
+        {%     set _ = items.append(value) %}
+        {%   endfor %}
+        {% endfor %}
+        {{ items }}
+      when:
+        - tripleo_deploy | bool
 
     - name: Set local ceph facts
       ini_file:
