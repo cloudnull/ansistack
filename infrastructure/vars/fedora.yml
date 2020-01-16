@@ -9,6 +9,7 @@ server_system_packages:
   - "python*-libvirt"
   - "python*-lxml"
   - "python*-virtualenv"
+  - "sysfsutils"
   - "ipmitool"
   - "nfs-utils"
   - "virt-install"

@@ -1,0 +1,90 @@
+---
+  # Ansible virtualization tools for lab based deployments
+  # Copyright (C) 2019  Kevin Carter
+  #
+  # This program is free software: you can redistribute it and/or modify
+  # it under the terms of the GNU General Public License as published by
+  # the Free Software Foundation, either version 3 of the License, or
+  # (at your option) any later version.
+  #
+  # This program is distributed in the hope that it will be useful,
+  # but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  # GNU General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+  - name: Create a user and to sudoers
+    hosts: "all"
+    any_errors_fatal: true
+    gather_facts: true
+    become: true
+    vars_files:
+      - vars/main.yml
+
+    tasks:
+      - name: Ensure group "wheel" exists
+        group:
+          name: wheel
+          state: present
+
+      - name: Ensure the user group exists
+        group:
+          name: "{{ server_user_name }}"
+          state: present
+
+      - name: Create ssh key pair
+        user:
+          name: "{{ server_user_name }}"
+          groups:
+            - wheel
+
+      - name: Get user entry
+        command: getent passwd carter
+        register: user_entry
+        changed_when: false
+
+      - name: Set user fact
+        set_fact:
+          user_home_dir: "{{ user_entry.stdout.strip().split(':')[5] }}"
+
+      - name: Show retrieved user home dir
+        debug:
+          var: user_home_dir
+
+      - name: Ensure .ssh directory
+        file:
+          path: "{{ user_home_dir }}/.ssh"
+          state: directory
+          owner: "{{ server_user_name }}"
+          group: "{{ server_user_name }}"
+          mode: "0700"
+
+      - name: Generate a keypair
+        openssh_keypair:
+          path: "{{ user_home_dir }}/.ssh/id_rsa"
+
+      - name: Set authorized key taken from file
+        authorized_key:
+          user: "{{ server_user_name }}"
+          state: present
+          key: "{{ lookup('file', (lookup('env', 'HOME') ~ '/.ssh/id_rsa.pub')) }}"
+
+      - name: Ensure sudoers.d directory
+        file:
+          path: "/etc/sudoers.d/"
+          state: directory
+          owner: root
+          group: root
+          mode: "0750"
+
+      - name: Validate the sudoers file before saving
+        lineinfile:
+          path: /etc/sudoers.d/custom
+          state: present
+          regexp: '^%wheel ALL='
+          line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+          validate: /usr/sbin/visudo -cf %s
+          create: true

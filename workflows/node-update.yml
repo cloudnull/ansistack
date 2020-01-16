@@ -24,6 +24,9 @@
   vars_files:
     - vars/main.yml
 
+  vars:
+    server_allow_reboot: false
+
   tasks:
     - name: Gather variables for each operating system
       include_vars: "{{ item }}"
@@ -56,13 +59,9 @@
       retries: 4
       delay: 16
 
-    - name: Generate a keypair
-      openssh_keypair:
-        path: "{{ ansible_env.HOME }}/.ssh/id_rsa"
-      become: true
-
     - name: Reboot target
       reboot:
         reboot_timeout: 3600
       when:
         - package_updates is changed
+        - server_allow_reboot | bool

@@ -17,19 +17,17 @@
 
 
 - name: Configure Linux CPU governor
-  hosts: hypervisor_hosts
+  hosts: all
+  become: true
+
   vars:
     governor: "{{ server_cpu_governor | default('performance') }}"
+
   handlers:
     - name: Run tmpfiles.d reload
-      command: /usr/bin/systemd-tmpfiles --create --remove /etc/tmpfiles.d/cpu-govenor.conf
-  tasks:
-    - name: Install sysfsutils
-      package:
-        name:
-          - sysfsutils
-        state: present
+      command: systemd-tmpfiles --create --remove /etc/tmpfiles.d/cpu-govenor.conf
 
+  tasks:
     - name: Check for governor
       stat:
         path: /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
@@ -45,8 +43,8 @@
         - name: Persist cpus scaling governor
           lineinfile:
             dest: "/etc/tmpfiles.d/cpu-govenor.conf"
-            line: "w- {{ item }} - - - - {{ governor }}"
-            regexp: "^{{ item }}.*"
+            line: "w {{ item }} - - - - {{ governor }}"
+            regexp: "^w.*{{ item }}.*"
             create: true
           with_items: "{{ cpus_scaling_governor.stdout_lines }}"
           notify:
@@ -69,8 +67,8 @@
         - name: Persist cpus scaling governor
           lineinfile:
             dest: "/etc/tmpfiles.d/cpu-govenor.conf"
-            line: "w- {{ item }} - - - - 1"
-            regexp: "^{{ item }}.*"
+            line: "w {{ item }} - - - - 1"
+            regexp: "^w.*{{ item }}.*"
             create: true
           with_items: "{{ cpus_cpuidle.stdout_lines }}"
           notify:

@@ -364,20 +364,30 @@
             name: vm.swappiness
             value: "10"
 
+    - name: Ensure the user group exists
+      become: true
+      group:
+        name: "{{ ansible_env.USER }}"
+        state: present
+
+    - name: Create ssh key pair
+      become: true
+      user:
+        name: "{{ ansible_env.USER }}"
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: "{{ ansible_env.HOME }}/.ssh/id_rsa"
+        groups:
+          - wheel
+
     - name: Ensure .ssh directory
+      become: true
       file:
         path: "{{ ansible_env.HOME }}/.ssh"
         state: directory
         owner: "{{ ansible_env.USER }}"
         group: "{{ ansible_env.USER }}"
         mode: "0700"
-
-    - name: Create ssh key pair
-      user:
-        name: "{{ ansible_env.USER }}"
-        generate_ssh_key: yes
-        ssh_key_bits: 2048
-        ssh_key_file: "{{ ansible_env.HOME }}/.ssh/id_rsa"
 
     - name: Accept ssh on all devices
       iptables:
