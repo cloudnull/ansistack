@@ -23,9 +23,13 @@
     - vars/main.yml
 
   handlers:
-    - name: Run tmpfiles.d reload
+    - name: Run govenor tmpfiles.d reload
       command: systemd-tmpfiles --create --remove /etc/tmpfiles.d/cpu-govenor.conf
+      listen: tmpfiles reload
 
+    - name: Run scaling tmpfiles.d reload
+      command: systemd-tmpfiles --create --remove /etc/tmpfiles.d/cpu-scaling.conf
+      listen: tmpfiles reload
   tasks:
     - name: Check for governor
       stat:
@@ -47,7 +51,7 @@
             create: true
           with_items: "{{ cpus_scaling_governor.stdout_lines }}"
           notify:
-            - Run tmpfiles.d reload
+            - tmpfiles reload
       when:
         - scaling_governor_check.stat.exists
 
@@ -71,6 +75,6 @@
             create: true
           with_items: "{{ cpus_cpuidle.stdout_lines }}"
           notify:
-            - Run tmpfiles.d reload
+            - tmpfiles reload
       when:
         - cpuidle_check.stat.exists

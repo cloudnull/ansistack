@@ -65,7 +65,7 @@
         - name: vm_disk_size
           condition: true
         - name: vm_image_name
-          condition: "{{ inventory_hostname in groups['provisioned_vms'] }}"
+          condition: "{{ (inventory_hostname in groups['provisioned_vms']) and not ('vm_bootable_iso' in hostvars[inventory_hostname]) }}"
       delegate_to: localhost
       connection: local
 

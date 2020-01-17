@@ -21,6 +21,9 @@
     any_errors_fatal: true
     gather_facts: true
     become: true
+    vars:
+      server_user_name: "{{ ansible_user }}"
+
     vars_files:
       - vars/main.yml
 

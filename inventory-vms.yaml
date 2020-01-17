@@ -54,15 +54,6 @@ all:
                       vm_preprov_networks:
                         eth1:
                           - "192.168.4.103/22"
-                    # compute2-vm-compute-1-gfx:
-                    #   vm_image_name: centos7
-                    #   vm_passthrough_lookup_regex: '.*Ellesmere.*'
-                    #   vm_bootable_iso: Win10_1909_English_x64.iso
-                    #   vm_variant: win10
-                    #   vm_cores: 8  # Number of cores
-                    #   vm_ram: 16384  # Size in MiB
-                    #   vm_additional_isos:
-                    #     - virtio-win-0.1.171.iso
                 provisioned_compute1:
                   vars:
                     vm_virt_host: "compute1"
@@ -118,6 +109,25 @@ all:
                         vm_preprov_networks:
                           eth1:
                             - "192.168.4.107/22"
+                provisioned_compute4:
+                  vars:
+                    vm_virt_host: "compute4"
+                    vm_cores: 4  # Number of cores
+                    vm_ram: 8192  # Size in MiB
+                    vm_disk_size: 72  # Size in GiB
+                  hosts:
+                    compute4-vm-1:
+                      vm_image_name: centos7
+                    compute4-vm-2:
+                      vm_image_name: centos7
+                    # compute4-vm-3-gfx:
+                    #   vm_passthrough_lookup_regex: '.*Ellesmere.*'
+                    #   vm_bootable_iso: Win10_1909_English_x64.iso
+                    #   vm_variant: win10
+                    #   vm_cores: 8  # Number of cores
+                    #   vm_ram: 16384  # Size in MiB
+                    #   vm_additional_isos:
+                    #     - virtio-win-0.1.171.iso
         bootable_vms:
           vars:
             vm_networks:

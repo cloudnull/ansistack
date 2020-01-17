@@ -17,12 +17,12 @@
 
 
 - name: Setup storage hosts
-  hosts: dsal_hosts
+  hosts: libvirt_hosts
   any_errors_fatal: true
   gather_facts: true
   user: root
   vars:
-    dsal_destroy_array: false
+    server_destroy_array: false
   vars_files:
     - vars/main.yml
   tasks:
@@ -34,12 +34,12 @@
 
     - name: Storage block
       when:
-        - dsal_storage_drive is defined
+        - server_storage_drive is defined
       block:
         - name: Create volume group for VMs
           lvg:
             vg: vms
-            pvs: "{{ dsal_storage_drive }}"
+            pvs: "{{ server_storage_drive }}"
 
         - name: Create logical volume for VMs
           lvol:
@@ -61,7 +61,7 @@
 
     - name: Storage arrays block
       when:
-        - dsal_storage_arrays is defined
+        - server_storage_arrays is defined
       block:
         - name: Ensure mdadm is installed
           package:
@@ -74,12 +74,12 @@
           register: "array_check"
           changed_when: false
           failed_when: false
-          with_items: "{{ dsal_storage_arrays }}"
+          with_items: "{{ server_storage_arrays }}"
           check_mode: no
 
         - name: Destroy block
           when:
-            - dsal_destroy_array | bool
+            - server_destroy_array | bool
             - array_check.results[0].rc == 0
           block:
             - name: Un-mounting array(s)
@@ -87,21 +87,21 @@
                 name: "{{ item.mountpoint }}"
                 src: "/dev/{{ item.name }}"
                 state: "unmounted"
-              loop: "{{ dsal_storage_arrays }}"
+              loop: "{{ server_storage_arrays }}"
 
             - name: Stopping array(s)
               command: "mdadm --stop /dev/{{ item.name }}"
               args:
                 removes: "/dev/{{ item.name }}"
               register: "array_stopped"
-              loop: "{{ dsal_storage_arrays }}"
+              loop: "{{ server_storage_arrays }}"
 
             - name: Removing array(s)
               command: "mdadm --remove /dev/{{ item.name }}"
               args:
                 removes: "/dev/{{ item.name }}"
               register: "array_removed"
-              loop: "{{ dsal_storage_arrays }}"
+              loop: "{{ server_storage_arrays }}"
 
             - name: Zeroing out array devices
               command: "mdadm --zero-superblock {{ item.1 }}"
@@ -114,20 +114,20 @@
           register: "disks_wiped"
           when:
             - (array_check.results[0].rc != 0) or
-              (dsal_destroy_array | bool)
+              (server_destroy_array | bool)
           with_subelements:
-            - "{{ dsal_storage_arrays }}"
+            - "{{ server_storage_arrays }}"
             - devices
 
         - name: End the play for hosts that run CentOS 6
           meta: end_host
           when:
-            - dsal_destroy_array | bool
+            - server_destroy_array | bool
 
         - name: Creating array(s)
           shell: "yes | mdadm --create /dev/{{ item.name }} --level={{ item.level }} --raid-devices={{ item.devices|count }} {{ item.devices| join (' ') }}"
           register: "array_created"
-          loop: "{{ dsal_storage_arrays }}"
+          loop: "{{ server_storage_arrays }}"
           when:
             - array_check.results[0].rc != 0
 
@@ -155,7 +155,7 @@
             fstype: "{{ item.fs }}"
             opts: "{{ item.filesystem_opts | default(omit) }}"
             dev: "/dev/{{ item.name }}"
-          loop: "{{ dsal_storage_arrays }}"
+          loop: "{{ server_storage_arrays }}"
           when:
             - item.fs is defined
 
@@ -166,7 +166,7 @@
             fstype: "{{ item.fs }}"
             state: "mounted"
             opts: "{{ item.opts | default(omit) }}"
-          loop: "{{ dsal_storage_arrays }}"
+          loop: "{{ server_storage_arrays }}"
           when:
             - item.fs is defined
             - item.mountpoint is defined

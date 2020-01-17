@@ -2,72 +2,32 @@
 
 all:
   vars:
-    provisioned_vm_inventory_file: "{{ lookup('env', 'HOME') }}/vm-local-lab-inventory.yaml"
+    ansible_user: userx
+    ansible_ssh_extra_args: >-
+      -o UserKnownHostsFile=/dev/null
+      -o StrictHostKeyChecking=no
+      -o Compression=no
+      -o TCPKeepAlive=yes
+      -o VerifyHostKeyDNS=no
+      -o ForwardX11=no
+      -o ForwardAgent=no
+    ansible_python_interpreter: "/usr/bin/python3"
+    server_networks:
+      uplink:
+        interface: eno1
+        type: macvlan
+      provisioning:
+        interface: eno1-VLAN10
+        type: macvlan
+      external:
+        interface: eno1-VLAN11
+        type: macvlan
   children:
-    all_machines:
-      vars:
-        ansible_ssh_extra_args: >-
-          -o UserKnownHostsFile=/dev/null
-          -o StrictHostKeyChecking=no
-          -o Compression=no
-          -o TCPKeepAlive=yes
-          -o VerifyHostKeyDNS=no
-          -o ForwardX11=no
-          -o ForwardAgent=no
-        ansible_python_interpreter: "/usr/bin/python3"
-        server_networks:
-          uplink:
-            interface: bond0
-            type: macvlan
-          provisioning:
-            interface: BOND0-VLAN10
-            type: macvlan
-          external:
-            interface: BOND0-VLAN11
-            type: macvlan
-      children:
-        all_hosts:
-          vars:
-            ansible_user: carter
-            server_user_name: "{{ ansible_user }}"
-          children:
-            compute_hosts:
-              children:
-                proxmox_hosts:
-                  hosts:
-                    compute3:
-                      ansible_host: 172.16.27.25
-                  children:
-                    routers:
-                      hosts:
-                        router:
-                          ansible_host: 172.16.27.44
-                    containers:
-                      hosts:
-                        plex_indexer:
-                          ansible_host: 172.16.27.227
-                        irc:
-                          ansible_host: 172.16.27.52
-                        unifi:
-                          ansible_host: 172.16.27.141
-                        sabnzb:
-                          ansible_host: 172.16.27.244
-                libvirt_hosts:
-                  hosts:
-                    compute1:
-                      ansible_host: 172.16.27.215
-                    compute2:
-                      ansible_host: 172.16.27.67
-                    compute4:
-                      ansible_host: 172.16.27.300
-            infra_hosts:
-              hosts:
-                plex:
-                  ansible_host: 172.16.27.219
-                brix:
-                  ansible_host: 172.16.27.218
-                  ansible_python_interpreter: "/usr/bin/python"
-            storage_hosts:
-              hosts:
-                system:
-                  ansible_host: 172.16.24.92
+    libvirt_hosts:
+      hosts:
+        server1:
+          ansible_host: 10.0.0.100
+        server2:
+          ansible_host: 10.0.0.101
+        server3:
+          ansible_host: 10.0.0.102

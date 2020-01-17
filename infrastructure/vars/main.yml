@@ -21,6 +21,9 @@ vm_image_path: '/mnt/rhv/images'
 vm_iso_path: '/mnt/rhv/template/iso'
 
 vm_image_data:
+  dummy:
+    access_user: null
+    python_interpreter: null
   centos7:
     url: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
     path: "{{ vm_image_path }}"

@@ -17,10 +17,10 @@
 
 
 - name: Run updates across all hosts
-  hosts: all_hosts:all_nodes
+  hosts: all
   any_errors_fatal: true
   gather_facts: true
-  user: root
+  become: true
   vars_files:
     - vars/main.yml
   tasks:

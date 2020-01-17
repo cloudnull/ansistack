@@ -20,7 +20,7 @@ setup hypervisors and build virtualized infrastructure. The workflows directory
 contains playbooks that are used to deploy solutions within virtualized
 infrastructure.
 
-## Deployment Particulars
+### Virtual Machine Deployment Particulars
 
 The process to build virtual machines has been broken up into three primary types.
 
@@ -41,7 +41,7 @@ The process to build virtual machines has been broken up into three primary type
    be connected to a vBMC controller, which will allow the instances to be
    controlled via iPMI.
 
-### Virtual machine Inventory examples
+#### Virtual Machine Inventory Examples
 
 To enable virtual machine deployments, inventory entries are required to define
 each virtual machine name, type, and placement.
@@ -132,7 +132,7 @@ bootable_vms:
   corresponding to the network name on the hypervisor which an interface will be
   spawned with.
 
-### PCI passthrough
+### PCI Passthrough
 
 Virtual machines can be given a specific PCI device which allows for specific
 hardware availability within a virtualized machine. To enable PCI passthrough
@@ -197,3 +197,67 @@ provisioned_vms:
 
 > In this example the specific devices **pci_0000_05_04_0** and
   **pci_0000_05_02_0** will be passed through to the virtual machine.
+
+----
+
+### Server Setup
+
+Server setup is simple, though can be as complex as you want it to be. The base
+requirement is a modern GNU/Linux operating system capable of running **KVM**
+via **libvirt**.
+
+Server playbooks within AnsiStack support Fedora29+, CentOS7/8, RHEL7/8, and
+Debian 9+. While these playbooks exist to stand up a server that will run
+virtualized workloads, these playbooks are optional. Any GNU/Linux server that
+is capable of running **KVM** via **libvirt** with the `virsh` and
+`virt-install` commands should be able to run AnsiStack workloads.
+
+#### Basic Requirements
+
+1. GNU/Linux
+
+2. KVM
+
+3. `virsh`
+
+4. Libvirt
+
+5. `virt-install`
+
+#### Server Inventory Examples
+
+To enable virtual machine deployments on servers, inventory entries are
+required to define each server.
+
+###### Image based deployment
+
+``` yaml
+libvirt_hosts:
+    hosts:
+        kvm-server1:
+            ansible_host: 10.1.1.10
+            server_networks:
+                uplink:
+                    interface: eth1
+                    type: macvlan
+                external:
+                    interface: eth1-VLAN10
+                    type: macvlan
+```
+
+> The option **server_networks** is used to define network devices within
+  virsh. The key for each network will define the name for the network within
+  virsh. The **interface** option is a string, and is required. This option
+  defines the ethernet device virsh network will bind to. The key **type** is a
+  string, and is required. This option sets the network type virsh will attach
+  virtual machines to; available options are *macvlan*, and *bridge*.
+
+## Complete Inventory Examples
+
+Complete inventory examples can be seen within this repository.
+
+1. The file **inventory-phys.yaml** contains a complete example which enables
+   servers for AnsiStack workloads.
+
+2. The file **inventory-vms.yaml** contains a complete example which provides
+   for virtualized workloads.

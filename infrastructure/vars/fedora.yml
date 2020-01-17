@@ -3,12 +3,9 @@
 server_system_packages:
   - "@virtualization"
   - "libguestfs-tools"
-  - "libsemanage-python"
   - "libvirt-client"
-  - "NetworkManager-glib"
   - "nm-connection-editor"
   - "OpenIPMI"
-  - "policycoreutils-python"
   - "python*-libselinux"
   - "python*-libvirt"
   - "python*-lxml"

@@ -34,7 +34,7 @@
   tasks:
     - name: Set inventory file path
       set_fact:
-        vm_job_user: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['access_user'] }}"
+        vm_job_user: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name'] | default('dummy')]['access_user'] }}"
 
     - name: Set inventory file path
       set_fact:
@@ -66,7 +66,7 @@
           set_fact:
             vm_ip_address: "{{ vm_ip.stdout.split()[3].split('/')[0] }}"
           vars:
-            ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['python_interpreter'] }}"
+            ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name'] | default('dummy')]['python_interpreter'] }}"
           when:
             - vm_bootable_iso is undefined
 
@@ -84,10 +84,10 @@
       delegate_to: "{{ vm_ip_address }}"
       when:
         - vm_bootable_iso is undefined
-        - not (hostvars[inventory_hostname]['vm_image_name'] | regex_search('(rhel)'))
+        - not (hostvars[inventory_hostname]['vm_image_name'] | default('dummy') | regex_search('(rhel)'))
       vars:
         ansible_user: "{{ vm_job_user }}"
-        ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name']]['python_interpreter'] }}"
+        ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name'] | default('dummy')]['python_interpreter'] }}"
       block:
         - name: Gather vm facts
           setup:
@@ -173,9 +173,9 @@
               {%   if node in groups['provisioned_vms'] %}
               {%
                      set entry = {
-                       'ansible_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
-                       'ansible_python_interpreter': vm_image_data[hostvars[node]['vm_image_name']]['python_interpreter'],
-                       'vm_job_user': vm_image_data[hostvars[node]['vm_image_name']]['access_user'],
+                       'ansible_user': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['access_user'],
+                       'ansible_python_interpreter': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['python_interpreter'],
+                       'vm_job_user': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['access_user'],
                        'vm_job_target': node,
                        'vm_virt_host': hostvars[node]['vm_virt_host'],
                        'ooo_type': hostvars[node]['ooo_type'] | default('undefined')
