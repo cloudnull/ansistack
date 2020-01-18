@@ -1,0 +1,50 @@
+---
+# Ansible virtualization tools for lab based deployments
+# Copyright (C) 2019  Kevin Carter
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+- name: Set the server power state
+  hosts: all
+  connection: local
+  gather_facts: false
+  vars:
+    server_ipmi_command: "status"
+    server_ipmi_interface: lanplus
+    server_ipmi_port: 623
+
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Ipmi block
+      block:
+        - name: Set or get the power state of a physical host
+          command: >-
+            ipmitool -I {{ server_ipmi_interface }}
+            -H {{ server_ipmi_address }}
+            -U {{ server_ipmi_username }}
+            -P {{ server_ipmi_password }}
+            -p {{ server_ipmi_port }}
+            power {{ server_ipmi_command }}
+          register: ipmi_command
+
+        - name: Return ipmi information
+          debug:
+            msg: "{{ ipmi_command.stdout }}"
+      when:
+        - server_ipmi_address is defined
+        - server_ipmi_username is defined
+        - server_ipmi_password is defined

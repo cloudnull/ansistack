@@ -149,63 +149,28 @@ all:
                     vm_ram: 8192
                     vm_disk_size: 96
                     tripleo_capabilities: boot_option:local,profile:compute
-                  hosts: {}
-                    # osp-compute2-vm-controller-1:
-                    #   vm_vbmc_port: 16020
-                    #   tripleo_capabilities: boot_option:local,profile:controller
-                    # osp-compute2-vm-controller-2:
-                    #   vm_vbmc_port: 16021
-                    #   tripleo_capabilities: boot_option:local,profile:controller
-                    # osp-compute2-vm-controller-3:
-                    #   vm_vbmc_port: 16022
-                    #   tripleo_capabilities: boot_option:local,profile:controller
-                    # osp-compute2-vm-compute-0:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16023
-                    #   vm_disk_size: 32
-                    # osp-compute2-vm-compute-1:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16024
-                    #   vm_disk_size: 32
-                    # osp-compute2-vm-compute-2:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16025
-                    #   vm_disk_size: 32
-                    # osp-compute2-vm-compute-3:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16026
-                    #   vm_disk_size: 32
-                    # osp-compute2-vm-compute-4:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16027
-                    #   vm_disk_size: 32
-                    # osp-compute2-vm-compute-5:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16028
-                    #   vm_disk_size: 32
-                    # osp-compute2-vm-compute-6:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16029
-                    #   vm_disk_size: 32
-                    # osp-compute2-vm-compute-7:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16030
-                    #   vm_disk_size: 32
-                    # osp-compute2-vm-compute-8:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16031
-                    #   vm_disk_size: 32
-                    # osp-compute2-vm-compute-9:
-                    #   vm_cores: 2
-                    #   vm_ram: 4096
-                    #   vm_vbmc_port: 16032
-                    #   vm_disk_size: 32
+                  hosts:
+                    osp-compute2-vm-controller-1:
+                      vm_vbmc_port: 16020
+                      tripleo_capabilities: boot_option:local,profile:controller
+                    osp-compute2-vm-controller-2:
+                      vm_vbmc_port: 16021
+                      tripleo_capabilities: boot_option:local,profile:controller
+                    osp-compute2-vm-controller-3:
+                      vm_vbmc_port: 16022
+                      tripleo_capabilities: boot_option:local,profile:controller
+                    osp-compute2-vm-compute-0:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16023
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-1:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16024
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-2:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16025
+                      vm_disk_size: 32

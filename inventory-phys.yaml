@@ -27,7 +27,13 @@ all:
       hosts:
         server1:
           ansible_host: 10.0.0.100
+          server_ipmi_address: 192.168.1.100
+          server_ipmi_username: ADMIN
+          server_ipmi_password: ADMIN
         server2:
           ansible_host: 10.0.0.101
+          server_ipmi_address: 192.168.1.101
+          server_ipmi_username: ADMIN
+          server_ipmi_password: ADMIN
         server3:
           ansible_host: 10.0.0.102
