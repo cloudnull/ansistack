@@ -26,39 +26,6 @@
   vars_files:
     - vars/main.yml
   tasks:
-    - name: Set authorized key taken from file
-      authorized_key:
-        user: "{{ ansible_user }}"
-        state: present
-        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-
-    - name: Storage block
-      when:
-        - server_storage_drive is defined
-      block:
-        - name: Create volume group for VMs
-          lvg:
-            vg: vms
-            pvs: "{{ server_storage_drive }}"
-
-        - name: Create logical volume for VMs
-          lvol:
-            vg: vms
-            lv: virtualMachines
-            size: +100%FREE
-
-        - name: Creating filesystem
-          filesystem:
-            fstype: "xfs"
-            dev: /dev/mapper/vms-virtualMachines
-
-        - name: Mounting volume(s)
-          mount:
-            name: /var/lib/libvirt
-            src: /dev/mapper/vms-virtualMachines
-            fstype: "xfs"
-            state: "mounted"
-
     - name: Storage arrays block
       when:
         - server_storage_arrays is defined
@@ -170,3 +137,30 @@
           when:
             - item.fs is defined
             - item.mountpoint is defined
+
+    - name: Storage block
+      when:
+        - server_storage_drive is defined
+      block:
+        - name: Create volume group for VMs
+          lvg:
+            vg: vms
+            pvs: "{{ server_storage_drive }}"
+
+        - name: Create logical volume for VMs
+          lvol:
+            vg: vms
+            lv: virtualMachines
+            size: +100%FREE
+
+        - name: Creating filesystem
+          filesystem:
+            fstype: "xfs"
+            dev: /dev/mapper/vms-virtualMachines
+
+        - name: Mounting volume(s)
+          mount:
+            name: /var/lib/libvirt
+            src: /dev/mapper/vms-virtualMachines
+            fstype: "xfs"
+            state: "mounted"

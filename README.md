@@ -198,8 +198,6 @@ provisioned_vms:
 > In this example the specific devices **pci_0000_05_04_0** and
   **pci_0000_05_02_0** will be passed through to the virtual machine.
 
-----
-
 ### Server Setup
 
 Server setup is simple, though can be as complex as you want it to be. The base
@@ -229,7 +227,7 @@ is capable of running **KVM** via **libvirt** with the `virsh` and
 To enable virtual machine deployments on servers, inventory entries are
 required to define each server.
 
-###### Image based deployment
+###### Server configuration
 
 ``` yaml
 libvirt_hosts:
@@ -251,6 +249,109 @@ libvirt_hosts:
   defines the ethernet device virsh network will bind to. The key **type** is a
   string, and is required. This option sets the network type virsh will attach
   virtual machines to; available options are *macvlan*, and *bridge*.
+
+#### Server Optional Configuration and Optimizations
+
+Several infrastructure playbooks exist that can be used to customize and
+optimize virtualized workloads.
+
+###### Server governor configuration
+
+The playbook **server-governor.yml** will scan for and set server performance
+options. This playbook sets all discovered power states to *performance*.
+
+###### Server storage setup
+
+The playbook **server-storage-setup.yml** configures block devices into
+suitable storage for running virtual machines. This is done in one of two ways.
+
+1. A set of disks are built into a software RAID.
+
+2. A given block device is partitioned and provisioned using logical volumes.
+
+#### Server Storage Inventory Examples
+
+To enable virtual machine deployments on servers, inventory entries are
+required to define each server.
+
+###### Storage array deployment
+
+``` yaml
+libvirt_hosts:
+    hosts:
+        kvm-server1:
+            ansible_host: 10.1.1.10
+            server_storage_arrays:
+            - name: 'md0'
+              level: 0
+              opts: 'noatime'
+              mountpoint: /var/lib/libvirt
+              fs: 'xfs'
+              devices:
+              - /dev/sdh
+              - /dev/sdi
+              - /dev/sdj
+              - /dev/sdb
+              - /dev/sdc
+              - /dev/sdd
+              - /dev/sde
+              - /dev/sdg
+              - /dev/sdf
+              - /dev/sda
+```
+
+> The **server_storage_arrays** option is an list of hashes and is used to
+  define the RAID array the playbook will setup. The key **name** is a string and
+  defines the name of the array that will be created. The key **level** is an
+  integer and defines the RAID level to be created. The key **opts** is a string
+  and defines mount options when the device is mount within the system. The key
+  **mountpoint** is a string and defines where the device will be mounted. The
+  key **fs** is a string and defines the filesystem the device will be formatted.
+  The key **devices** is a list, which defines all of the block devices that will
+  make up the raid array.
+
+
+###### Storage array deployment
+
+``` yaml
+libvirt_hosts:
+    hosts:
+        kvm-server1:
+            ansible_host: 10.1.1.10
+            server_storage_drive: /dev/sdb1
+```
+
+> The option **server_storage_drive** is a string and defines a block device or
+  partition that will be provisioned using logical volumes, formatted *XFS*,
+  and mounted at `/var/lib/libvirt`.
+
+#### Server updates
+
+The playbook **server-update.yml** will run package updates across the board.
+
+#### Server power
+
+The playbook **server-power.yml** will run IPMI power commands from the
+executing system against a given host. This playbooks requires the `ipmitool`
+command to be installed locally. Common extra options used in conjunction with
+this playbook is **server_ipmi_command** which augments the power command; the
+default value is *status*. This playbook will only interact with hosts that the
+required options **server_ipmi_address**, **server_ipmi_username**,
+**server_ipmi_password**, and defined within inventory.
+
+###### Server power inventory examples
+
+``` yaml
+libvirt_hosts:
+    hosts:
+        kvm-server1:
+            ansible_host: 10.1.1.10
+            server_ipmi_address: 192.168.1.100
+            server_ipmi_username: ADMIN
+            server_ipmi_password: secrete
+```
+
+----
 
 ## Complete Inventory Examples
 

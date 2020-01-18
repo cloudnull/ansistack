@@ -30,6 +30,7 @@
     - name: Run scaling tmpfiles.d reload
       command: systemd-tmpfiles --create --remove /etc/tmpfiles.d/cpu-scaling.conf
       listen: tmpfiles reload
+
   tasks:
     - name: Check for governor
       stat:
