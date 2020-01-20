@@ -178,7 +178,7 @@
                        'vm_job_user': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['access_user'],
                        'vm_job_target': node,
                        'vm_virt_host': hostvars[node]['vm_virt_host'],
-                       'ooo_type': hostvars[node]['ooo_type'] | default('undefined')
+                       'tripleo_deploy_type': hostvars[node]['tripleo_deploy_type'] | default('undefined')
                      }
               %}
               {%     if 'vm_ip_address' in hostvars[node] %}

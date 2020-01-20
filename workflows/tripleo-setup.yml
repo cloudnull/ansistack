@@ -282,7 +282,7 @@
             content: "{{ preprov_param_data | non_ha | to_nice_yaml }}"
             dest: "{{ ansible_env.HOME }}/pre-provisioned-parameters.yaml"
           when:
-            - not ((preprov_target_nodes | selectattr("ooo_type", "match", ".*control.*") | list | length) > 1)
+            - not ((preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*control.*") | list | length) > 1)
 
         - name: Ensure templates temp path exists
           file:

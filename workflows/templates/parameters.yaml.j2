@@ -1,11 +1,11 @@
 {% set pd = {'parameter_defaults': {}} %}
 {% if tripleo_deploy | default(true) | bool %}
 {%   if (preprov_target_nodes is defined) and ((tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*control.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*compute.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*ceph.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*block.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (preprov_target_nodes | selectattr("ooo_type", "match", ".*swift.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*control.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*compute.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*ceph.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*block.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*swift.*") | list | length)) %}
 {%   elif (target_nodes is defined) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (target_nodes | selectattr("tripleo_capabilities", "match", ".*control.*") | list | length)) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (target_nodes | selectattr("tripleo_capabilities", "match", ".*compute.*") | list | length)) %}

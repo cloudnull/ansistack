@@ -33,12 +33,12 @@ all:
                     vm_cores: 4  # Number of cores
                     vm_ram: 4096  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
-                    ooo_type: novacompute
+                    tripleo_deploy_type: novacompute
                     overcloud_target: true
                   hosts:
                     compute2-vm-controller-1:
                       vm_image_name: centos7
-                      ooo_type: controller
+                      tripleo_deploy_type: controller
                       vm_cores: 6  # Number of cores
                       vm_ram: 16384  # Size in MiB
                       vm_preprov_networks:

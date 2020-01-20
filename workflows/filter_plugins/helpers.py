@@ -157,9 +157,9 @@ class FilterModule(object):
         vms = inv['vms']
         index = collections.defaultdict(int)
         for k, v in vms['hosts'].items():
-            if 'ooo_type' in v:
-                if v['ooo_type'] != 'undefined':
-                    ooo_type_name = 'overcloud-%s' % v['ooo_type']
+            if 'tripleo_deploy_type' in v:
+                if v['tripleo_deploy_type'] != 'undefined':
+                    tripleo_deploy_type_name = 'overcloud-%s' % v['tripleo_deploy_type']
                     port_map = orig['parameter_defaults']['DeployedServerPortMap']
                     network_address = v.get('vm_management_net', v['ansible_host'])
                     port_map[k + '-' + anchor] = {
@@ -195,7 +195,7 @@ class FilterModule(object):
                         }
                     }
                     host_map = orig['parameter_defaults']['HostnameMap']
-                    host_map['%s-%s' % (ooo_type_name, index[ooo_type_name])] = k
-                    index[ooo_type_name] += 1
+                    host_map['%s-%s' % (tripleo_deploy_type_name, index[tripleo_deploy_type_name])] = k
+                    index[tripleo_deploy_type_name] += 1
 
         return orig

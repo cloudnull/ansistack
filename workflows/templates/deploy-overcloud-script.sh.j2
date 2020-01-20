@@ -71,7 +71,7 @@ openstack overcloud node introspect --all-managea
                                                                            --provide
 {%   endif %}
 {#   Setup Non-HA architecture #}
-{%   if not ((preprov_target_nodes | selectattr("ooo_type", "match", ".*control.*") | list | length) > 1) %}
+{%   if not ((preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*control.*") | list | length) > 1) %}
 {%     set _ = environments.append('/tmp/templates/environments/podman.yaml') %}
 {%   endif %}
 {%   set _ = environments_user.append(ansible_env.HOME ~ '/parameters.yaml') %}
