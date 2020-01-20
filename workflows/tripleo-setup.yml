@@ -316,7 +316,7 @@
         backup: false
       loop: |-
         {% set items = [] %}
-        {% for k, v in tripleo_undercloud_config.items() %}
+        {% for k, v in (tripleo_undercloud_config | combine(tripleo_undercloud_config_overrides, recursive=True)).items() %}
         {%   for _k, _v in v.items() %}
         {%     set value = {} %}
         {%     set _ = value.__setitem__('section', k) %}

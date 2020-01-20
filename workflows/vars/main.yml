@@ -91,3 +91,5 @@ tripleo_undercloud_config:
     dhcp_start: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.1"
     dhcp_end: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.254"
     inspection_iprange: "192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.1,192.168.{{ ansible_local.tripleo.setup.tripleo_magic_number }}.254"
+
+tripleo_undercloud_config_overrides: {}
