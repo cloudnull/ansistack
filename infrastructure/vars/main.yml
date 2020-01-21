@@ -1,8 +1,6 @@
 ---
 
 ## VM options
-_vm_cleanup: false
-_vm_purge: false
 
 vm_start_on_create: "{{ inventory_hostname in groups['provisioned_vms'] }}"
 vm_pub_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"

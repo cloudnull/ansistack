@@ -18,8 +18,6 @@
 
 #
 # This playbook has three basic options:
-#   * vm_cleanup - if `true` clenaup old VMs and create create new ones
-#   * vm_purge - if `true` purge all VMs
 #   * vm_flags - Options to pass into libvirt (virt-install).
 #
 # This setup tool requires two networks to be enabled within libvirt: ['provisioning', 'external'].
@@ -88,9 +86,8 @@
       loop_control:
         label: "{{ item.key.split(':')[0] }} + {{ item.key.split(':')[-1] }}"
       when:
-        - (((not ((vm_purge | default(false)) | bool)) and
-           (inventory_hostname in groups['provisioned_vms'])) or
-           (vm_image_get | bool))
+        - inventory_hostname in groups['provisioned_vms'] or
+          (vm_image_get | bool)
 
     - name: Check on image get async task
       async_status:

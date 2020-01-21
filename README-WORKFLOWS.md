@@ -75,8 +75,6 @@ and allow for VMs to attach to them.
 
 ###### This playbook has three basic options
 
-* vm_cleanup - if `true` clenaup old VMs and create create new ones
-* vm_purge - if `true` purge all VMs
 * vm_flags - Options to pass into libvirt (virt-install).
 
 All of these options are made for convienance and are not required for a basic
@@ -96,16 +94,6 @@ process.
 
 These playbooks are idempotent and will return an **instackenv** file even if
 no new vms are created.
-
-#### Re-provisioning VMs
-
-To re-provision VMs within an environment the `vm-create.yml` playbook can be used
-with the `vm_cleanup` flag set to `true`. This will "re-kick" all virtual machines
-in the targetted inventory.
-
-``` shell
-$ ansible-playbook -i inventory.yaml -e vm_cleanup=true playbooks/vm-create.yml
-```
 
 #### Deploy OSP
 
