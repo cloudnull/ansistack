@@ -41,20 +41,6 @@
         chdir: "/var/lib/libvirt/images/{{ inventory_hostname }}"
         creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/cidata.iso"
 
-- name: Destroy and undefine running VM
-  become: true
-  virt:
-    name: "{{ inventory_hostname }}"
-    command: "{{ item }}"
-  register: undefine
-  until: undefine is success
-  retries: 2
-  delay: 1
-  ignore_errors: true
-  loop:
-    - destroy
-    - undefine
-
 - name: Passthrough pci block
   block:
     - name: Passthrough PCI lookup

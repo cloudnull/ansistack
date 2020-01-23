@@ -47,7 +47,7 @@
         vm_protected: "{{ (hostvars[inventory_hostname]['vm_protected'] is defined) and (hostvars[inventory_hostname]['vm_protected'] | bool) and (vm_dominfo.rc == 0) }}"
       run_once: true
 
-    - name: Cleanup block
+    - name: Stop block
       when:
         - vm_dominfo.rc == 0
         - not (vm_protected | bool)
@@ -65,13 +65,19 @@
             command: destroy
           ignore_errors: true
 
-    - name: Undefine running VM
+    - name: Destroy and undefine running VM
+      become: true
       virt:
         name: "{{ inventory_hostname }}"
-        command: undefine
-      delegate_to: "{{ vm_virt_host }}"
+        command: "{{ item }}"
+      register: undefine
+      until: undefine is success
+      retries: 2
+      delay: 1
       ignore_errors: true
-      become: true
+      loop:
+        - destroy
+        - undefine
 
     - name: Clean up base image file
       file:
