@@ -54,30 +54,27 @@
       become: true
       delegate_to: "{{ vm_virt_host }}"
       block:
-        - name: Stop running VM
+        - name: Destroy running VM
           virt:
             name: "{{ inventory_hostname }}"
             command: destroy
-      rescue:
-        - name: Stop running VM
-          virt:
-            name: "{{ inventory_hostname }}"
-            command: destroy
+          register: destroy
+          until: destroy is failed
+          retries: 3
+          delay: 1
+          failed_when: destroy is success
           ignore_errors: true
 
-    - name: Destroy and undefine running VM
-      become: true
-      virt:
-        name: "{{ inventory_hostname }}"
-        command: "{{ item }}"
-      register: undefine
-      until: undefine is success
-      retries: 2
-      delay: 1
-      ignore_errors: true
-      loop:
-        - destroy
-        - undefine
+        - name: Undefine VM
+          become: true
+          virt:
+            name: "{{ inventory_hostname }}"
+            command: "undefine"
+          register: undefine
+          until: undefine is success
+          retries: 2
+          delay: 1
+          ignore_errors: true
 
     - name: Clean up base image file
       file:
