@@ -54,6 +54,46 @@ all:
                       vm_preprov_networks:
                         eth1:
                           - "192.168.4.103/22"
+                    compute2-vm-compute-3:
+                      vm_image_name: centos7
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.104/22"
+                    compute2-vm-compute-4:
+                      vm_image_name: centos7
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.105/22"
+                    compute2-vm-compute-5:
+                      vm_image_name: centos7
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.106/22"
+                    compute2-vm-compute-6:
+                      vm_image_name: centos7
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.107/22"
+                    compute2-vm-compute-7:
+                      vm_image_name: centos7
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.108/22"
+                    compute2-vm-compute-8:
+                      vm_image_name: centos7
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.109/22"
+                    compute2-vm-compute-9:
+                      vm_image_name: centos7
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.110/22"
+                    compute2-vm-compute-10:
+                      vm_image_name: centos7
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.111/22"
                 provisioned_compute1:
                   vars:
                     vm_virt_host: "compute1"
@@ -66,17 +106,7 @@ all:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.104/22"
-                    compute1-vm-2:
-                      vm_image_name: centos7
-                      vm_preprov_networks:
-                        eth1:
-                          - "192.168.4.105/22"
-                    compute1-vm-3:
-                      vm_image_name: centos7
-                      vm_preprov_networks:
-                        eth1:
-                          - "192.168.4.106/22"
+                          - "192.168.3.101/22"
                 provisioned_rhel_compute1:
                   vars:
                     vm_virt_host: "compute1"
@@ -112,13 +142,11 @@ all:
                 provisioned_compute4:
                   vars:
                     vm_virt_host: "compute4"
-                    vm_cores: 4  # Number of cores
-                    vm_ram: 8192  # Size in MiB
+                    vm_cores: 6  # Number of cores
+                    vm_ram: 16384  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
                   hosts:
                     compute4-vm-1:
-                      vm_image_name: centos7
-                    compute4-vm-2:
                       vm_image_name: centos7
                     # compute4-vm-3-gfx:
                     #   vm_passthrough_lookup_regex: '.*Ellesmere.*'
@@ -128,49 +156,49 @@ all:
                     #   vm_ram: 16384  # Size in MiB
                     #   vm_additional_isos:
                     #     - virtio-win-0.1.171.iso
-        bootable_vms:
-          vars:
-            vm_networks:
-              provisioning:
-                dhcp: true
-                interface: eth0
-                manager: nmcli
-              external:
-                dhcp: false
-                interface: eth1
-                manager: nmcli
-          children:
-            bootable_compute_hosts:
-              children:
-                bootable_compute2:
-                  vars:
-                    vm_virt_host: "compute2"
-                    vm_cores: 8
-                    vm_ram: 8192
-                    vm_disk_size: 96
-                    tripleo_capabilities: boot_option:local,profile:compute
-                  hosts:
-                    osp-compute2-vm-controller-1:
-                      vm_vbmc_port: 16020
-                      tripleo_capabilities: boot_option:local,profile:controller
-                    osp-compute2-vm-controller-2:
-                      vm_vbmc_port: 16021
-                      tripleo_capabilities: boot_option:local,profile:controller
-                    osp-compute2-vm-controller-3:
-                      vm_vbmc_port: 16022
-                      tripleo_capabilities: boot_option:local,profile:controller
-                    osp-compute2-vm-compute-0:
-                      vm_cores: 2
-                      vm_ram: 4096
-                      vm_vbmc_port: 16023
-                      vm_disk_size: 32
-                    osp-compute2-vm-compute-1:
-                      vm_cores: 2
-                      vm_ram: 4096
-                      vm_vbmc_port: 16024
-                      vm_disk_size: 32
-                    osp-compute2-vm-compute-2:
-                      vm_cores: 2
-                      vm_ram: 4096
-                      vm_vbmc_port: 16025
-                      vm_disk_size: 32
+        # bootable_vms:
+        #   vars:
+        #     vm_networks:
+        #       provisioning:
+        #         dhcp: true
+        #         interface: eth0
+        #         manager: nmcli
+        #       external:
+        #         dhcp: false
+        #         interface: eth1
+        #         manager: nmcli
+        #   children:
+        #     bootable_compute_hosts:
+        #       children:
+        #         bootable_compute2:
+        #           vars:
+        #             vm_virt_host: "compute2"
+        #             vm_cores: 8
+        #             vm_ram: 8192
+        #             vm_disk_size: 96
+        #             tripleo_capabilities: boot_option:local,profile:compute
+        #           hosts:
+        #             osp-compute2-vm-controller-1:
+        #               vm_vbmc_port: 16020
+        #               tripleo_capabilities: boot_option:local,profile:controller
+        #             osp-compute2-vm-controller-2:
+        #               vm_vbmc_port: 16021
+        #               tripleo_capabilities: boot_option:local,profile:controller
+        #             osp-compute2-vm-controller-3:
+        #               vm_vbmc_port: 16022
+        #               tripleo_capabilities: boot_option:local,profile:controller
+        #             osp-compute2-vm-compute-0:
+        #               vm_cores: 2
+        #               vm_ram: 4096
+        #               vm_vbmc_port: 16023
+        #               vm_disk_size: 32
+        #             osp-compute2-vm-compute-1:
+        #               vm_cores: 2
+        #               vm_ram: 4096
+        #               vm_vbmc_port: 16024
+        #               vm_disk_size: 32
+        #             osp-compute2-vm-compute-2:
+        #               vm_cores: 2
+        #               vm_ram: 4096
+        #               vm_vbmc_port: 16025
+        #               vm_disk_size: 32

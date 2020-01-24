@@ -131,7 +131,7 @@
   register: vm_xml
   until: vm_xml.rc == 0
   retries: 3
-  delay: 2
+  delay: "{{ 8 | random }}"
 
 - name: Create disk image
   become: true
@@ -144,7 +144,7 @@
   register: disk_image
   until: disk_image.rc == 0
   retries: 3
-  delay: 2
+  delay: "{{ 8 | random }}"
 
 - name: Resize virt image
   become: true
@@ -157,7 +157,7 @@
   register: resize_img
   until: resize_img is success
   retries: 3
-  delay: 2
+  delay: "{{ 8 | random }}"
   environment:
     LIBGUESTFS_BACKEND: direct
   when:
