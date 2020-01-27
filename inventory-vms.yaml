@@ -145,6 +145,7 @@ all:
                     vm_cores: 6  # Number of cores
                     vm_ram: 16384  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
+                    undercloud_target: true
                   hosts:
                     compute4-vm-1:
                       vm_image_name: centos7
