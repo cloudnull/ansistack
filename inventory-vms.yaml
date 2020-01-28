@@ -103,7 +103,7 @@ all:
                     undercloud_target: true
                   hosts:
                     compute1-vm-1:
-                      vm_image_name: centos7
+                      vm_image_name: centos8
                       vm_preprov_networks:
                         eth1:
                           - "192.168.3.101/22"

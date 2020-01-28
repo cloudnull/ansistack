@@ -44,6 +44,50 @@ vm_image_data:
       - tmux
       - OpenIPMI
       - ipmitool
+  centos8:
+    url: https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.1.1911-20200113.3.x86_64.qcow2
+    path: "{{ vm_image_path }}"
+    name: CentOS-8-x86_64-GenericCloud.qcow2
+    access_user: 'centos'
+    cloud_init_packages:
+      - NetworkManager
+      - qemu-guest-agent
+    python_interpreter: "/usr/bin/python3"
+    pkgmgr: yum
+    base_os: centos
+    base_packages:
+      - vim
+      - network-scripts
+      - patch
+      - git
+      - patchutils
+      - iptables-services
+      - python*-virtualenv
+      - tmux
+      - OpenIPMI
+      - ipmitool
+  centos8-stream:
+    url: https://cloud.centos.org/centos/8-stream/x86_64/images/CentOS-Stream-GenericCloud-8-20200113.0.x86_64.qcow2
+    path: "{{ vm_image_path }}"
+    name: CentOS-8-stream-x86_64-GenericCloud.qcow2
+    access_user: 'centos'
+    cloud_init_packages:
+      - NetworkManager
+      - qemu-guest-agent
+    python_interpreter: "/usr/bin/python3"
+    pkgmgr: yum
+    base_os: centos
+    base_packages:
+      - vim
+      - network-scripts
+      - patch
+      - git
+      - patchutils
+      - iptables-services
+      - python*-virtualenv
+      - tmux
+      - OpenIPMI
+      - ipmitool
   fedora28:
     url: https://download.fedoraproject.org/pub/fedora/linux/releases/28/Cloud/x86_64/images/Fedora-Cloud-Base-28-1.1.x86_64.qcow2
     path: "{{ vm_image_path }}"

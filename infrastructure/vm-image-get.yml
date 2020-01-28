@@ -27,7 +27,7 @@
   hosts: all_vms
   any_errors_fatal: true
   gather_facts: false
-  user: root
+  become: true
   vars:
     image_download_set: |-
       {% set image_seen = [] %}
@@ -35,7 +35,7 @@
       {% for host in ansible_play_hosts %}
       {%   if (not (vm_image_data[hostvars[host]['vm_image_name']]['name'] in image_seen)) and (vm_image_shared_storage | default(false) | bool) %}
       {%     set _ = image_set.__setitem__(
-          hostvars[hostvars[host]['vm_virt_host']]['ansible_host']
+          hostvars[host]['vm_virt_host']
           ~ ':'
           ~ vm_image_data[hostvars[host]['vm_image_name']]['path']
           ~ ':' ~ vm_image_data[hostvars[host]['vm_image_name']]['name'],
@@ -45,7 +45,7 @@
       {%     set _ = image_seen.append(vm_image_data[hostvars[host]['vm_image_name']]['name']) %}
       {%   else %}
       {%     set _ = image_set.__setitem__(
-          hostvars[hostvars[host]['vm_virt_host']]['ansible_host']
+          hostvars[host]['vm_virt_host']
           ~ ':'
           ~ vm_image_data[hostvars[host]['vm_image_name']]['path']
           ~ ':' ~ vm_image_data[hostvars[host]['vm_image_name']]['name'],
@@ -69,8 +69,6 @@
       loop: "{{ image_download_set | dict2items }}"
       loop_control:
         label: "{{ item.key.split(':')[0] }} + {{ item.key.split(':')[-1] }}"
-      when:
-        - ansible_local['virt_cloud']['setup']['initialized'] is undefined
 
     - name: Download vm image
       get_url:

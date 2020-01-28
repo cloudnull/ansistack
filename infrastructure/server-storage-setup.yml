@@ -20,7 +20,7 @@
   hosts: libvirt_hosts
   any_errors_fatal: true
   gather_facts: true
-  user: root
+  become: true
   vars:
     server_destroy_array: false
   vars_files:

@@ -20,7 +20,7 @@
   hosts: bootable_vms
   any_errors_fatal: true
   gather_facts: false
-  user: root
+  become: true
   vars_files:
     - vars/main.yml
   pre_tasks:
