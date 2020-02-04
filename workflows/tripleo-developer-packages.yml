@@ -106,6 +106,14 @@
             - item.install_in_venv | default(false) | bool
           with_items: "{{ developer_patches }}"
 
+        - name: Install developer pip packages
+          pip:
+            name: "selinux"
+            extra_args: '--force --upgrade'
+            virtualenv: "/opt/tripleo-patches"
+            virtualenv_site_packages: no
+            virtualenv_python: "{{ ((ansible_distribution | lower) != 'centos') | ternary('python3', omit) }}"
+
         - name: Create package build script
           template:
             src: rpm_build.sh.j2

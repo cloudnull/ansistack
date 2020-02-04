@@ -100,13 +100,14 @@ all:
                     vm_cores: 8  # Number of cores
                     vm_ram: 16384  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
-                    undercloud_target: true
+                    undercloud_target: false
                   hosts:
                     compute1-vm-1:
                       vm_image_name: centos8
-                      vm_preprov_networks:
-                        eth1:
-                          - "192.168.3.101/22"
+                    compute1-vm-2:
+                      vm_image_name: centos7
+                    compute1-vm-3:
+                      vm_image_name: centos7
                 provisioned_rhel_compute1:
                   vars:
                     vm_virt_host: "compute1"

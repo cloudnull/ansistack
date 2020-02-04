@@ -80,44 +80,6 @@
           set_fact:
             vm_console_address: "{{ vm_console.stdout | replace('localhost', hostvars[vm_virt_host]['ansible_host']) }}"
 
-    - name: Fact block
-      delegate_to: "{{ vm_ip_address }}"
-      when:
-        - vm_bootable_iso is undefined
-        - not (hostvars[inventory_hostname]['vm_image_name'] | default('dummy') | regex_search('(rhel)'))
-      vars:
-        ansible_user: "{{ vm_job_user }}"
-        ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name'] | default('dummy')]['python_interpreter'] }}"
-      block:
-        - name: Gather vm facts
-          setup:
-            gather_subset: "!facter,!ohai"
-          register: gather_facts
-          until: gather_facts is success
-          retries: 3
-          delay: 5
-
-        - name: Ensure local facts directory exists
-          file:
-            dest: "/etc/ansible/facts.d"
-            state: directory
-            group: "root"
-            owner: "root"
-            mode:  "0755"
-            recurse: no
-          become: true
-
-        - name: Set local facts
-          ini_file:
-            dest: "/etc/ansible/facts.d/tripleo.fact"
-            section: "lab"
-            option: "{{ item }}"
-            value: "{{ hostvars[inventory_hostname][item] }}"
-          with_items:
-            - vm_job_target
-            - vm_job_user
-          become: true
-
     - name: Set limit vm group
       set_fact:
         vm_limit_group: "{{ ansible_play_hosts_all }}"
