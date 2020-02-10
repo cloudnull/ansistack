@@ -100,7 +100,7 @@
       debug:
         msg: >-
           VM(s) creation has completed. An inventory file has been created for the generated nodes.
-          This file can be found here `{{ provisioned_vm_inventory_file }}`.
+          This file can be found here `{{ vm_inventory_file }}`.
       run_once: true
 
   tasks:
@@ -110,21 +110,21 @@
 
     - name: Set inventory file path
       set_fact:
-        provisioned_vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
+        vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-inventory.yaml"
       when:
-        - provisioned_vm_inventory_file is undefined
+        - vm_inventory_file is undefined
 
     - name: Finishing block
       run_once: true
       block:
         - name: Check for inventory file
           stat:
-            path: "{{ provisioned_vm_inventory_file }}"
+            path: "{{ vm_inventory_file }}"
           register: vm_inv_file
 
         - name: Read existing inventory file
           set_fact:
-            existing_provisioned_vm_inventory_file: "{{ lookup('file', provisioned_vm_inventory_file) | default('---') | from_yaml }}"
+            existing_vm_inventory_file: "{{ lookup('file', vm_inventory_file) | default('---') | from_yaml }}"
           when:
             - vm_inv_file.stat.exists | bool
 
@@ -164,8 +164,8 @@
               {%     endif %}
               {%   endif %}
               {% endfor %}
-              {{ (existing_provisioned_vm_inventory_file | default({})) | combine(inventory, recursive=True) | to_nice_yaml }}
-            dest: "{{ provisioned_vm_inventory_file }}"
+              {{ (existing_vm_inventory_file | default({})) | combine(inventory, recursive=True) | to_nice_yaml }}
+            dest: "{{ vm_inventory_file }}"
           notify: Raw deployment notice
           vars:
             inventory:

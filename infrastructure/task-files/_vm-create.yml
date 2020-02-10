@@ -207,14 +207,6 @@
     xml: >-
       {{ vm_xml.stdout | replace('driver name="vhost" queues="3"', 'driver name="vhost" queues="3" txmode="iothread" ioeventfd="on" event_idx="off"') }}
 
-- name: Ensure local facts directory exists
-  file:
-    dest: "/etc/ansible/facts.d"
-    state: directory
-    group: "root"
-    owner: "root"
-    mode:  "0755"
-
 - name: Set vm created local fact
   ini_file:
     dest: "/etc/ansible/facts.d/virt_cloud.fact"

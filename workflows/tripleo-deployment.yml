@@ -56,7 +56,7 @@
 
         - name: Read pre-provisioned node yaml
           slurp:
-            src: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
+            src: "{{ ansible_env.HOME }}/{{ vm_inventory_file | basename }}"
           register: preprov_targets
 
         - name: Read pre-provisioned nodes data

@@ -31,33 +31,6 @@
         line: "127.0.0.1 undercloud.{{ ansible_domain }} undercloud localhost localhost.localdomain"
         regexp: '^127\.0\.0\.1'
 
-    - name: Ensure local facts directory exists
-      become: true
-      file:
-        dest: "/etc/ansible/facts.d"
-        state: directory
-        group: "root"
-        owner: "root"
-        mode:  "0755"
-        recurse: no
-
-    - name: Initialize local facts
-      become: true
-      ini_file:
-        dest: "/etc/ansible/facts.d/tripleo.fact"
-        section: "setup"
-        option: "{{ item.option }}"
-        value: "{{ item.value }}"
-      when:
-        - (ansible_local.tripleo is undefined) or
-          (ansible_local.tripleo.setup is undefined) or
-          (ansible_local.tripleo.setup.tripleo_magic_number is undefined)
-      loop:
-        - option: initialized
-          value: true
-        - option: tripleo_magic_number
-          value: "{{ tripleo_magic_number | default(24 | random) }}"
-
     - name: Set instackenv file fact
       set_fact:
         instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
@@ -80,16 +53,16 @@
 
     - name: Prep-provisioned nodes
       when:
-        - provisioned_vm_inventory_file is defined
+        - vm_inventory_file is defined
       block:
         - name: Copy pre-provisioned node yaml into place
           copy:
-            src: "{{ provisioned_vm_inventory_file }}"
-            dest: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
+            src: "{{ vm_inventory_file }}"
+            dest: "{{ ansible_env.HOME }}/{{ vm_inventory_file | basename }}"
 
         - name: Read pre-provisioned node yaml
           slurp:
-            src: "{{ ansible_env.HOME }}/{{ provisioned_vm_inventory_file | basename }}"
+            src: "{{ ansible_env.HOME }}/{{ vm_inventory_file | basename }}"
           register: preprov_targets
 
         - name: Read pre-provisioned nodes data
@@ -157,14 +130,6 @@
           package:
             name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
             state: present
-          become: true
-
-        - name: Set local package facts
-          ini_file:
-            dest: "/etc/ansible/facts.d/tripleo.fact"
-            section: "lab"
-            option: "tripleo_package_fact"
-            value: "{{ tripleo_package_fact }}"
           become: true
 
         - name: Enable tripleo repository (dev)
@@ -251,13 +216,13 @@
 
     - name: pre-provisioned block
       when:
-        - provisioned_vm_inventory_file is defined
+        - vm_inventory_file is defined
         - tripleo_deploy_pre_provisioned | bool
       block:
         - name: Run pre-provisioned node parameter create
           copy:
             content: |-
-              {{ lookup('file', provisioned_vm_inventory_file) | default('---') | from_yaml | preprov_hosts | to_nice_yaml }}
+              {{ lookup('file', vm_inventory_file) | default('---') | from_yaml | preprov_hosts | to_nice_yaml }}
             dest: "{{ ansible_env.HOME }}/pre-provisioned-parameters.yaml"
 
         - name: Read pre-provisioned parameter yaml
@@ -328,14 +293,6 @@
         {{ items }}
       when:
         - tripleo_deploy | bool
-
-    - name: Set local ceph facts
-      ini_file:
-        dest: "/etc/ansible/facts.d/tripleo.fact"
-        section: "lab"
-        option: "tripleo_ceph_enabled"
-        value: "{{ tripleo_ceph_enabled }}"
-      become: true
 
     - name: System block
       become: true
