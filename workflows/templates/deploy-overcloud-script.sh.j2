@@ -69,7 +69,7 @@ pushd ~/images
     tar xf /usr/share/rhosp-director-images/$i
   done
 {%     else %}
-  export OS_YAML="/usr/share/openstack-tripleo-common/image-yaml/overcloud-images-{{ tripleo_name_hash[ansible_distribution] }}-{{ ansible_distribution_version }}"
+  export OS_YAML="/usr/share/openstack-tripleo-common/image-yaml/overcloud-images-{{ tripleo_name_hash[(ansible_distribution | lower)] }}-{{ ansible_distribution_version }}"
   export DIB_YUM_REPO_CONF="/etc/yum.repos.d/*"
   openstack overcloud image build
 {%     endif %}

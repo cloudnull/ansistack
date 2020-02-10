@@ -63,6 +63,20 @@
           set_fact:
             preprov_target_nodes: "{{ (preprov_targets['content'] | b64decode | from_yaml)['vms']['hosts'].values() | list }}"
 
+    - name: Run vm pre-prov networks setup
+      shell: |-
+        set -o pipefail
+        {% for k, v in hostvars[item]['vm_preprov_networks'].items() %}
+        nmcli connection | awk '/{{ k }}/ {print $2}' | xargs -n 1 nmcli connection delete
+        nmcli con add type ethernet ifname {{ k }} ipv4.method manual ipv6.method ignore con-name {{ k }} ipv4.address {{ v | join(',') }}
+        {% endfor %}
+      become: true
+      run_once: true
+      delegate_to: "{{ item }}"
+      when:
+        - "'vm_preprov_networks' in hostvars[item]"
+      with_items: "{{ groups['overcloud'] | union(groups['undercloud']) }}"
+
     - name: Create deploy script(s)
       template:
         src: templates/{{ item }}.j2

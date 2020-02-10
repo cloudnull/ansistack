@@ -98,3 +98,5 @@ tripleo_undercloud_config:
     inspection_iprange: "192.168.{{ tripleo_magic_number }}.1,192.168.{{ tripleo_magic_number }}.254"
 
 tripleo_undercloud_config_overrides: {}
+tripleo_capabilities: undefined
+tripleo_deploy_type: undefined

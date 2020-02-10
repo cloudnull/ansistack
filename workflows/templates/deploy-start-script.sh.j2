@@ -22,7 +22,7 @@ tmux select-window -t 0
 {%   set _ = cmd.append(ansible_env.HOME ~ '/deploy-overcloud-script.sh') %}
 {% endif %}
 {% if (cmd | length) > 0 %}
-tmux send-keys "{{ cmd | join(' && ') }}" C-m
+tmux send-keys "{{ cmd | join(' && sleep 5 && ') }}" C-m
 
 echo -e "Stack creation has been initiated."
 {% endif %}
