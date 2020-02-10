@@ -202,4 +202,4 @@ class FilterModule(object):
         return orig
 
     def if_any(self, items):
-        return any([boolean(i) for i in items])
+        return any([boolean(i) for i in items if i])

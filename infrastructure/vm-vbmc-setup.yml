@@ -33,11 +33,11 @@
         - hostvars[inventory_hostname][item.name] is undefined
       with_items:
         - name: vm_vbmc_username
-          condition: "{{ inventory_hostname in groups['bootable_vms'] }}"
+          condition: "{{ inventory_hostname in groups['bootable_vms'] | default([]) }}"
         - name: vm_vbmc_password
-          condition: "{{ inventory_hostname in groups['bootable_vms'] }}"
+          condition: "{{ inventory_hostname in groups['bootable_vms'] | default([]) }}"
         - name: vm_vbmc_port
-          condition: "{{ inventory_hostname in groups['bootable_vms'] }}"
+          condition: "{{ inventory_hostname in groups['bootable_vms'] | default([]) }}"
       delegate_to: localhost
       connection: local
   tasks:

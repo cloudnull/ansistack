@@ -146,7 +146,7 @@
         LIBGUESTFS_BACKEND: direct
       register: disk_image
       until: disk_image.rc == 0
-      retries: 5
+      retries: 3
       delay: "{{ 16 | random }}"
 
     - name: Resize virt image
@@ -158,7 +158,7 @@
         /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2
       register: resize_img
       until: resize_img is success
-      retries: 5
+      retries: 3
       delay: "{{ 16 | random }}"
       environment:
         LIBGUESTFS_BACKEND: direct
@@ -167,6 +167,11 @@
         - vm_image_data[vm_image_name] is defined
         - vm_bootable_iso is undefined
   rescue:
+    - name: Cleanup disk image
+      file:
+        path: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
+        state: absent
+
     - name: Create disk image (fallback)
       command: >-
         qemu-img create
@@ -180,7 +185,7 @@
         LIBGUESTFS_BACKEND: direct
       register: disk_image
       until: disk_image.rc == 0
-      retries: 5
+      retries: 3
       delay: "{{ 16 | random }}"
 
     - name: Resize virt image (fallback)
@@ -192,7 +197,7 @@
         /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2
       register: resize_img
       until: resize_img is success
-      retries: 5
+      retries: 3
       delay: "{{ 16 | random }}"
       environment:
         LIBGUESTFS_BACKEND: direct

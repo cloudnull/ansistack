@@ -58,7 +58,7 @@
         content: |-
           {% set nodes_list = [] %}
           {% for node in ansible_play_batch %}
-          {%   if node in groups['bootable_vms'] %}
+          {%   if node in groups['bootable_vms'] | default([]) %}
           {%     set node_info = {} %}
           {%     if (hostvars[node]['vm_macs'] | length) > 0%}
           {%       set _ = node_info.__setitem__('mac', hostvars[node]['vm_macs']) %}
