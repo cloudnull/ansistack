@@ -60,7 +60,9 @@
           {% for node in ansible_play_batch %}
           {%   if node in groups['bootable_vms'] %}
           {%     set node_info = {} %}
-          {%     set _ = node_info.__setitem__('mac', hostvars[node]['vm_macs']) %}
+          {%     if (hostvars[node]['vm_macs'] | length) > 0%}
+          {%       set _ = node_info.__setitem__('mac', hostvars[node]['vm_macs']) %}
+          {%     endif %}
           {%     if 'name' in hostvars[node] %}
           {%       set node_name = hostvars[node]['name'] %}
           {%     else %}
@@ -78,7 +80,7 @@
           {%     set _ = node_info.__setitem__('pm_port', hostvars[node]['vm_vbmc_port']) %}
           {%     if 'tripleo_capabilities' in hostvars[node] %}
           {%       set tripleo_capabilities = hostvars[node]['tripleo_capabilities'] ~ ',node:' ~ node_name %}
-          {%       set _ = node_info.__setitem__('tripleo_capabilities', tripleo_capabilities) %}
+          {%       set _ = node_info.__setitem__('capabilities', tripleo_capabilities) %}
           {%     endif %}
           {%     set _ = node_info.__setitem__('_comment', 'original target hostname [ ' ~ hostvars[node]['inventory_hostname'] ~ ' ]. This is a KVM VM controlled with VBMC.') %}
           {%     set _ = nodes_list.append(node_info) %}

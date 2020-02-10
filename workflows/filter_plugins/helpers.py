@@ -21,7 +21,7 @@ import collections
 from collections import OrderedDict
 from operator import itemgetter
 
-
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.filter import ipaddr
 
 
@@ -33,7 +33,8 @@ class FilterModule(object):
         return {
             'preprov_hosts': self.preprov_hosts,
             'preprov_host_entry': self.preprov_host_entry,
-            'non_ha': self.non_ha
+            'non_ha': self.non_ha,
+            'if_any': self.if_any
         }
 
     def preprov_host_entry(self, data, anchor='ctlplane'):
@@ -199,3 +200,6 @@ class FilterModule(object):
                     index[tripleo_deploy_type_name] += 1
 
         return orig
+
+    def if_any(self, items):
+        return any([boolean(i) for i in items])

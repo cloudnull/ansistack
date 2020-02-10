@@ -34,7 +34,7 @@ all:
                     vm_ram: 4096  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
                     tripleo_deploy_type: novacompute
-                    overcloud_target: true
+                    tripleo_overcloud_target: false
                   hosts:
                     compute2-vm-controller-1:
                       vm_image_name: centos7
@@ -100,7 +100,7 @@ all:
                     vm_cores: 8  # Number of cores
                     vm_ram: 16384  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
-                    undercloud_target: false
+                    tripleo_undercloud_target: false
                   hosts:
                     compute1-vm-1:
                       vm_image_name: centos8
@@ -131,7 +131,7 @@ all:
                         dhcp: false
                         interface: eth2
                         manager: nmcli
-                    undercloud_target: true
+                    tripleo_undercloud_target: true
                   hosts:
                     compute1-rhel-vm-1:
                       vm_image_name: rhel8
@@ -146,7 +146,7 @@ all:
                     vm_cores: 6  # Number of cores
                     vm_ram: 16384  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
-                    undercloud_target: true
+                    tripleo_undercloud_target: true
                   hosts:
                     compute4-vm-1:
                       vm_image_name: centos7
@@ -158,49 +158,50 @@ all:
                     #   vm_ram: 16384  # Size in MiB
                     #   vm_additional_isos:
                     #     - virtio-win-0.1.171.iso
-        # bootable_vms:
-        #   vars:
-        #     vm_networks:
-        #       provisioning:
-        #         dhcp: true
-        #         interface: eth0
-        #         manager: nmcli
-        #       external:
-        #         dhcp: false
-        #         interface: eth1
-        #         manager: nmcli
-        #   children:
-        #     bootable_compute_hosts:
-        #       children:
-        #         bootable_compute2:
-        #           vars:
-        #             vm_virt_host: "compute2"
-        #             vm_cores: 8
-        #             vm_ram: 8192
-        #             vm_disk_size: 96
-        #             tripleo_capabilities: boot_option:local,profile:compute
-        #           hosts:
-        #             osp-compute2-vm-controller-1:
-        #               vm_vbmc_port: 16020
-        #               tripleo_capabilities: boot_option:local,profile:controller
-        #             osp-compute2-vm-controller-2:
-        #               vm_vbmc_port: 16021
-        #               tripleo_capabilities: boot_option:local,profile:controller
-        #             osp-compute2-vm-controller-3:
-        #               vm_vbmc_port: 16022
-        #               tripleo_capabilities: boot_option:local,profile:controller
-        #             osp-compute2-vm-compute-0:
-        #               vm_cores: 2
-        #               vm_ram: 4096
-        #               vm_vbmc_port: 16023
-        #               vm_disk_size: 32
-        #             osp-compute2-vm-compute-1:
-        #               vm_cores: 2
-        #               vm_ram: 4096
-        #               vm_vbmc_port: 16024
-        #               vm_disk_size: 32
-        #             osp-compute2-vm-compute-2:
-        #               vm_cores: 2
-        #               vm_ram: 4096
-        #               vm_vbmc_port: 16025
-        #               vm_disk_size: 32
+        bootable_vms:
+          vars:
+            vm_networks:
+              provisioning:
+                dhcp: true
+                interface: eth0
+                manager: nmcli
+              external:
+                dhcp: false
+                interface: eth1
+                manager: nmcli
+          children:
+            bootable_compute_hosts:
+              children:
+                bootable_compute2:
+                  vars:
+                    vm_virt_host: "compute2"
+                    vm_cores: 8
+                    vm_ram: 8192
+                    vm_disk_size: 96
+                    tripleo_capabilities: boot_option:local,profile:compute
+                    tripleo_overcloud_target: false
+                  hosts:
+                    osp-compute2-vm-controller-1:
+                      vm_vbmc_port: 16020
+                      tripleo_capabilities: boot_option:local,profile:controller
+                    osp-compute2-vm-controller-2:
+                      vm_vbmc_port: 16021
+                      tripleo_capabilities: boot_option:local,profile:controller
+                    osp-compute2-vm-controller-3:
+                      vm_vbmc_port: 16022
+                      tripleo_capabilities: boot_option:local,profile:controller
+                    osp-compute2-vm-compute-0:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16023
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-1:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16024
+                      vm_disk_size: 32
+                    osp-compute2-vm-compute-2:
+                      vm_cores: 2
+                      vm_ram: 4096
+                      vm_vbmc_port: 16025
+                      vm_disk_size: 32

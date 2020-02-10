@@ -22,6 +22,11 @@ developer_rebuild_rpms: false
 # System packages to be installed in a development environment
 developer_system_packages: []
 
+# Name from distribution hash
+tripleo_name_hash:
+  redhat: rhel
+  centos: centos
+
 # Name of the cuurent development release
 tripleo_version_dev_enabled: true
 tripleo_version: stein
@@ -59,7 +64,7 @@ tripleo_nova_virt_type: kvm
 # Deployment type/enablement
 tripleo_deploy: true
 tripleo_deploy_run: true
-tripleo_deploy_pre_provisioned: true
+tripleo_deploy_pre_provisioned: "{{ not (groups['bootable_vms'] | map('extract', hostvars, 'tripleo_overcloud_target') | list) | if_any }}"
 
 # Enable low memory mode
 tripleo_low_memory: false

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+set -evo
 source /opt/rdo/bin/activate
 
 export TRIPLEO_ROOT=/opt/tripleo
@@ -20,6 +21,7 @@ pushd /opt/tripleo
 {% endfor %}
 popd
 
+set +evo
 RPMS=$(find /opt/tripleo/rpms/ -name '*.rpm' ! -name '*src.rpm')
 if [[ ! -z "${RPMS}" ]]; then
     echo -e "Installing RPMS: ${RPMS}"

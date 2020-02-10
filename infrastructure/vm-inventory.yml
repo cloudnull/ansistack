@@ -156,10 +156,10 @@
               {%       set _ = entry.__setitem__('vm_console_uri', hostvars[node]['vm_console_address']) %}
               {%     endif %}
               {%     set _ = inventory['vms']['hosts'].__setitem__(node, entry) %}
-              {%     if hostvars[node]['undercloud_target'] | default(false) | bool %}
+              {%     if hostvars[node]['tripleo_undercloud_target'] | default(false) | bool %}
               {%       set _ = inventory['vms']['children']['undercloud']['hosts'].__setitem__(node, {}) %}
               {%     endif %}
-              {%     if hostvars[node]['overcloud_target'] | default(false) | bool %}
+              {%     if hostvars[node]['tripleo_overcloud_target'] | default(false) | bool %}
               {%       set _ = inventory['vms']['children']['overcloud']['hosts'].__setitem__(node, {}) %}
               {%     endif %}
               {%   endif %}
