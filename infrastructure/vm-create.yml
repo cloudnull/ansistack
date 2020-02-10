@@ -143,7 +143,17 @@
       become: true
       when:
         - (vm_dominfo.rc != 0)
+        - ansible_local['virt_cloud'][inventory_hostname] is undefined or
+          ansible_local['virt_cloud'][inventory_hostname]['created'] is undefined or
+          not (ansible_local['virt_cloud'][inventory_hostname]['created'] | bool)
       block:
+        - name: Set vm created local fact
+          ini_file:
+            dest: "/etc/ansible/facts.d/virt_cloud.fact"
+            section: "{{ inventory_hostname }}"
+            option: "created"
+            value: "false"
+
         - name: Create vm directory
           file:
             path: "/var/lib/libvirt/images/{{ inventory_hostname }}"

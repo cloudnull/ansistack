@@ -36,71 +36,67 @@ all:
                     tripleo_deploy_type: novacompute
                     tripleo_overcloud_target: false
                   hosts:
-                    compute2-vm-controller-1:
+                    compute2-vm-compute-0:
                       vm_image_name: centos7
-                      tripleo_deploy_type: controller
-                      vm_cores: 6  # Number of cores
-                      vm_ram: 16384  # Size in MiB
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.101/22"
+                          - "192.168.4.201/22"
                     compute2-vm-compute-1:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.102/22"
+                          - "192.168.4.202/22"
                     compute2-vm-compute-2:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.103/22"
+                          - "192.168.4.203/22"
                     compute2-vm-compute-3:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.104/22"
+                          - "192.168.4.204/22"
                     compute2-vm-compute-4:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.105/22"
+                          - "192.168.4.205/22"
                     compute2-vm-compute-5:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.106/22"
+                          - "192.168.4.206/22"
                     compute2-vm-compute-6:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.107/22"
+                          - "192.168.4.207/22"
                     compute2-vm-compute-7:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.108/22"
+                          - "192.168.4.208/22"
                     compute2-vm-compute-8:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.109/22"
+                          - "192.168.4.209/22"
                     compute2-vm-compute-9:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.110/22"
+                          - "192.168.4.210/22"
                     compute2-vm-compute-10:
                       vm_image_name: centos7
                       vm_preprov_networks:
                         eth1:
-                          - "192.168.4.111/22"
+                          - "192.168.4.211/22"
                 provisioned_compute1:
                   vars:
                     vm_virt_host: "compute1"
-                    vm_cores: 8  # Number of cores
+                    vm_cores: 6  # Number of cores
                     vm_ram: 16384  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
-                    tripleo_undercloud_target: false
                   hosts:
                     compute1-vm-1:
                       vm_image_name: centos8
@@ -108,6 +104,27 @@ all:
                       vm_image_name: centos7
                     compute1-vm-3:
                       vm_image_name: centos7
+                    compute1-vm-controller-1:
+                      tripleo_undercloud_target: true
+                      vm_image_name: centos7
+                      tripleo_deploy_type: controller
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.101/22"
+                    compute1-vm-controller-2:
+                      tripleo_undercloud_target: false
+                      vm_image_name: centos7
+                      tripleo_deploy_type: controller
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.102/22"
+                    compute1-vm-controller-3:
+                      tripleo_undercloud_target: false
+                      vm_image_name: centos7
+                      tripleo_deploy_type: controller
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.103/22"
                 provisioned_rhel_compute1:
                   vars:
                     vm_virt_host: "compute1"
@@ -135,11 +152,9 @@ all:
                   hosts:
                     compute1-rhel-vm-1:
                       vm_image_name: rhel8
-                      compute1-vm-3:
-                        vm_image_name: centos7
-                        vm_preprov_networks:
-                          eth1:
-                            - "192.168.4.107/22"
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.190/22"
                 provisioned_compute4:
                   vars:
                     vm_virt_host: "compute4"
@@ -150,7 +165,11 @@ all:
                   hosts:
                     compute4-vm-1:
                       vm_image_name: centos7
-                    # compute4-vm-3-gfx:
+                    compute4-vm-2:
+                      vm_image_name: centos7
+                    compute4-vm-3:
+                      vm_image_name: centos7
+                    # compute4-vm-1-gfx:
                     #   vm_passthrough_lookup_regex: '.*Ellesmere.*'
                     #   vm_bootable_iso: Win10_1909_English_x64.iso
                     #   vm_variant: win10

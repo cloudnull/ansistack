@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 - name: Cloud-init block
-  become: true
   when:
     - inventory_hostname in groups['provisioned_vms']
     - vm_bootable_iso is undefined
@@ -133,41 +131,93 @@
   retries: 3
   delay: "{{ 8 | random }}"
 
-- name: Create disk image
-  become: true
-  command: >-
-    qemu-img create -f qcow2 -o preallocation=falloc /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2 {{ vm_disk_size }}G
-  args:
-    creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
-  environment:
-    LIBGUESTFS_BACKEND: direct
-  register: disk_image
-  until: disk_image.rc == 0
-  retries: 3
-  delay: "{{ 8 | random }}"
+- name: Create vm block
+  block:
+    - name: Create disk image
+      command: >-
+        qemu-img create
+        -f qcow2
+        -o preallocation=falloc
+        /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2
+        {{ vm_disk_size }}G
+      args:
+        creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
+      environment:
+        LIBGUESTFS_BACKEND: direct
+      register: disk_image
+      until: disk_image.rc == 0
+      retries: 5
+      delay: "{{ 16 | random }}"
 
-- name: Resize virt image
-  become: true
-  command: >-
-    virt-resize
-    --expand /dev/sda1
-    --align-first=auto
-    {{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['name'] }}
-    /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2
-  register: resize_img
-  until: resize_img is success
-  retries: 3
-  delay: "{{ 8 | random }}"
-  environment:
-    LIBGUESTFS_BACKEND: direct
-  when:
-    - vm_image_name is defined
-    - vm_image_data[vm_image_name] is defined
-    - vm_bootable_iso is undefined
+    - name: Resize virt image
+      command: >-
+        virt-resize
+        --expand /dev/sda1
+        --align-first=auto
+        {{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['name'] }}
+        /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2
+      register: resize_img
+      until: resize_img is success
+      retries: 5
+      delay: "{{ 16 | random }}"
+      environment:
+        LIBGUESTFS_BACKEND: direct
+      when:
+        - vm_image_name is defined
+        - vm_image_data[vm_image_name] is defined
+        - vm_bootable_iso is undefined
+  rescue:
+    - name: Create disk image (fallback)
+      command: >-
+        qemu-img create
+        -f qcow2
+        -o preallocation=falloc
+        /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2
+        {{ vm_disk_size }}G
+      args:
+        creates: "/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2"
+      environment:
+        LIBGUESTFS_BACKEND: direct
+      register: disk_image
+      until: disk_image.rc == 0
+      retries: 5
+      delay: "{{ 16 | random }}"
+
+    - name: Resize virt image (fallback)
+      command: >-
+        virt-resize
+        --expand /dev/sda1
+        --align-first=auto
+        {{ vm_image_data[vm_image_name]['path'] }}/{{ vm_image_data[vm_image_name]['name'] }}
+        /var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2
+      register: resize_img
+      until: resize_img is success
+      retries: 5
+      delay: "{{ 16 | random }}"
+      environment:
+        LIBGUESTFS_BACKEND: direct
+      when:
+        - vm_image_name is defined
+        - vm_image_data[vm_image_name] is defined
+        - vm_bootable_iso is undefined
 
 - name: Define the VM
-  become: true
   virt:
     command: define
     xml: >-
       {{ vm_xml.stdout | replace('driver name="vhost" queues="3"', 'driver name="vhost" queues="3" txmode="iothread" ioeventfd="on" event_idx="off"') }}
+
+- name: Ensure local facts directory exists
+  file:
+    dest: "/etc/ansible/facts.d"
+    state: directory
+    group: "root"
+    owner: "root"
+    mode:  "0755"
+
+- name: Set vm created local fact
+  ini_file:
+    dest: "/etc/ansible/facts.d/virt_cloud.fact"
+    section: "{{ inventory_hostname }}"
+    option: "created"
+    value: "true"

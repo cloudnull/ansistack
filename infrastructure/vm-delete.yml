@@ -81,3 +81,13 @@
         state: absent
       delegate_to: "{{ vm_virt_host }}"
       become: true
+
+    - name: Set vm deleted local fact
+      ini_file:
+        dest: "/etc/ansible/facts.d/virt_cloud.fact"
+        section: "{{ inventory_hostname }}"
+        option: "created"
+        value: "true"
+        state: "absent"
+      delegate_to: "{{ vm_virt_host }}"
+      become: true
