@@ -29,30 +29,34 @@ source /opt/tripleo-patches/bin/activate
 source ~/stackrc
 {%   if (ansible_distribution | lower) == 'redhat' %}
 openstack subnet set ctlplane-subnet --dns-nameserver {{ redhat_dns_servers[0] }} || true
-{# openstack tripleo container image prepare -e local_images.yaml --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml #}
+{#
+    NOTE(cloudnull): Remove image prepare, this is not required, though
+                     it would be nice to expose this if enabled.
+    openstack tripleo container image prepare -e local_images.yaml --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml
+    {%     set _ = environments.append(ansible_env.HOME ~ '/containers-prepare-parameters.yaml') %}
+#}
 {%   else %}
 openstack subnet set ctlplane-subnet --dns-nameserver {{ tripleo_dns_servers[0] }} || true
-{# openstack tripleo container image prepare default --local-push-destination --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml #}
-{# {%     set _ = environments.append(ansible_env.HOME ~ '/containers-prepare-parameters.yaml') %} #}
+{#
+    NOTE(cloudnull): Removed local push, while it may be useful, I'm not sure it is needed.
+                     The generated template file has also been removed.
+    openstack tripleo container image prepare default --local-push-destination --output-env-file {{ ansible_env.HOME }}/containers-prepare-parameters.yaml
+    {%     set _ = environments.append(ansible_env.HOME ~ '/containers-prepare-parameters.yaml') %}
+#}
 {%   endif %}
-{#   pre-provisioned nodes #}
-{%   if (tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool) %}
 pushd $THT
   $THT/tools/process-templates.py --roles-data $THT/roles_data.yaml -o /tmp/templates/
 popd
-{%     set distro_map = {'redhat': 'rhel', 'centos': 'centos'} %}
+{#   pre-provisioned nodes #}
+{%   if (tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool) %}
 {#
     NOTE(cloudnull): removed deployed-server-bootstap-*, in a future release we should be able to
                      support this if its found in an given deployment environment.
-#}
-{#
-    {%     set _ = environments.append('/tmp/templates/environments/deployed-server-bootstrap-environment-' ~ distro_map[(ansible_distribution | lower)] ~ '.yaml') %}
+    {%     set _ = environments.append('/tmp/templates/environments/deployed-server-bootstrap-environment-' ~ tripleo_name_hash[(ansible_distribution | lower)] ~ '.yaml') %}
 #}
 {%     set _ = environments.append('/tmp/templates/environments/deployed-server-environment.yaml') %}
 {#
     NOTE(cloudnull): Include the network-isolation template when we work out the bugs
-#}
-{#
     {%     set _ = environments.append('/tmp/templates/environments/network-isolation.yaml') %}
 #}
 {%     set _ = environments_user.append(ansible_env.HOME ~ '/pre-provisioned-parameters.yaml') %}
@@ -76,7 +80,7 @@ pushd ~/images
   openstack overcloud image upload --update-existing
 popd
 openstack overcloud node import vm-instackenv.yaml
-openstack overcloud node introspect --all-managea
+openstack overcloud node introspect --all-manageable \
                                     --provide \
                                     --concurrency {{ (ansible_processor_vcpus | int) * 2  }} \
                                     || openstack overcloud node introspect --all-manageable \

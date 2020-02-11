@@ -34,10 +34,11 @@
   pre_tasks:
     - name: Get VM mac addresses
       shell: >-
-        virsh dumpxml {{ inventory_hostname }} | awk -F"'" '/mac address/ {print $2}'
+        virsh dumpxml --domain "{{ inventory_hostname }}" | awk -F"'" '/mac address/ {print $2}'
       delegate_to: "{{ vm_virt_host }}"
       changed_when: false
       register: vm_mac_addresses
+      become: true
 
     - name: Set mac address fact
       set_fact:

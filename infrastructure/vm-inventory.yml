@@ -104,6 +104,12 @@
       run_once: true
 
   tasks:
+    - name: Set empty limit vm group
+      set_fact:
+        vm_limit_group: []
+      when:
+        - vm_limit_group is undefined
+
     - name: Show limit group
       debug:
         msg: "{{ vm_limit_group }}"

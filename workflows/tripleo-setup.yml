@@ -255,8 +255,8 @@
             state: directory
 
         - name: Create network interface template
-          copy:
-            src: templates/vm_interface_template.yaml
+          template:
+            src: "templates/vm_interface_template.yaml.j2"
             dest: "/tmp/templates/vm_interface_template.yaml"
           when:
             - tripleo_deploy | bool

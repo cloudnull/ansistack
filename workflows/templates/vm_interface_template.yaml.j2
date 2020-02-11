@@ -231,7 +231,7 @@ resources:
                     get_param: ControlPlaneDefaultRoute
                 members:
                 - type: interface
-                  name: nic2
+                  name: {{ (tripleo_deploy_pre_provisioned | bool) | ternary('nic2', 'nic1') }}
                   # force the MAC address of the bridge to this interface
                   primary: true
 outputs:
