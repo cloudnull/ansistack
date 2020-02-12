@@ -22,6 +22,6 @@ rsync -avz \
 ssh -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null \
     {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }} \
-    "openstack undercloud minion install"
+    "openstack undercloud minion install --yes"
 {%   endfor %}
 {% endif %}
