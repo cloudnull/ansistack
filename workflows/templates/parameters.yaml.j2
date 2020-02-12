@@ -47,7 +47,7 @@
 {%   endif %}
 {%   if (ansible_distribution | lower) == 'redhat' %}
 {%     set registries = redhat_docker_registries %}
-{%     set _ = registries.append('192.168.' ~ tripleo_magic_number ~ '.1:8787') %}
+{%     set _ = registries.append((vm_management_net | ipaddr('ip')) ~ ':8787') %}
 {%     set _ = pd['parameter_defaults'].__setitem__('DockerInsecureRegistryAddress', registries) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('DnsServers', redhat_dns_servers) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('NtpServer', redhat_ntp_servers) %}
@@ -66,7 +66,7 @@
 {%   if tripleo_default_route is defined %}
 {%     set _ = pd['parameter_defaults'].__setitem__('ControlPlaneDefaultRoute', tripleo_default_route) %}
 {%   endif %}
-{%   set _ = pd['parameter_defaults'].__setitem__('DockerInsecureRegistryAddress', ['192.168.' ~ tripleo_magic_number ~ '.1:8787']) %}
+{%   set _ = pd['parameter_defaults'].__setitem__('DockerInsecureRegistryAddress', [(vm_management_net | ipaddr('ip')) ~ ':8787']) %}
 {%   endif %}
 {% else %}
 {# Standalone parameter options #}

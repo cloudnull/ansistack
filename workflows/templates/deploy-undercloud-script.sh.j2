@@ -17,7 +17,7 @@ openstack undercloud install
 {%   for item in groups['minion'] %}
 rsync -avz \
       --rsh="/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-      {{ ansible_env.HOME }}/tripleo-undercloud-outputs.yaml {{ ansible_env.HOME }}/tripleo-undercloud-passwords.yaml
+      {{ ansible_env.HOME }}/tripleo-undercloud-outputs.yaml {{ ansible_env.HOME }}/tripleo-undercloud-passwords.yaml \
       {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }}:{{ ansible_env.HOME }}/
 ssh -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null \

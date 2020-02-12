@@ -101,8 +101,10 @@ tripleo_undercloud_config_overrides: {}
 
 tripleo_minion_config:
   DEFAULT:
-    local_interface: eth1
-    local_ip: "{{ vm_management_net | ipaddr('ip') }}"
+    minion_local_interface: eth1
+    minion_local_ip: "{{ vm_management_net }}"
+    minion_nameservers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_dns_servers, tripleo_dns_servers) | join(',') }}"
+    minion_ntp_servers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_ntp_servers, tripleo_ntp_servers) | join(',') }}"
 
 tripleo_minion_config_overrides: {}
 
