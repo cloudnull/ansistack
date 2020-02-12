@@ -100,21 +100,18 @@ all:
                     vm_disk_size: 72  # Size in GiB
                   hosts:
                     compute1-vm-controller-1:
-                      tripleo_undercloud_target: true
                       vm_image_name: centos7
                       tripleo_deploy_type: controller
                       vm_preprov_networks:
                         eth1:
                           - "192.168.4.101/22"
                     compute1-vm-controller-2:
-                      tripleo_undercloud_target: false
                       vm_image_name: centos7
                       tripleo_deploy_type: controller
                       vm_preprov_networks:
                         eth1:
                           - "192.168.4.102/22"
                     compute1-vm-controller-3:
-                      tripleo_undercloud_target: false
                       vm_image_name: centos7
                       tripleo_deploy_type: controller
                       vm_preprov_networks:
@@ -143,7 +140,6 @@ all:
                         dhcp: false
                         interface: eth2
                         manager: nmcli
-                    tripleo_undercloud_target: true
                   hosts:
                     compute1-rhel-vm-1:
                       vm_image_name: rhel8
@@ -156,7 +152,6 @@ all:
                     vm_cores: 6  # Number of cores
                     vm_ram: 16384  # Size in MiB
                     vm_disk_size: 72  # Size in GiB
-                    tripleo_undercloud_target: true
                   hosts:
                     compute4-vm-1:
                       vm_image_name: centos7
@@ -188,13 +183,13 @@ all:
                   hosts:
                     osp-compute2-vm-controller-1:
                       vm_vbmc_port: 16020
-                      tripleo_capabilities: boot_option:local,profile:controller
+                      tripleo_capabilities: boot_option:local,profile:control
                     osp-compute2-vm-controller-2:
                       vm_vbmc_port: 16021
-                      tripleo_capabilities: boot_option:local,profile:controller
+                      tripleo_capabilities: boot_option:local,profile:control
                     osp-compute2-vm-controller-3:
                       vm_vbmc_port: 16022
-                      tripleo_capabilities: boot_option:local,profile:controller
+                      tripleo_capabilities: boot_option:local,profile:control
                     osp-compute2-vm-compute-0:
                       vm_cores: 2
                       vm_ram: 4096

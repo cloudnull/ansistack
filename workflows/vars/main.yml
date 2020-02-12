@@ -77,7 +77,7 @@ tripleo_undercloud_config:
     deployment_user: "{{ ansible_user }}"
     undercloud_debug: true
     local_interface: eth1
-    local_ip: "192.168.{{ tripleo_magic_number }}.1/22"
+    local_ip: "{{ vm_management_net }}"
     local_mtu: 1500
     generate_service_certificate: false
     container_images_file: "{{ ansible_env.HOME }}/local_images.yaml"
@@ -90,13 +90,21 @@ tripleo_undercloud_config:
     mtu: 1500
     undercloud_enable_paunch: False
   ctlplane-subnet:
-    gateway: "192.168.{{ tripleo_magic_number }}.1"
+    gateway: "{{ vm_management_net | ipaddr('ip') }}"
     cidr: "192.168.{{ tripleo_magic_number }}.0/22"
     masquerade: true
-    dhcp_start: "192.168.{{ tripleo_magic_number }}.1"
+    dhcp_start: "192.168.{{ tripleo_magic_number }}.225"
     dhcp_end: "192.168.{{ tripleo_magic_number }}.254"
-    inspection_iprange: "192.168.{{ tripleo_magic_number }}.1,192.168.{{ tripleo_magic_number }}.254"
+    inspection_iprange: "192.168.{{ tripleo_magic_number }}.225,192.168.{{ tripleo_magic_number }}.254"
 
 tripleo_undercloud_config_overrides: {}
+
+tripleo_minion_config:
+  DEFAULT:
+    local_interface: eth1
+    local_ip: "{{ vm_management_net | ipaddr('ip') }}"
+
+tripleo_minion_config_overrides: {}
+
 tripleo_capabilities: undefined
 tripleo_deploy_type: undefined

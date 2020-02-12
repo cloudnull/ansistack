@@ -17,7 +17,7 @@
 
 
 - name: Run tripleo setup
-  hosts: "all"
+  hosts: "undercloud:minion"
   any_errors_fatal: true
   gather_facts: true
   vars_files:
@@ -266,33 +266,65 @@
         tripleo_deploy: "{{ tripleo_deploy }}"
       run_once: true
 
-    - name: Create undercloud config
-      copy:
-        src: /usr/share/python-tripleoclient/undercloud.conf.sample
-        dest: "{{ ansible_env.HOME }}/undercloud.conf"
-        remote_src: true
-
-    - name: Update the undercloud config
-      ini_file:
-        path: "{{ ansible_env.HOME }}/undercloud.conf"
-        section: "{{ item.section }}"
-        option: "{{ item.option }}"
-        value: "{{ item.value }}"
-        backup: false
-      loop: |-
-        {% set items = [] %}
-        {% for k, v in (tripleo_undercloud_config | combine(tripleo_undercloud_config_overrides, recursive=True)).items() %}
-        {%   for _k, _v in v.items() %}
-        {%     set value = {} %}
-        {%     set _ = value.__setitem__('section', k) %}
-        {%     set _ = value.__setitem__('option', _k) %}
-        {%     set _ = value.__setitem__('value', _v) %}
-        {%     set _ = items.append(value) %}
-        {%   endfor %}
-        {% endfor %}
-        {{ items }}
+    - name: Undercloud config block
       when:
-        - tripleo_deploy | bool
+        - inventory_hostname in groups['undercloud']
+      block:
+        - name: Create undercloud config
+          copy:
+            src: /usr/share/python-tripleoclient/undercloud.conf.sample
+            dest: "{{ ansible_env.HOME }}/undercloud.conf"
+            remote_src: true
+
+        - name: Update the undercloud config
+          ini_file:
+            path: "{{ ansible_env.HOME }}/undercloud.conf"
+            section: "{{ item.section }}"
+            option: "{{ item.option }}"
+            value: "{{ item.value }}"
+            backup: false
+          loop: |-
+            {% set items = [] %}
+            {% for k, v in (tripleo_undercloud_config | combine(tripleo_undercloud_config_overrides, recursive=True)).items() %}
+            {%   for _k, _v in v.items() %}
+            {%     set value = {} %}
+            {%     set _ = value.__setitem__('section', k) %}
+            {%     set _ = value.__setitem__('option', _k) %}
+            {%     set _ = value.__setitem__('value', _v) %}
+            {%     set _ = items.append(value) %}
+            {%   endfor %}
+            {% endfor %}
+            {{ items }}
+
+    - name: Minion config block
+      when:
+        - inventory_hostname in groups['minion']
+      block:
+        - name: Create minion config
+          copy:
+            src: /usr/share/python-tripleoclient/minion.conf.sample
+            dest: "{{ ansible_env.HOME }}/minion.conf"
+            remote_src: true
+
+        - name: Update the minion config
+          ini_file:
+            path: "{{ ansible_env.HOME }}/minion.conf"
+            section: "{{ item.section }}"
+            option: "{{ item.option }}"
+            value: "{{ item.value }}"
+            backup: false
+          loop: |-
+            {% set items = [] %}
+            {% for k, v in (tripleo_minion_config | combine(tripleo_minion_config_overrides, recursive=True)).items() %}
+            {%   for _k, _v in v.items() %}
+            {%     set value = {} %}
+            {%     set _ = value.__setitem__('section', k) %}
+            {%     set _ = value.__setitem__('option', _k) %}
+            {%     set _ = value.__setitem__('value', _v) %}
+            {%     set _ = items.append(value) %}
+            {%   endfor %}
+            {% endfor %}
+            {{ items }}
 
     - name: System block
       become: true

@@ -141,7 +141,7 @@ class FilterModule(object):
         return data
 
     def preprov_hosts(self, inv, rendered_template_path=None,
-                      anchor='ctlplane'):
+                      anchor='ctlplane', stackname='overcloud'):
         # These resources are assumed to be generated and stored in the
         # /tmp/templates directory.
         if rendered_template_path:
@@ -160,7 +160,10 @@ class FilterModule(object):
         for k, v in vms['hosts'].items():
             if 'tripleo_deploy_type' in v:
                 if v['tripleo_deploy_type'] != 'undefined':
-                    tripleo_deploy_type_name = 'overcloud-%s' % v['tripleo_deploy_type']
+                    tripleo_deploy_type_name = '{}-{}'.format(
+                        stackname,
+                        v['tripleo_deploy_type']
+                    )
                     port_map = orig['parameter_defaults']['DeployedServerPortMap']
                     network_address = v.get('vm_management_net', v['ansible_host'])
                     port_map[k + '-' + anchor] = {
@@ -196,7 +199,11 @@ class FilterModule(object):
                         }
                     }
                     host_map = orig['parameter_defaults']['HostnameMap']
-                    host_map['%s-%s' % (tripleo_deploy_type_name, index[tripleo_deploy_type_name])] = k
+                    host_entry = '{}-{}'.format(
+                        tripleo_deploy_type_name,
+                        index[tripleo_deploy_type_name]
+                    )
+                    host_map[host_entry] = k
                     index[tripleo_deploy_type_name] += 1
 
         return orig

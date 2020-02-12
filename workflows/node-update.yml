@@ -17,7 +17,7 @@
 
 
 - name: Run virtual machine updates
-  hosts: "all"
+  hosts: "{{ deployment_targets | default('all') }}"
   any_errors_fatal: true
   gather_facts: true
   become: true

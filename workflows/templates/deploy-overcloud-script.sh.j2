@@ -94,6 +94,7 @@ openstack overcloud node introspect --all-manageable \
 {%   set sorted_base_env_files = (environments | sort | list) %}
 {%   set _ = sorted_base_env_files.extend(environments_user) %}
 openstack --os-cloud undercloud overcloud deploy \
+          --stack {{ tripleo_stack_name | default('overcloud') }} \
           --templates $THT/ \
           -r {{ roles | join(' -r ') }} \
           -e {{ sorted_base_env_files | join(' -e ') }} \

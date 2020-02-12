@@ -24,36 +24,36 @@
     - vars/main.yml
 
   tasks:
+    - name: Slurp key from undercloud
+      slurp:
+        src: "{{ ansible_env.HOME }}/.ssh/id_rsa.pub"
+      register: pub_key_content
+
+    - name: Add key to overcloud
+      authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ pub_key_content['content'] | b64decode }}"
+      run_once: true
+      delegate_to: "{{ item }}"
+      with_items: "{{ groups['overcloud'] | union(groups['minion']) }}"
+
+    - name: Synchronize repos
+      command: >-
+        rsync -avz
+        --rsync-path="sudo rsync"
+        --rsh="/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+        /etc/yum.repos.d/
+        {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }}:/etc/yum.repos.d/
+      run_once: true
+      with_items: "{{ groups['overcloud'] | union(groups['minion']) }}"
+      when:
+        - (ansible_distribution | lower) != 'redhat'
+
     - name: Pre-provisioned node setup
       when:
         - (tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool)
       block:
-        - name: Slurp key from undercloud
-          slurp:
-            src: "{{ ansible_env.HOME }}/.ssh/id_rsa.pub"
-          register: pub_key_content
-
-        - name: Add key to overcloud
-          authorized_key:
-            user: "{{ ansible_user }}"
-            state: present
-            key: "{{ pub_key_content['content'] | b64decode }}"
-          run_once: true
-          delegate_to: "{{ item }}"
-          with_items: "{{ groups['overcloud'] }}"
-
-        - name: Synchronize repos
-          command: >-
-            rsync -avz
-            --rsync-path="sudo rsync"
-            --rsh="/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-            /etc/yum.repos.d/
-            {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }}:/etc/yum.repos.d/
-          run_once: true
-          with_items: "{{ groups['overcloud'] }}"
-          when:
-            - (ansible_distribution | lower) != 'redhat'
-
         - name: Read pre-provisioned node yaml
           slurp:
             src: "{{ ansible_env.HOME }}/{{ vm_inventory_file | basename }}"
@@ -75,7 +75,7 @@
       delegate_to: "{{ item }}"
       when:
         - "'vm_preprov_networks' in hostvars[item]"
-      with_items: "{{ groups['overcloud'] | union(groups['undercloud']) }}"
+      with_items: "{{ groups['overcloud'] | union(groups['undercloud']) | union(groups['minion']) }}"
 
     - name: Create deploy script(s)
       template:

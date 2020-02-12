@@ -56,38 +56,12 @@
       delegate_to: localhost
       run_once: true
       copy:
-        content: |-
-          {% set nodes_list = [] %}
-          {% for node in ansible_play_batch %}
-          {%   if node in groups['bootable_vms'] | default([]) %}
-          {%     set node_info = {} %}
-          {%     if (hostvars[node]['vm_macs'] | length) > 0%}
-          {%       set _ = node_info.__setitem__('mac', hostvars[node]['vm_macs']) %}
-          {%     endif %}
-          {%     if 'name' in hostvars[node] %}
-          {%       set node_name = hostvars[node]['name'] %}
-          {%     else %}
-          {%       set node_name = hostvars[node]['inventory_hostname'] %}
-          {%     endif %}
-          {%     set _ = node_info.__setitem__('name', node_name) %}
-          {%     set _ = node_info.__setitem__('cpu', hostvars[node]['vm_cores']) %}
-          {%     set _ = node_info.__setitem__('memory', hostvars[node]['vm_ram']) %}
-          {%     set _ = node_info.__setitem__('disk', hostvars[node]['vm_disk_size']) %}
-          {%     set _ = node_info.__setitem__('arch', 'x86_64') %}
-          {%     set _ = node_info.__setitem__('pm_type', 'ipmi') %}
-          {%     set _ = node_info.__setitem__('pm_user', hostvars[node]['vm_vbmc_username']) %}
-          {%     set _ = node_info.__setitem__('pm_password', hostvars[node]['vm_vbmc_password']) %}
-          {%     set _ = node_info.__setitem__('pm_addr', hostvars[hostvars[node]['vm_virt_host']]['ansible_host']) %}
-          {%     set _ = node_info.__setitem__('pm_port', hostvars[node]['vm_vbmc_port']) %}
-          {%     if 'tripleo_capabilities' in hostvars[node] %}
-          {%       set tripleo_capabilities = hostvars[node]['tripleo_capabilities'] ~ ',node:' ~ node_name %}
-          {%       set _ = node_info.__setitem__('capabilities', tripleo_capabilities) %}
-          {%     endif %}
-          {%     set _ = node_info.__setitem__('_comment', 'original target hostname [ ' ~ hostvars[node]['inventory_hostname'] ~ ' ]. This is a KVM VM controlled with VBMC.') %}
-          {%     set _ = nodes_list.append(node_info) %}
-          {%   endif %}
-          {% endfor %}
-          {% set render_this = {'nodes': nodes_list} %}
-          {{ render_this | to_nice_yaml }}
+        content: "{{
+                      ansible_play_batch | bootable_hosts(
+                         hostvars=hostvars,
+                         groups=groups,
+                         stackname=(tripleo_stack_name | default('overcloud'))
+                      ) | to_nice_yaml
+                  }}"
         dest: "{{ instackenv_file }}"
       notify: Deployment notice

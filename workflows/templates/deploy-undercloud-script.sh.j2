@@ -13,3 +13,15 @@ source /opt/tripleo-patches/bin/activate
 {%   endif %}
 {% endif %}
 openstack undercloud install
+{% if (groups['minion'] | length) > 0 %}
+{%   for item in groups['minion'] %}
+rsync -avz \
+      --rsh="/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+      {{ ansible_env.HOME }}/tripleo-undercloud-outputs.yaml {{ ansible_env.HOME }}/tripleo-undercloud-passwords.yaml
+      {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }}:{{ ansible_env.HOME }}/
+ssh -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/dev/null \
+    {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }} \
+    "openstack undercloud minion install"
+{%   endfor %}
+{% endif %}
