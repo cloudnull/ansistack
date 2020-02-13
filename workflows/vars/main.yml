@@ -76,7 +76,7 @@ tripleo_undercloud_config:
     cleanup: False
     deployment_user: "{{ ansible_user }}"
     undercloud_debug: true
-    local_interface: eth1
+    local_interface: "{{ vm_management_interface }}"
     local_ip: "{{ vm_management_net }}"
     local_mtu: 1500
     generate_service_certificate: false
@@ -101,7 +101,7 @@ tripleo_undercloud_config_overrides: {}
 
 tripleo_minion_config:
   DEFAULT:
-    minion_local_interface: eth1
+    minion_local_interface: "{{ vm_management_interface }}"
     minion_local_ip: "{{ vm_management_net }}"
     minion_nameservers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_dns_servers, tripleo_dns_servers) | join(',') }}"
     minion_ntp_servers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_ntp_servers, tripleo_ntp_servers) | join(',') }}"

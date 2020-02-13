@@ -6,7 +6,8 @@ all:
       vars:
         vm_vbmc_username: admin
         vm_vbmc_password: secrete
-        vm_management_net: "{{ vm_preprov_networks['eth1'][0] }}"
+        vm_management_interface: eth1
+        vm_management_net: "{{ vm_preprov_networks[vm_management_interface][0] }}"
         vm_inventory_file: "{{ lookup('env','HOME') }}/vm--preprov-lab-inventory.yaml"
       children:
         provisioned_vms:

@@ -82,7 +82,7 @@
    )
 %}
 {%   set _ = pd['parameter_defaults'].__setitem__('NeutronGlobalPhysnetMtu', 1350) %}
-{%   set _ = pd['parameter_defaults'].__setitem__('NeutronPublicInterface', 'eth1') %}
+{%   set _ = pd['parameter_defaults'].__setitem__('NeutronPublicInterface', vm_management_interface) %}
 {%   set _ = pd['parameter_defaults'].__setitem__('NeutronDnsDomain', 'localdomain') %}
 {%   set _ = pd['parameter_defaults'].__setitem__('NeutronBridgeMappings', 'datacentre:br-ctlplane') %}
 {%   set _ = pd['parameter_defaults'].__setitem__('NeutronPhysicalBridge', 'br-ctlplane') %}
