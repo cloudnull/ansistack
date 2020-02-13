@@ -82,8 +82,8 @@ tripleo_undercloud_config:
     generate_service_certificate: false
     container_images_file: "{{ ansible_env.HOME }}/local_images.yaml"
     container_insecure_registries: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_docker_registry, '') }}"
-    undercloud_public_host: "192.168.{{ tripleo_magic_number }}.2"
-    undercloud_admin_host: "192.168.{{ tripleo_magic_number }}.3"
+    undercloud_public_host: "{{ vm_management_net | ipaddr('last_usable') }}"
+    undercloud_admin_host: "{{ vm_management_net | ipaddr('last_usable') | ipmath(-1) }}"
     undercloud_nameservers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_dns_servers, tripleo_dns_servers) | join(',') }}"
     undercloud_ntp_servers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_ntp_servers, tripleo_ntp_servers) | join(',') }}"
     undercloud_enable_selinux: False
@@ -91,11 +91,11 @@ tripleo_undercloud_config:
     undercloud_enable_paunch: False
   ctlplane-subnet:
     gateway: "{{ vm_management_net | ipaddr('ip') }}"
-    cidr: "192.168.{{ tripleo_magic_number }}.0/22"
+    cidr: "{{ vm_management_net | ipaddr('network/prefix') }}"
     masquerade: true
-    dhcp_start: "192.168.{{ tripleo_magic_number }}.225"
-    dhcp_end: "192.168.{{ tripleo_magic_number }}.254"
-    inspection_iprange: "192.168.{{ tripleo_magic_number }}.225,192.168.{{ tripleo_magic_number }}.254"
+    dhcp_start: "{{ vm_management_net | ipaddr('last_usable') | ipmath(-50) }}"
+    dhcp_end: "{{ vm_management_net | ipaddr('last_usable') | ipmath(-2) }}"
+    inspection_iprange: "{{ vm_management_net | ipaddr('last_usable') | ipmath(-100) }},{{ vm_management_net | ipaddr('last_usable') | ipmath(-51) }}"
 
 tripleo_undercloud_config_overrides: {}
 

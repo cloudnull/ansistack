@@ -4,7 +4,6 @@ all:
   children:
     all_vms:
       vars:
-        tripleo_magic_number: 4
         vm_vbmc_username: admin
         vm_vbmc_password: secrete
         vm_management_net: "{{ vm_preprov_networks['eth1'][0] }}"
