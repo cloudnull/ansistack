@@ -77,16 +77,6 @@
         - "'vm_preprov_networks' in hostvars[item]"
       with_items: "{{ groups['overcloud'] | union(groups['undercloud']) | union(groups['minion']) }}"
 
-    - name: Create deploy script(s)
-      template:
-        src: templates/{{ item }}.j2
-        dest: "{{ ansible_env.HOME }}/{{ item }}"
-        mode: '0755'
-      loop:
-        - deploy-undercloud-script.sh
-        - deploy-overcloud-script.sh
-        - deploy-start-script.sh
-
     - name: Run deployment command(s)
       shell: "{{ ansible_env.HOME }}/deploy-start-script.sh"
       when:

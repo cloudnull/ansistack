@@ -410,3 +410,16 @@
         jump: ACCEPT
         comment: "100 ssh on all"
       become: yes
+
+    - name: Create deploy script(s)
+      template:
+        src: templates/{{ item }}.j2
+        dest: "{{ ansible_env.HOME }}/{{ item }}"
+        mode: '0755'
+      loop:
+        - deploy-undercloud-script.sh
+        - deploy-overcloud-script.sh
+        - deploy-start-script.sh
+        - deploy-minion-script.sh
+      when:
+        - inventory_hostname in groups['undercloud']

@@ -13,30 +13,3 @@ source /opt/tripleo-patches/bin/activate
 {%   endif %}
 {% endif %}
 openstack undercloud install
-{% if (groups['minion'] | length) > 0 %}
-{%   for item in groups['minion'] %}
-rsync -avz \
-      --rsh="/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-      {{ ansible_env.HOME }}/tripleo-undercloud-outputs.yaml {{ ansible_env.HOME }}/tripleo-undercloud-passwords.yaml \
-      {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }}:{{ ansible_env.HOME }}/
-if [[ -d "/opt/tripleo/rpms" ]]; then
-  RPMS=$(find /opt/tripleo/rpms/ -name '*.rpm' ! -name '*src.rpm')
-  if [[ ! -z "${RPMS}" ]]; then
-      rsync -avz \
-          --rsh="/bin/ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-          --rsync-path="sudo rsync" \
-          /opt/tripleo/rpms/ \
-          {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }}:/opt/tripleo/rpms/
-      ssh -o StrictHostKeyChecking=no \
-          -o UserKnownHostsFile=/dev/null \
-          -tt \
-          {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }} \
-          "sudo \$(command -v dnf || command -v yum) -y install /opt/tripleo/rpms/*.rpm"
-  fi
-fi
-ssh -o StrictHostKeyChecking=no \
-    -o UserKnownHostsFile=/dev/null \
-    {{ ansible_env.USER }}@{{ hostvars[item]['ansible_host'] }} \
-    "openstack undercloud minion install --yes"
-{%   endfor %}
-{% endif %}

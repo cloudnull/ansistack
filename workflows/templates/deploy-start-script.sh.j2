@@ -17,6 +17,9 @@ tmux select-window -t 0
 {% set cmd = [] %}
 {% if tripleo_undercloud_deploy | default(true) | bool %}
 {%   set _ = cmd.append(ansible_env.HOME ~ '/deploy-undercloud-script.sh') %}
+{%   if (groups['minion'] | length) > 0 %}
+{%     set _ = cmd.append(ansible_env.HOME ~ '/deploy-minion-script.sh') %}
+{%   endif %}
 {% endif %}
 {% if tripleo_overcloud_deploy | default(true) | bool %}
 {%   set _ = cmd.append(ansible_env.HOME ~ '/deploy-overcloud-script.sh') %}
