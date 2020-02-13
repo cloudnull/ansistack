@@ -106,7 +106,7 @@ tripleo_minion_config:
     minion_nameservers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_dns_servers, tripleo_dns_servers) | join(',') }}"
     minion_ntp_servers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_ntp_servers, tripleo_ntp_servers) | join(',') }}"
     enable_heat_engine: true
-    enable_ironic_conductor: true
+    enable_ironic_conductor: false
 
 tripleo_minion_config_overrides: {}
 
