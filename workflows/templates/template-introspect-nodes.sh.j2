@@ -1,0 +1,6 @@
+openstack --os-cloud undercloud overcloud node import vm-instackenv.yaml
+openstack --os-cloud undercloud overcloud node introspect \
+          --all-manageable \
+          --provide \
+          --concurrency {{ (ansible_processor_vcpus | int) * 2  }} \
+          || openstack --os-cloud undercloud overcloud node introspect --all-manageable --provide

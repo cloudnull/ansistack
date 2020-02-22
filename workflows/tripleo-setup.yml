@@ -33,23 +33,29 @@
 
     - name: Set instackenv file fact
       set_fact:
-        instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+        vm_instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
       when:
-        - instackenv_file is undefined
+        - vm_instackenv_file is undefined
 
-    - name: Copy instackenv into place
-      copy:
-        src: "{{ instackenv_file }}"
-        dest: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
+    - name: Standard deployment block
+      block:
+        - name: Copy instackenv into place
+          copy:
+            src: "{{ vm_instackenv_file }}"
+            dest: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
 
-    - name: Read instackenv yaml
-      slurp:
-        src: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
-      register: instack_env
+        - name: Read instackenv yaml
+          slurp:
+            src: "{{ ansible_env.HOME }}/vm-instackenv.yaml"
+          register: instack_env
 
-    - name: Set ironic nodes
-      set_fact:
-        target_nodes: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] }}"
+        - name: Set ironic nodes
+          set_fact:
+            standard_target_nodes: "{{ (instack_env['content'] | b64decode | from_yaml)['nodes'] }}"
+      rescue:
+        - name: Notice
+          debug:
+            msg: "No standard target nodes will be defined."
 
     - name: Prep-provisioned nodes
       when:
@@ -217,7 +223,7 @@
     - name: pre-provisioned block
       when:
         - vm_inventory_file is defined
-        - tripleo_deploy_pre_provisioned | bool
+        - (tripleo_deploy_pre_provisioned is defined) and (tripleo_deploy_pre_provisioned | bool)
       block:
         - name: Run pre-provisioned node parameter create
           copy:
@@ -260,6 +266,17 @@
             dest: "/tmp/templates/vm_interface_template.yaml"
           when:
             - tripleo_deploy | bool
+
+    - name: Novaless provisioning block
+      when:
+        - vm_inventory_file is defined
+        - (tripleo_overcloud_novaless is defined) and (tripleo_overcloud_novaless | bool)
+      block:
+        - name: Run novaless node parameter create
+          copy:
+            content: |-
+              {{ lookup('file', vm_inventory_file) | default('---') | from_yaml | novaless_hosts | to_nice_yaml }}
+            dest: "{{ ansible_env.HOME }}/overcloud-baremetal-config.yaml"
 
     - name: Set global fact
       set_fact:

@@ -7,12 +7,12 @@
 {%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*ceph.*") | list | length)) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*block.*") | list | length)) %}
 {%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (preprov_target_nodes | selectattr("tripleo_deploy_type", "match", ".*swift.*") | list | length)) %}
-{%   elif (target_nodes is defined) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (target_nodes | selectattr("capabilities", "match", ".*profile:control.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (target_nodes | selectattr("capabilities", "match", ".*profile:compute.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (target_nodes | selectattr("capabilities", "match", ".*profile:ceph.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (target_nodes | selectattr("capabilities", "match", ".*profile:block.*") | list | length)) %}
-{%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (target_nodes | selectattr("capabilities", "match", ".*profile:swift.*") | list | length)) %}
+{%   elif (standard_target_nodes is defined) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ControllerCount', (standard_target_nodes | selectattr("capabilities", "match", ".*profile:control.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ComputeCount', (standard_target_nodes | selectattr("capabilities", "match", ".*profile:compute.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('CephStorageCount', (standard_target_nodes | selectattr("capabilities", "match", ".*profile:ceph.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('BlockStorageCount', (standard_target_nodes | selectattr("capabilities", "match", ".*profile:block.*") | list | length)) %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ObjectStorageCount', (standard_target_nodes | selectattr("capabilities", "match", ".*profile:swift.*") | list | length)) %}
 {%     set stackname = tripleo_stack_name | default('overcloud') %}
 {%     set _ = pd['parameter_defaults'].__setitem__(
      'ControllerSchedulerHints',
@@ -65,6 +65,9 @@
 {%   else %}
 {%   if tripleo_default_route is defined %}
 {%     set _ = pd['parameter_defaults'].__setitem__('ControlPlaneDefaultRoute', tripleo_default_route) %}
+{%   endif %}
+{%   if tripleo_default_subnet is defined %}
+{%     set _ = pd['parameter_defaults'].__setitem__('ControlPlaneSubnetCidr', tripleo_default_subnet) %}
 {%   endif %}
 {%   set _ = pd['parameter_defaults'].__setitem__('DockerInsecureRegistryAddress', [(vm_management_net | ipaddr('ip')) ~ ':8787']) %}
 {%   endif %}

@@ -34,37 +34,26 @@ class FilterModule(object):
             'preprov_hosts': self.preprov_hosts,
             'preprov_host_entry': self.preprov_host_entry,
             'non_ha': self.non_ha,
-            'if_any': self.if_any
+            'if_any': self.if_any,
+            'novaless_hosts': self.novaless_hosts
         }
 
     def preprov_host_entry(self, data, anchor='ctlplane'):
         """
          data = DeployedServerPortMap:
-                    compute2-vm-compute-1-ctlplane:
+                    compute2-vm-compute-1-controller-ctlplane:
                         fixed_ips:
                         -   ip_address: 172.16.27.165
                         subnets:
                         -   cidr: 22
-                    compute2-vm-compute-2-ctlplane:
+                    compute2-vm-compute-1-compute-ctlplane:
                         fixed_ips:
                         -   ip_address: 172.16.27.207
                         subnets:
                         -   cidr: 22
-                    compute2-vm-compute-3-ctlplane:
-                        fixed_ips:
-                        -   ip_address: 172.16.27.189
-                        subnets:
-                        -   cidr: 22
-                    compute2-vm-controller-1-ctlplane:
-                        fixed_ips:
-                        -   ip_address: 172.16.27.16
-                        subnets:
-                        -   cidr: 22
                 HostnameMap:
-                    overcloud-compute-0: compute2-vm-compute-1
-                    overcloud-compute-1: compute2-vm-compute-2
-                    overcloud-compute-2: compute2-vm-compute-3
-                    overcloud-controller-0: compute2-vm-controller-1
+                    overcloud-controller-0: compute2-vm-compute-1-controller
+                    overcloud-compute-0: compute2-vm-compute-1-compute
         """
         return_data = list()
         for k, v in data['HostnameMap'].items():
@@ -165,7 +154,7 @@ class FilterModule(object):
                         v['tripleo_deploy_type']
                     )
                     port_map = orig['parameter_defaults']['DeployedServerPortMap']
-                    network_address = v.get('vm_management_net', v['ansible_host'])
+                    network_address = v.get('vm_management_net', v.get('ansible_host'))
                     port_map[k + '-' + anchor] = {
                         'fixed_ips': [
                             {
@@ -207,6 +196,74 @@ class FilterModule(object):
                     index[tripleo_deploy_type_name] += 1
 
         return orig
+
+    def novaless_hosts(self, inv, anchor='ctlplane', stackname='overcloud'):
+        types = dict()
+        index = collections.defaultdict(int)
+        for k, v in inv['vms']['hosts'].items():
+            if 'tripleo_deploy_type' in v:
+                if v['tripleo_deploy_type'] == 'minion':
+                    continue
+                elif v['tripleo_deploy_type'] == 'undercloud':
+                    continue
+                else:
+                    tripleo_deploy_type_name = '{}-{}'.format(
+                        stackname,
+                        v['tripleo_deploy_type']
+                    )
+
+                    if v['tripleo_deploy_type'] == 'novacompute':
+                        type_name = 'compute'
+                    else:
+                        type_name = v['tripleo_deploy_type']
+
+                    type_name = type_name.capitalize()
+
+                    if type_name in types:
+                        type_data = types[type_name]
+                    else:
+                        type_data = types[type_name] = dict()
+                        type_data['name'] = type_name
+                        type_data['count'] = 0
+                        type_data['instances'] = list()
+                        type_data['defaults'] = {'image': {'href': 'overcloud-full'}}
+
+                    instance_data = dict()
+                    instance_data['name'] = k
+                    instance_data['hostname'] = '{}-{}'.format(
+                        tripleo_deploy_type_name,
+                        index[tripleo_deploy_type_name]
+                    )
+                    index[tripleo_deploy_type_name] += 1
+                    type_data['count'] += 1
+                    disk_size = v.get('vm_disk_size', 12)
+                    instance_data['root_size_gb'] = disk_size - 3
+                    instance_data['swap_size_mb'] = 2 * 1024
+
+                    nics = list()
+                    nic_data = dict()
+                    vm_preprov_networks = v.get('vm_preprov_networks')
+                    if vm_preprov_networks:
+                        for _, ips in vm_preprov_networks.items():
+                            nic_data['network'] = 'ctlplane'  # This should be able to be defined.
+                            for ip in ips:  # The last ip address defined will always win.
+                                network_address = ipaddr.ipaddr(
+                                    ip,
+                                    query='address',
+                                    version=False,
+                                    alias='ipaddr'
+                                )
+                                if network_address:
+                                    nic_data['fixed_ip'] = network_address
+                    if nic_data:
+                        nics.append(nic_data)
+
+                    if nics:
+                        instance_data['nics'] = nics
+
+                    type_data['instances'].append(instance_data)
+
+        return [i for i in types.values()]
 
     def if_any(self, items):
         return any([boolean(i) for i in items if i])

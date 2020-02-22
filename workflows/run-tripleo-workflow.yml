@@ -18,7 +18,7 @@
 # All of these playbooks will control flow using user input variables.
 - import_playbook: node-update.yml
   vars:
-    deployment_targets: "undercloud:minion:overcloud"
+    deployment_targets: "undercloud:minion"
 - import_playbook: tripleo-setup.yml
 - import_playbook: tripleo-developer-packages.yml
 - import_playbook: tripleo-standalone-setup.yml

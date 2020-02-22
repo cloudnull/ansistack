@@ -55,9 +55,9 @@
 
     - name: Set instackenv file fact
       set_fact:
-        instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+        vm_instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
       when:
-        - instackenv_file is undefined
+        - vm_instackenv_file is undefined
 
     - name: Set inventory file path
       set_fact:

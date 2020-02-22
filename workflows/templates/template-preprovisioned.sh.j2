@@ -1,0 +1,14 @@
+{#
+    NOTE(cloudnull): removed deployed-server-bootstap-*, in a future release we should be able to
+                     support this if its found in an given deployment environment.
+    {%     set _ = environments.append('/tmp/templates/environments/deployed-server-bootstrap-environment-' ~ tripleo_name_hash[(ansible_distribution | lower)] ~ '.yaml') %}
+#}
+{% set _ = environments.append('/tmp/templates/environments/deployed-server-environment.yaml') %}
+{#
+    NOTE(cloudnull): Include the network-isolation template when we work out the bugs
+    {%     set _ = environments.append('/tmp/templates/environments/network-isolation.yaml') %}
+#}
+{% set _ = environments_user.append(ansible_env.HOME ~ '/pre-provisioned-parameters.yaml') %}
+{% if ((ansible_distribution | lower) == 'redhat') and (redhat_puddle_local_images_url is defined) %}
+{%   set _ = environments_user.append(ansible_env.HOME ~ '/container_image_prepare.yaml') %}
+{% endif %}

@@ -28,7 +28,7 @@
       debug:
         msg: >-
           VM(s) creation has completed. An instackenv file has been created for the generated nodes.
-          This file can be found here `{{ instackenv_file }}`.
+          This file can be found here `{{ vm_instackenv_file }}`.
       run_once: true
 
   pre_tasks:
@@ -46,9 +46,9 @@
 
     - name: Set instackenv file fact
       set_fact:
-        instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
+        vm_instackenv_file: "{{ lookup('env','HOME') }}/vm-instackenv.yaml"
       when:
-        - instackenv_file is undefined
+        - vm_instackenv_file is undefined
 
   post_tasks:
     - name: Write instackenv file
@@ -63,5 +63,5 @@
                          stackname=(tripleo_stack_name | default('overcloud'))
                       ) | to_nice_yaml
                   }}"
-        dest: "{{ instackenv_file }}"
+        dest: "{{ vm_instackenv_file }}"
       notify: Deployment notice

@@ -49,7 +49,8 @@ tripleo_ntp_servers:
   - time3.google.com
 
 # Set the default route, which defaults to the undercloud
-tripleo_default_route: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+tripleo_default_route: "{{ vm_management_net | ipaddr('ip') }}"
+tripleo_default_subnet: "{{ vm_management_net | ipaddr('prefix') }}"
 
 # Set the DNS servers
 tripleo_dns_servers:

@@ -34,6 +34,9 @@
         user: "{{ ansible_user }}"
         state: present
         key: "{{ pub_key_content['content'] | b64decode }}"
+      when:
+        - (hostvars[item]['tripleo_overcloud_novaless'] is undefined) or
+          (not (hostvars[item]['tripleo_overcloud_novaless'] | bool))
       run_once: true
       delegate_to: "{{ item }}"
       with_items: "{{ groups['overcloud'] | union(groups['minion']) }}"
@@ -48,6 +51,8 @@
       run_once: true
       with_items: "{{ groups['overcloud'] | union(groups['minion']) }}"
       when:
+        - (hostvars[item]['tripleo_overcloud_novaless'] is undefined) or
+          (not (hostvars[item]['tripleo_overcloud_novaless'] | bool))
         - (ansible_distribution | lower) != 'redhat'
 
     - name: Pre-provisioned node setup
@@ -74,6 +79,8 @@
       run_once: true
       delegate_to: "{{ item }}"
       when:
+        - (hostvars[item]['tripleo_overcloud_novaless'] is undefined) or
+          (not (hostvars[item]['tripleo_overcloud_novaless'] | bool))
         - "'vm_preprov_networks' in hostvars[item]"
       with_items: "{{ groups['overcloud'] | union(groups['undercloud']) | union(groups['minion']) }}"
 
