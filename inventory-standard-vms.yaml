@@ -1,0 +1,104 @@
+---
+all:
+  vars:
+    vm_instackenv_file: "{{ lookup('env','HOME') }}/vm-lab-standard-instackenv.yaml"
+    vm_vbmc_username: admin
+    vm_vbmc_password: secrete
+    vm_management_interface: eth1
+    vm_management_net: "{{ vm_preprov_networks[vm_management_interface][0] }}"
+    vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-standard-inventory.yaml"
+  children:
+    all_vms:
+      children:
+        provisioned_vms:
+          vars:
+            vm_networks:
+              uplink:
+                dhcp: true
+                interface: eth0
+                manager: nmcli
+              provisioning:
+                dhcp: false
+                interface: eth1
+                manager: nmcli
+              external:
+                dhcp: false
+                interface: eth2
+                manager: nmcli
+          children:
+            provisioned_compute_hosts:
+              children:
+                provisioned_compute1:
+                  vars:
+                    vm_virt_host: "compute1"
+                    vm_cores: 8
+                    vm_ram: 16384
+                    vm_disk_size: 72
+                  hosts:
+                    std-compute1-vm-undercloud-0:
+                      vm_image_name: centos7
+                      tripleo_deploy_type: undercloud
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.101/22"
+                provisioned_compute4:
+                  vars:
+                    vm_virt_host: "compute4"
+                    vm_cores: 4
+                    vm_ram: 6144
+                    vm_disk_size: 32
+                  hosts:
+                    std-compute4-vm-minion-0:
+                      vm_image_name: centos7
+                      tripleo_deploy_type: minion
+                      vm_preprov_networks:
+                        eth1:
+                          - "192.168.4.102/22"
+        bootable_vms:
+          vars:
+            vm_networks:
+              provisioning:
+                dhcp: true
+                interface: eth0
+                manager: nmcli
+              external:
+                dhcp: false
+                interface: eth1
+                manager: nmcli
+          children:
+            bootable_compute_hosts:
+              children:
+                bootable_compute1:
+                  vars:
+                    vm_virt_host: "compute1"
+                    vm_cores: 8
+                    vm_ram: 16384
+                    vm_disk_size: 96
+                    tripleo_overcloud_target: true
+                  hosts:
+                    std-compute1-vm-controller-1:
+                      vm_vbmc_port: 16020
+                      tripleo_capabilities: boot_option:local,profile:control
+                      tripleo_deploy_type: controller
+                bootable_compute2:
+                  vars:
+                    vm_virt_host: "compute2"
+                    vm_cores: 4
+                    vm_ram: 6144
+                    vm_disk_size: 48
+                    tripleo_capabilities: boot_option:local,profile:compute
+                    tripleo_overcloud_target: true
+                    tripleo_deploy_type: novacompute
+                  hosts:
+                    std-compute2-vm-compute-0:
+                      vm_vbmc_port: 16020
+                    std-compute2-vm-compute-1:
+                      vm_vbmc_port: 16021
+                    std-compute2-vm-compute-2:
+                      vm_vbmc_port: 16022
+                    std-compute2-vm-compute-3:
+                      vm_vbmc_port: 16023
+                    std-compute2-vm-compute-4:
+                      vm_vbmc_port: 16024
+                    std-compute2-vm-compute-5:
+                      vm_vbmc_port: 16025
