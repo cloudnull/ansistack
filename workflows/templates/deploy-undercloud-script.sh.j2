@@ -5,10 +5,10 @@ set -ev
 export THT="${THT:-/usr/share/openstack-tripleo-heat-templates}"
 
 {% if (ansible_distribution | lower) != 'redhat' %}
-{%   if False in (developer_patches | map(attribute='install_in_venv') | list) %}
+{%   if False in (tripleo_developer_patches | map(attribute='install_in_venv') | list) %}
 /opt/tripleo/build-packages.sh
 {%   endif %}
-{%   if True in (developer_patches | map(attribute='install_in_venv') | list) %}
+{%   if True in (tripleo_developer_patches | map(attribute='install_in_venv') | list) %}
 source /opt/tripleo-patches/bin/activate
 {%   endif %}
 {% endif %}

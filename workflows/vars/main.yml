@@ -6,7 +6,7 @@ developer_py_venv_packages:
 
 # list of hashes which point to patches to pull from online sources
 #
-#  developer_patches:
+#  tripleo_developer_patches:
 #    - url: "https://review.opendev.org/openstack/tripleo-common"
 #      refspec: "refs/changes/96/662496/5"
 #    - url: "https://review.opendev.org/openstack/tripleo-heat-templates"
@@ -14,7 +14,7 @@ developer_py_venv_packages:
 #    - url: "https://github.com/openstack/tripleo-ansible"
 #      version: "master"
 #
-developer_patches: []
+tripleo_developer_patches: []
 
 # Force developer packages to rebuild
 developer_rebuild_rpms: false

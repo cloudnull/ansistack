@@ -34,7 +34,7 @@
 
     - name: Install developer patches
       when:
-        - (developer_patches | length) > 0
+        - (tripleo_developer_patches | length) > 0
         - (ansible_distribution | lower) != 'redhat'
       vars:
         ansible_python_interpreter: /opt/rdo/bin/python
@@ -70,7 +70,7 @@
             state: absent
           when:
             - item.refs is defined
-          with_items: "{{ developer_patches }}"
+          with_items: "{{ tripleo_developer_patches }}"
 
         - name: Clone patched repo(s)
           git:
@@ -78,13 +78,13 @@
             dest: "/opt/tripleo/{{ item.url | basename }}"
             refspec: '{{ item.refs | default(omit) }}'
             version: "{{ item.version | default(((item.refs is defined) | ternary('FETCH_HEAD', omit))) }}"
-          with_items: "{{ developer_patches }}"
+          with_items: "{{ tripleo_developer_patches }}"
 
         - name: Force packages to rebuild
           file:
             path: "/opt/tripleo/{{ item.url | basename }}.created"
             state: absent
-          with_items: "{{ developer_patches }}"
+          with_items: "{{ tripleo_developer_patches }}"
           when:
             - developer_rebuild_rpms | bool
 
@@ -104,7 +104,7 @@
             virtualenv_python: "{{ ((ansible_distribution | lower) != 'centos') | ternary('python3', omit) }}"
           when:
             - item.install_in_venv | default(false) | bool
-          with_items: "{{ developer_patches }}"
+          with_items: "{{ tripleo_developer_patches }}"
 
         - name: Install developer pip packages
           pip:

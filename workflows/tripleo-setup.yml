@@ -440,3 +440,21 @@
         - deploy-minion-script.sh
       when:
         - inventory_hostname in groups['undercloud']
+
+    - name: NFS block
+      when:
+        - tripleo_nfs_image_mount is defined
+      become: true
+      block:
+        - name: Create images directory
+          file:
+            path: "{{ tripleo_nfs_image_mount.path }}"
+            state: directory
+
+        - name: Mount nfs share for images
+          mount:
+            path: "{{ tripleo_nfs_image_mount.path }}"
+            src: "{{ tripleo_nfs_image_mount.src }}"
+            fstype: "{{ tripleo_nfs_image_mount.fstype }}"
+            opts: "{{ tripleo_nfs_image_mount.opts }}"
+            state: mounted

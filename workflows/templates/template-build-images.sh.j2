@@ -1,12 +1,18 @@
+{% if tripleo_nfs_image_mount is undefined or (ansible_distribution | lower) == 'redhat' %}
 pushd ~/images
-{% if (ansible_distribution | lower) == 'redhat' %}
+{%   if (ansible_distribution | lower) == 'redhat' %}
   for i in overcloud-full.tar ironic-python-agent.tar; do
     tar xf /usr/share/rhosp-director-images/$i
   done
-{% else %}
+{%   else %}
   export OS_YAML="/usr/share/openstack-tripleo-common/image-yaml/overcloud-images-{{ tripleo_name_hash[(ansible_distribution | lower)] }}-{{ ansible_distribution_version }}"
   export DIB_YUM_REPO_CONF="/etc/yum.repos.d/*"
   openstack --os-cloud undercloud overcloud image build
-{% endif %}
+{%   endif %}
   openstack --os-cloud undercloud overcloud image upload --update-existing
 popd
+{% else %}
+pushd {{ tripleo_nfs_image_mount.path }}
+  openstack --os-cloud undercloud overcloud image upload --update-existing
+popd
+{% endif %}
