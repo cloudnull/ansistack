@@ -121,3 +121,10 @@
         state: "absent"
       delegate_to: "{{ vm_virt_host }}"
       become: true
+
+    - name: Delete node from vbmc
+      command: >-
+        /opt/vbmc/bin/vbmc delete {{ inventory_hostname }}
+      ignore_errors: true
+      delegate_to: "{{ vm_virt_host }}"
+      become: true
