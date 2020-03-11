@@ -5,9 +5,19 @@ tripleo_system_ceph_packages:
   - util-linux
   - lvm2
 
-developer_system_packages:
+tripleo_developer_system_packages:
+  - createrepo
   - gcc
   - git
+  - libffi-devel
+  - openssl-devel
+  - python*-mock
   - python*-virtualenv
+  - redhat-rpm-config
+  - rpm-build
+  - rpmdevtools
+  - rsync
+  - sqlite
   - tmux
   - vim
+  - "{{ ansible_facts['python_version'] is version('3', 'gt', strict=False) | ternary('python3-libselinux', 'libselinux-python') }}"

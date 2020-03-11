@@ -217,6 +217,9 @@ class FilterModule(object):
                     else:
                         type_name = v['tripleo_deploy_type']
 
+                    if type_name == 'Undefined':
+                        continue
+
                     type_name = type_name.capitalize()
 
                     if type_name in types:

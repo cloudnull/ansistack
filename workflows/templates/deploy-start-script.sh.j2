@@ -10,7 +10,7 @@ tmux new-window -n glances -t 1 || true
 
 # Start Monitoring
 tmux select-window -t 1
-tmux send-keys "/opt/rdo/bin/glances --disable-autodiscover --diskio-iops --diskio-show-ramfs --enable-irq" C-m
+tmux send-keys "/opt/tripleo/venv/bin/glances --disable-autodiscover --diskio-iops --diskio-show-ramfs --enable-irq" C-m
 
 # Start deployment
 tmux select-window -t 0

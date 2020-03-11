@@ -25,6 +25,16 @@
       )
 %}
 {%   endif %}
+{% else %}
+{%   set image_item = {
+       'name_prefix': 'centos-binary-',
+       'namespace': 'docker.io/tripleomaster'
+     }
+%}
+{%   if tripleo_image_tag is defined %}
+{%     set _ = image_item.__setitem__('tag', tripleo_image_tag) %}
+{%   endif %}
+{%   set _ = pd['parameter_defaults'].__setitem__('ContainerImagePrepare', [{'set': image_item}]) %}
 {% endif %}
 ---
 {{ pd | to_nice_yaml }}

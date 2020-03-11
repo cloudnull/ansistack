@@ -1,24 +1,30 @@
 #!/usr/bin/env bash
 
 set -evo
-source /opt/rdo/bin/activate
+source /opt/tripleo/venv/bin/activate
 
 export TRIPLEO_ROOT=/opt/tripleo
 
 sudo chown -R $(whoami):$(whoami) /opt/tripleo
 
-pushd /opt/tripleo
+{% set packages = [] %}
 {% for patch in tripleo_developer_patches %}
 {%   if not (patch.install_in_venv | default(false) | bool) %}
-    export PKG_NAME="{{ patch.url | basename }}"
-    if [[ ! -f "/opt/tripleo/${PKG_NAME}.created" ]]; then
-        sudo find /opt/tripleo/rpms/ -name '${PKG_NAME}*rpm' -exec rm -f {}  \;
-        sudo --preserve-env=PATH,TRIPLEO_ROOT /opt/tripleo-ci/scripts/tripleo.sh --delorean-build ${PKG_NAME}
-        touch /opt/tripleo/${PKG_NAME}.created
-        sudo find /opt/tripleo/delorean -name '*rpm' -exec mv {} /opt/tripleo/rpms/ \;
-    fi
+{%     set _ = packages.append('--package-name ' ~ (patch.url | basename) ~ ' ') %}
 {%   endif %}
 {% endfor %}
+
+pushd /opt/tripleo/DLRN
+    if [[ ! -f "/opt/tripleo/packages.created" ]]; then
+        sudo find /opt/tripleo/rpms/ -name '*rpm' -exec rm -f {}  \;
+        sudo /opt/tripleo/venv/bin/dlrn --config-file /opt/tripleo/DLRN/projects.ini \
+                                        --head-only \
+                                        {{ packages | join( ) }} \
+                                        --local \
+                                        --info-repo /opt/tripleo/rdoinfo \
+                                        --dev > /opt/tripleo/packages.created
+        sudo find /opt/tripleo/data -name '*rpm' -exec mv {} /opt/tripleo/rpms/ \;
+    fi
 popd
 
 set +evo

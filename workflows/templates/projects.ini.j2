@@ -1,0 +1,35 @@
+[DEFAULT]
+datadir=/opt/tripleo/data
+scriptsdir=/opt/tripleo/venv/share/dlrn/scripts
+configdir=
+baseurl={{
+    (((ansible_distribution | lower) == "redhat") and
+     ((ansible_distribution_major_version | int) == 8)) |
+    ternary(
+        'https://trunk.rdoproject.org/rhel8-master',
+        'https://trunk.rdoproject.org/centos' ~ ansible_distribution_major_version
+    )
+}}
+distro=rpm-master
+source=master
+{% if ansible_distribution | lower == 'centos' %}
+target={{ ((ansible_distribution_major_version | int) == 8) | ternary('centos8', 'centos') }}
+{% else %}
+target={{ ansible_distribution | lower }}
+{% endif %}
+smtpserver=
+reponame=delorean
+maxretries=2
+pkginfo_driver=dlrn.drivers.rdoinfo.RdoInfoDriver
+tags=
+rsyncdest=
+rsyncport=22
+workers={{ ansible_processor_count }}
+gerrit_topic=rdo-FTBFS
+database_connection=sqlite:///commits.sqlite
+fallback_to_master=1
+
+[gitrepo_driver]
+
+[mockbuild_driver]
+install_after_build=0

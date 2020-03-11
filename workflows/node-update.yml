@@ -52,7 +52,7 @@
 
     - name: Install developer packages
       package:
-        name: "{{ developer_system_packages }}"
+        name: "{{ tripleo_developer_system_packages }}"
         state: present
       register: package_installs
       until: package_installs is success

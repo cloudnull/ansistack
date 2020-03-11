@@ -23,12 +23,31 @@
   become: true
   vars_files:
     - vars/main.yml
-
+  pre_tasks:
+    - name: Gather variables for each operating system
+      include_vars: "{{ item }}"
+      with_first_found:
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+        - "{{ ansible_os_family | lower }}.yml"
+      tags:
+        - always
   tasks:
+    # NOTE(cloudnull): Dirty hack because these packages are missing
+    - name: Install mock and unit tests
+      package:
+        name:
+          - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-mock-2.0.0-11.el8.noarch.rpm
+          - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-unittest2-1.1.0-16.el8.noarch.rpm
+        state: present
+
     - name: Install rdopkg
       pip:
         name: "{{ developer_py_venv_packages }}"
-        virtualenv: "/opt/rdo"
+        virtualenv: "/opt/tripleo/venv"
         virtualenv_site_packages: yes
         virtualenv_python: "{{ ((ansible_distribution | lower) != 'centos') | ternary('python3', omit) }}"
 
@@ -37,36 +56,65 @@
         - (tripleo_developer_patches | length) > 0
         - (ansible_distribution | lower) != 'redhat'
       vars:
-        ansible_python_interpreter: /opt/rdo/bin/python
+        ansible_python_interpreter: /opt/tripleo/venv/bin/python
       block:
-        - name: Install build packages
-          package:
-            name:
-              - "gcc"
-            state: present
-
         - name: Create delorian directories
           file:
-            path: "/opt/tripleo/{{ item }}"
+            path: "/opt/tripleo/rpms"
             state: "directory"
-          with_items:
-            - rpms
 
-        - name: clone tripleo-ci
+        - name: Set some facts
+          set_fact:
+            build_dir: '/home/stack'
+
+        - name: Set libselinux name for python3
+          when: ansible_facts['python_version'] is version('3.0', 'gt', strict=False)
+          set_fact:
+            libselinux_python: python3-libselinux
+
+        - name: Set libselinux name for python2
+          when: ansible_facts['python_version'] is version('3.0', 'lt', strict=True)
+          set_fact:
+            libselinux_python: libselinux-python
+
+        - name: Create mock group
+          become: true
+          group:
+            name: mock
+            state: present
+
+        - name: Add user to mock group
+          user:
+            name: "{{ ansible_user }}"
+            groups: mock
+            append: true
+
+        - name: Ensure DLRN data subdirectory is present
+          file:
+            path: "/opt/tripleo/DLRN/data"
+            state: directory
+
+        - name: Push projects config
+          template:
+            dest: "/opt/tripleo/DLRN/projects.ini"
+            src: projects.ini.j2
+
+        - name: Install and update pip in venv
+          pip:
+            name: pip
+            state: latest
+            virtualenv: "/opt/tripleo/venv"
+            extra_args: '--upgrade'
+
+        - name: Fetch rdoinfo
           git:
-            dest: "/opt/tripleo-ci"
-            repo: "https://opendev.org/openstack/tripleo-ci"
-
-        - name: install tripleo-ci dependencies
-          command: /opt/tripleo-ci/scripts/tripleo.sh --delorean-setup
-          args:
-            creates: /opt/tripleo/delorean
-          environment:
-            TRIPLEO_ROOT: /opt/tripleo
+            repo: "https://github.com/redhat-openstack/rdoinfo"
+            dest: "/opt/tripleo/rdoinfo"
+            version: master
 
         - name: Cleanup repos with refspecs
           file:
-            path: "/opt/tripleo/{{ item.url | basename }}"
+            path: "/opt/tripleo/data/{{ item.url | basename }}"
             state: absent
           when:
             - item.refs is defined
@@ -75,7 +123,7 @@
         - name: Clone patched repo(s)
           git:
             repo: "{{ item.url }}"
-            dest: "/opt/tripleo/{{ item.url | basename }}"
+            dest: "/opt/tripleo/data/{{ item.url | basename }}"
             refspec: '{{ item.refs | default(omit) }}'
             version: "{{ item.version | default(((item.refs is defined) | ternary('FETCH_HEAD', omit))) }}"
           with_items: "{{ tripleo_developer_patches }}"
@@ -90,8 +138,8 @@
 
         - name: Download the centos gpg key
           get_url:
-            url: http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-7
-            dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+            url: http://mirror.centos.org/centos/RPM-GPG-KEY-CentOS-Official
+            dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-Official
           when:
             - (ansible_distribution | lower) != 'centos'
 
@@ -99,20 +147,12 @@
           pip:
             name: "/opt/tripleo/{{ item.url | basename }}"
             extra_args: '--force --upgrade'
-            virtualenv: "/opt/tripleo-patches"
+            virtualenv: "/opt/tripleo/venv"
             virtualenv_site_packages: no
             virtualenv_python: "{{ ((ansible_distribution | lower) != 'centos') | ternary('python3', omit) }}"
           when:
             - item.install_in_venv | default(false) | bool
           with_items: "{{ tripleo_developer_patches }}"
-
-        - name: Install developer pip packages
-          pip:
-            name: "selinux"
-            extra_args: '--force --upgrade'
-            virtualenv: "/opt/tripleo-patches"
-            virtualenv_site_packages: no
-            virtualenv_python: "{{ ((ansible_distribution | lower) != 'centos') | ternary('python3', omit) }}"
 
         - name: Create package build script
           template:

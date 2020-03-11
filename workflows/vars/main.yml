@@ -1,8 +1,10 @@
 ---
 
 developer_py_venv_packages:
+  - dlrn
   - rdopkg
   - glances
+  - selinux
 
 # list of hashes which point to patches to pull from online sources
 #
@@ -20,7 +22,7 @@ tripleo_developer_patches: []
 developer_rebuild_rpms: false
 
 # System packages to be installed in a development environment
-developer_system_packages: []
+tripleo_developer_system_packages: []
 
 # Name from distribution hash
 tripleo_name_hash:

@@ -24,6 +24,18 @@
     - vars/main.yml
 
   pre_tasks:
+    - name: Gather variables for each operating system
+      include_vars: "{{ item }}"
+      with_first_found:
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_major_version | lower }}.yml"
+        - "{{ ansible_distribution | lower }}.yml"
+        - "{{ ansible_os_family | lower }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+        - "{{ ansible_os_family | lower }}.yml"
+      tags:
+        - always
+
     - name: set hostname properly
       become: true
       lineinfile:
@@ -121,46 +133,31 @@
     - name: Centos package setup
       when:
         - (ansible_distribution | lower) == 'centos'
+      become: true
       block:
-        - name: fetch latest repo version
-          uri:
-            url: https://trunk.rdoproject.org/centos7/current/
-            return_content: yes
-          register: tripleo_packages
+        - name: Fetch latest delorean repo version
+          get_url:
+            url: "https://trunk.rdoproject.org/{{ (ansible_distribution | lower) }}{{ ansible_distribution_major_version }}/current/delorean.repo"
+            dest: "/etc/yum.repos.d/delorean.repo"
 
-        - name: Set package fact
+        - name: Fetch latest delorean-current repo version
+          get_url:
+            url: "https://trunk.rdoproject.org/{{ (ansible_distribution | lower) }}{{ ansible_distribution_major_version }}/current-tripleo/delorean.repo"
+            dest: "/etc/yum.repos.d/delorean-current.repo"
+
+        - name: Fetch latest delorean-deps repo version
+          get_url:
+            url: "https://trunk.rdoproject.org/{{ (ansible_distribution | lower) }}{{ ansible_distribution_major_version }}/delorean-deps.repo"
+            dest: "/etc/yum.repos.d/delorean-deps.repo"
+
+        - name: Install tripleo packages
+          package:
+            name: "python*tripleoclient"
+            state: present
+
+        - name: Client install success
           set_fact:
-            tripleo_package_fact: "{{ (tripleo_packages.content | regex_search('(\\B\"python2-tripleo-repos.*rpm\\b\")', multiline=True)).strip('\"') }}"
-
-        - name: install tripleo repository (centos)
-          package:
-            name: "https://trunk.rdoproject.org/centos7/current/{{ tripleo_package_fact }}"
-            state: present
-          become: true
-
-        - name: Enable tripleo repository (dev)
-          command: >-
-            tripleo-repos current-tripleo-dev {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
-          changed_when: false
-          become: true
-          when:
-            - tripleo_version_dev_enabled | bool
-
-        - name: Enable tripleo repository (stable)
-          command: >-
-            tripleo-repos -b {{ tripleo_version }} current {{ (tripleo_ceph_enabled | bool) | ternary('ceph', '') }}
-          args:
-            creates: "/etc/yum.repos.d/delorean-{{ tripleo_version }}-stable.repo"
-          changed_when: false
-          become: true
-          when:
-            - not (tripleo_version_dev_enabled | bool)
-
-        - name: Install tripleo packages (py2)
-          package:
-            name: "python-tripleoclient"
-            state: present
-          become: true
+            tripleo_deploy: true
       rescue:
         - name: Notice
           debug:
@@ -209,6 +206,20 @@
         - name: Client install failed
           set_fact:
             tripleo_deploy: false
+
+    - name: Image tag block
+      when:
+        - (ansible_distribution_major_version | int) == 8
+      block:
+        - name: Get image tag
+          uri:
+            url: https://trunk.rdoproject.org/centos8-master/current-tripleo/delorean.repo.md5
+            return_content: yes
+          register: c8_md5
+
+        - name: Set image tag fact
+          set_fact:
+            tripleo_image_tag: "{{ c8_md5.content }}"
 
     - name: Create local_images params
       template:
