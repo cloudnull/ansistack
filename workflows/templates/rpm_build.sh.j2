@@ -22,14 +22,16 @@ pushd /opt/tripleo/DLRN
                                         {{ packages | join( ) }} \
                                         --local \
                                         --info-repo /opt/tripleo/rdoinfo \
-                                        --dev &> /opt/tripleo/packages.log && touch /opt/tripleo/packages.created
-        export RPMS="$(find /opt/tripleo/rpms/ -name '*.rpm' ! -name '*src.rpm')"
+                                        --dev &> /opt/tripleo/packages.log || exit 99
+        sudo touch /opt/tripleo/packages.created
+        export RPMS="$(find /opt/tripleo/data/ -name '*.rpm' ! -name '*src.rpm')"
+        sudo mv ${RPMS} /opt/tripleo/rpms/
     fi
 popd
 
 set +evo
 
 if [[ ! -z "${RPMS}" ]]; then
-    echo -e "Installing RPMS: ${RPMS}"
+    echo -e "Installing RPMS"
     sudo $(command -v dnf || command -v yum) -y install /opt/tripleo/rpms/*.rpm
 fi

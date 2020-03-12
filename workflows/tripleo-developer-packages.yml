@@ -39,12 +39,7 @@
     # NOTE(cloudnull): Dirty hack because these packages are missing
     - name: Install mock and unit tests
       package:
-        name:
-          - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-mock-2.0.0-11.el8.noarch.rpm
-          - http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/python3-unittest2-1.1.0-16.el8.noarch.rpm
-          - https://download-ib01.fedoraproject.org/pub/epel/8/Everything/x86_64/Packages/m/mock-1.4.21-1.el8.noarch.rpm
-          - https://download-ib01.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/m/mock-core-configs-31.7-1.el8.noarch.rpm
-          - https://download-ib01.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/d/distribution-gpg-keys-1.37-1.el8.noarch.rpm
+        name: "{{ tripleo_external_developer_packages }}"
         state: present
 
     - name: Install rdopkg
