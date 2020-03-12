@@ -199,12 +199,11 @@ class FilterModule(object):
 
     def novaless_hosts(self, inv, anchor='ctlplane', stackname='overcloud'):
         types = dict()
+        ignored_types = ['minion', 'undefined', 'undercloud']
         index = collections.defaultdict(int)
         for k, v in inv['vms']['hosts'].items():
             if 'tripleo_deploy_type' in v:
-                if v['tripleo_deploy_type'] == 'minion':
-                    continue
-                elif v['tripleo_deploy_type'] == 'undercloud':
+                if v['tripleo_deploy_type'].lower() in ignored_types:
                     continue
                 else:
                     tripleo_deploy_type_name = '{}-{}'.format(
@@ -216,9 +215,6 @@ class FilterModule(object):
                         type_name = 'compute'
                     else:
                         type_name = v['tripleo_deploy_type']
-
-                    if type_name == 'Undefined':
-                        continue
 
                     type_name = type_name.capitalize()
 
