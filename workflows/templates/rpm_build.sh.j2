@@ -1,37 +1,47 @@
 #!/usr/bin/env bash
 
-set -evo
+set -ev
+set -o pipefail
+
 source /opt/tripleo/venv/bin/activate
 
 export TRIPLEO_ROOT=/opt/tripleo
 
 sudo chown -R $(whoami):$(whoami) /opt/tripleo
-
-{% set packages = [] %}
-{% for patch in tripleo_developer_patches %}
-{%   if not (patch.install_in_venv | default(false) | bool) %}
-{%     set _ = packages.append('--package-name ' ~ (patch.url | basename) ~ ' ') %}
-{%   endif %}
-{% endfor %}
+sudo rm -rf /opt/tripleo/data/repos
 
 pushd /opt/tripleo/DLRN
     if [[ ! -f "/opt/tripleo/packages.created" ]]; then
+        export PACKAGE_NAMES=""
+{% for patch in tripleo_developer_patches %}
+{%   if not (patch.install_in_venv | default(false) | bool) %}
+        PROJECT_NAME="$(/opt/tripleo/venv/bin/rdopkg findpkg -l /opt/tripleo/rdoinfo -s "{{ patch.url | basename }}" | awk '/^name/ {print $2}')"
+        sudo mkdir -p "/opt/tripleo/data/${PROJECT_NAME}"
+        sudo rsync -a "/opt/tripleo/patches/{{ patch.url | basename }}/" "/opt/tripleo/data/${PROJECT_NAME}/"
+        export PACKAGE_NAMES+="--package-name ${PROJECT_NAME} "
+{%   endif %}
+{% endfor %}
+
         sudo find /opt/tripleo/rpms/ -name '*rpm' -exec rm -f {}  \;
-        sudo /opt/tripleo/venv/bin/dlrn --config-file /opt/tripleo/DLRN/projects.ini \
+        sudo /opt/tripleo/venv/bin/dlrn ${PACKAGE_NAMES} \
+                                        --config-file /opt/tripleo/DLRN/projects.ini \
                                         --head-only \
-                                        {{ packages | join( ) }} \
                                         --local \
+                                        --no-repo \
+                                        --dev \
                                         --info-repo /opt/tripleo/rdoinfo \
-                                        --dev &> /opt/tripleo/packages.log || exit 99
-        sudo touch /opt/tripleo/packages.created
-        export RPMS="$(find /opt/tripleo/data/ -name '*.rpm' ! -name '*src.rpm')"
-        sudo mv ${RPMS} /opt/tripleo/rpms/
+                                        --dev &> /opt/tripleo/packages.log
+        if [[ ! $? == 0 ]]; then
+          echo "Failed to build, check logs: /opt/tripleo/packages.log"
+          exit 99
+        else
+          sudo touch /opt/tripleo/packages.created
+          sudo find /opt/tripleo/data/ -name '*.rpm' ! -name '*src.rpm' -exec cp -L {} /opt/tripleo/rpms/ \;
+        fi
     fi
 popd
 
-set +evo
-
-if [[ ! -z "${RPMS}" ]]; then
+if [[ ! -z "$(find /opt/tripleo/rpms/ -name '*.rpm' ! -name '*src.rpm')" ]]; then
     echo -e "Installing RPMS"
     sudo $(command -v dnf || command -v yum) -y install /opt/tripleo/rpms/*.rpm
 fi

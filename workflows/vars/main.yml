@@ -24,6 +24,9 @@ developer_rebuild_rpms: false
 # System packages to be installed in a development environment
 tripleo_developer_system_packages: []
 
+# System packages installed from an external source.
+tripleo_external_developer_packages: []
+
 # Name from distribution hash
 tripleo_name_hash:
   redhat: rhel

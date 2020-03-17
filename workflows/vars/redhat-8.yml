@@ -1,0 +1,28 @@
+---
+
+tripleo_system_ceph_packages:
+  - ceph-ansible
+  - util-linux
+  - lvm2
+
+tripleo_developer_system_packages:
+  - createrepo
+  - gcc
+  - git
+  - libffi-devel
+  - openssl-devel
+  - python*-mock
+  - python*-virtualenv
+  - python3-libselinux
+  - redhat-rpm-config
+  - rpm-build
+  - rpmdevtools
+  - rsync
+  - sqlite
+  - tmux
+  - vim
+
+tripleo_external_developer_packages:
+  - https://download-ib01.fedoraproject.org/pub/epel/8/Everything/x86_64/Packages/m/mock-1.4.21-1.el8.noarch.rpm
+  - https://download-ib01.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/m/mock-core-configs-31.7-1.el8.noarch.rpm
+  - https://download-ib01.fedoraproject.org/pub/epel/8/Everything/aarch64/Packages/d/distribution-gpg-keys-1.37-1.el8.noarch.rpm

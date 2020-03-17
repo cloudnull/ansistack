@@ -42,6 +42,16 @@
         name: "{{ tripleo_external_developer_packages }}"
         state: present
 
+    - name: Update the PowerTools config
+      ini_file:
+        path: "/etc/yum.repos.d/CentOS-PowerTools.repo"
+        section: "PowerTools"
+        option: "enabled"
+        value: "1"
+        backup: false
+      when:
+        - (ansible_distribution_major_version | int) == 8
+
     - name: Install rdopkg
       pip:
         name: "{{ developer_py_venv_packages }}"
@@ -110,9 +120,19 @@
             dest: "/opt/tripleo/rdoinfo"
             version: master
 
+        - name: Create data directories
+          file:
+            path: "/opt/tripleo/data"
+            state: "directory"
+
+        - name: Create patches directories
+          file:
+            path: "/opt/tripleo/patches"
+            state: "directory"
+
         - name: Cleanup repos with refspecs
           file:
-            path: "/opt/tripleo/data/{{ item.url | basename }}"
+            path: "/opt/tripleo/patches/{{ item.url | basename }}"
             state: absent
           when:
             - item.refs is defined
@@ -121,7 +141,7 @@
         - name: Clone patched repo(s)
           git:
             repo: "{{ item.url }}"
-            dest: "/opt/tripleo/data/{{ item.url | basename }}"
+            dest: "/opt/tripleo/patches/{{ item.url | basename }}"
             refspec: '{{ item.refs | default(omit) }}'
             version: "{{ item.version | default(((item.refs is defined) | ternary('FETCH_HEAD', omit))) }}"
           with_items: "{{ tripleo_developer_patches }}"
