@@ -56,7 +56,9 @@ popd
 #   pre-provisioned with metalsmith (novaless) nodes #
 {%     include 'templates/template-preprovisioned.sh.j2' %}
 
-{%     include 'templates/template-build-images.sh.j2' %}
+{%     if tripleo_nfs_image_mount is undefined or (ansible_distribution | lower) == 'redhat' or (tripleo_build_images | default(false) | bool) %}
+{%       include 'templates/template-build-images.sh.j2' %}
+{%     endif %}
 
 {%     include 'templates/template-introspect-nodes.sh.j2' %}
 
@@ -69,7 +71,9 @@ openstack --os-cloud undercloud overcloud node provision \
 {%     set _ = environments.append('/tmp/templates/environments/enable-swap-partition.yaml') %}
 {%   else %}
 #   ironic powered nodes #
-{%     include 'templates/template-build-images.sh.j2' %}
+{%     if tripleo_nfs_image_mount is undefined or (ansible_distribution | lower) == 'redhat' or (tripleo_build_images | default(false) | bool) %}
+{%       include 'templates/template-build-images.sh.j2' %}
+{%     endif %}
 
 {%     include 'templates/template-introspect-nodes.sh.j2' %}
 

@@ -1,31 +1,11 @@
-{% if tripleo_nfs_image_mount is undefined or (ansible_distribution | lower) == 'redhat' or (tripleo_build_images | default(false) | bool) %}
-pushd ~/images
-{%   if (ansible_distribution | lower) == 'redhat' %}
-  for i in overcloud-full.tar ironic-python-agent.tar; do
-    tar xf /usr/share/rhosp-director-images/$i
-  done
-{%   else %}
-  mkdir -p ~/elements
-  pushd ~/elements
-    git clone https://opendev.org/openstack/tripleo-puppet-elements || true
-    git clone https://opendev.org/openstack/tripleo-image-elements || true
-    git clone https://opendev.org/openstack/heat-agents || true
-    git clone https://opendev.org/openstack/ironic-python-agent-builder || true
-    git clone https://opendev.org/openstack/instack-undercloud || true
-  popd
-  export ELEMENTS_PATH="${HOME}/elements/tripleo-puppet-elements/elements:${HOME}/elements/tripleo-image-elements/elements:${HOME}/elements/heat-agents:${HOME}/elements/ironic-python-agent-builder/dib/"
-  export DIB_DEBUG_TRACE=1
-  export DIB_YUM_REPO_CONF="/etc/yum.repos.d/delorean*"
-{%     set configs = ['/usr/share/openstack-tripleo-common/image-yaml/overcloud-images-' ~ tripleo_name_hash[(ansible_distribution | lower)] ~ ansible_distribution_major_version ~ '.yaml'] %}
-{%     if ansible_facts['python_version'] is version('3', 'gt', strict=False) %}
-{%       set _ = configs.append('/usr/share/openstack-tripleo-common/image-yaml/overcloud-images-python3.yaml') %}
-{%     endif %}
-  openstack --os-cloud undercloud overcloud image build --config-file {{ configs | join(' --config-file ') }}
-{%   endif %}
-  openstack --os-cloud undercloud overcloud image upload --update-existing
-popd
-{% else %}
+
+# Run image build script
+{{ ansible_env.HOME ~ '/deploy-build-images.sh' }}
+
+{% if tripleo_nfs_image_mount is defined %}
 pushd {{ tripleo_nfs_image_mount.path }}
-  openstack --os-cloud undercloud overcloud image upload --update-existing
-popd
+{% else %}
+pushd ~/images
 {% endif %}
+    openstack --os-cloud undercloud overcloud image upload --update-existing
+popd

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -ev
+
+pushd ~/images
+{%   if (ansible_distribution | lower) == 'redhat' %}
+  for i in overcloud-full.tar ironic-python-agent.tar; do
+    tar xf /usr/share/rhosp-director-images/$i
+  done
+{%   else %}
+  mkdir -p ~/elements
+  pushd ~/elements
+    git clone https://opendev.org/openstack/tripleo-puppet-elements || true
+    git clone https://opendev.org/openstack/tripleo-image-elements || true
+    git clone https://opendev.org/openstack/heat-agents || true
+    git clone https://opendev.org/openstack/ironic-python-agent-builder || true
+    git clone https://opendev.org/openstack/instack-undercloud || true
+  popd
+  export ELEMENTS_PATH="${HOME}/elements/tripleo-puppet-elements/elements:${HOME}/elements/tripleo-image-elements/elements:${HOME}/elements/heat-agents:${HOME}/elements/ironic-python-agent-builder/dib/"
+  export DIB_DEBUG_TRACE=1
+  export DIB_YUM_REPO_CONF="/etc/yum.repos.d/*"
+{%     set configs = [] %}
+{%     if ansible_facts['python_version'] is version('3', 'gt', strict=False) %}
+{%       set _ = configs.append('/usr/share/openstack-tripleo-common/image-yaml/overcloud-images-python3.yaml') %}
+{%     endif %}
+{%     set _ = configs.append(
+         '/usr/share/openstack-tripleo-common/image-yaml/overcloud-images-' ~ tripleo_name_hash[(ansible_distribution | lower)] ~ ansible_distribution_major_version ~ '.yaml'
+       )
+%}
+  openstack --os-cloud undercloud overcloud image build --config-file {{ configs | join(' --config-file ') }}
+{%   endif %}
+popd

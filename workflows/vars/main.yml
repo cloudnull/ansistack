@@ -33,8 +33,8 @@ tripleo_name_hash:
   centos: centos
 
 # Name of the cuurent development release
-tripleo_version_dev_enabled: true
-tripleo_version: stein
+tripleo_branch_repos: current-tripleo
+tripleo_branch: master
 
 # Enable ceph support on the deployment
 tripleo_ceph_enabled: false

@@ -135,25 +135,25 @@
         - (ansible_distribution | lower) == 'centos'
       become: true
       block:
-        - name: Fetch latest delorean repo version
-          get_url:
-            url: "https://trunk.rdoproject.org/{{ (ansible_distribution | lower) }}{{ ansible_distribution_major_version }}/current/delorean.repo"
-            dest: "/etc/yum.repos.d/delorean.repo"
-
-        - name: Fetch latest delorean-current repo version
-          get_url:
-            url: "https://trunk.rdoproject.org/{{ (ansible_distribution | lower) }}{{ ansible_distribution_major_version }}/current-tripleo/delorean.repo"
-            dest: "/etc/yum.repos.d/delorean-current.repo"
-
-        - name: Fetch latest delorean-deps repo version
-          get_url:
-            url: "https://trunk.rdoproject.org/{{ (ansible_distribution | lower) }}{{ ansible_distribution_major_version }}/delorean-deps.repo"
-            dest: "/etc/yum.repos.d/delorean-deps.repo"
-
         - name: Install tripleo packages
           package:
-            name: "python*tripleoclient"
+            name:
+              - "python*tripleoclient"
+              - "python*tripleo-repos"
             state: present
+
+        - name: Run tripleo-repos
+          command: tripleo-repos --branch {{ tripleo_branch }} {{ tripleo_branch_repos }}
+          become: true
+
+        - name: Run package updates
+          package:
+            name: "*"
+            state: "latest"
+          register: package_updates
+          until: package_updates is success
+          retries: 3
+          delay: 16
 
         - name: Client install success
           set_fact:
@@ -449,6 +449,7 @@
         - deploy-overcloud-script.sh
         - deploy-start-script.sh
         - deploy-minion-script.sh
+        - deploy-build-images.sh
       when:
         - inventory_hostname in groups['undercloud']
 
