@@ -1,11 +1,17 @@
 
+{% if tripleo_nfs_image_mount is undefined or (ansible_distribution | lower) == 'redhat' or (tripleo_build_images | default(false) | bool) %}
 # Run image build script
 {{ ansible_env.HOME ~ '/deploy-build-images.sh' }}
 
-{% if tripleo_nfs_image_mount is defined %}
+{%   if tripleo_nfs_image_mount is defined %}
 pushd {{ tripleo_nfs_image_mount.path }}
-{% else %}
+{%   else %}
 pushd ~/images
-{% endif %}
+{%   endif %}
     openstack --os-cloud undercloud overcloud image upload --update-existing
 popd
+{% else %}
+pushd ~/images
+    openstack --os-cloud undercloud overcloud image upload --update-existing
+popd
+{% endif %}
