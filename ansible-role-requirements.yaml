@@ -1,0 +1,4 @@
+---
+- src: https://github.com/cloudnull/ansible-role-tripleo_sdk
+  version: master
+  name: tripleo_sdk

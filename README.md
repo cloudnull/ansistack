@@ -20,6 +20,15 @@ setup hypervisors and build virtualized infrastructure. The workflows directory
 contains playbooks that are used to deploy solutions within virtualized
 infrastructure.
 
+## Workflows External Dependencies
+
+Workflows rely on roles not within this repository. To install these roles run
+the following command.
+
+``` shell
+ansible-galaxy install --role-file=ansible-role-requirements.yaml
+```
+
 ### Virtual Machine Deployment Particulars
 
 The process to build virtual machines has been broken up into three primary types.
