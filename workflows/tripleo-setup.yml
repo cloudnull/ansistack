@@ -135,27 +135,6 @@
         - (ansible_distribution | lower) == 'centos'
       become: true
       block:
-        - name: fetch latest repo version
-          uri:
-            url: https://trunk.rdoproject.org/{{ (ansible_distribution | lower) }}{{ ansible_distribution_major_version }}/current/delorean.repo
-            return_content: yes
-          register: tripleo_packages
-
-        - name: Create default repo file
-          copy:
-            content: "{{ tripleo_packages.content }}"
-            dest: /etc/yum.repos.d/delorean.repo
-          become: true
-
-        - name: Install tripleo-repos package
-          package:
-            name: "python*tripleo-repos"
-            state: present
-
-        - name: Run tripleo-repos
-          command: tripleo-repos --branch {{ tripleo_branch }} {{ tripleo_branch_repos }}
-          become: true
-
         - name: Run package updates
           package:
             name: "*"

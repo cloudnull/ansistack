@@ -6,7 +6,7 @@ export THT="${THT:-/usr/share/openstack-tripleo-heat-templates}"
 
 {% if (ansible_distribution | lower) != 'redhat' %}
 {%   if False in (tripleo_developer_patches | map(attribute='install_in_venv') | list) %}
-/opt/tripleo/build-packages.sh || /opt/tripleo/build-packages.sh
+{{ ansible_env.HOME }}/tripleo-sdk/build-packages.sh
 {%   endif %}
 {%   if True in (tripleo_developer_patches | map(attribute='install_in_venv') | list) %}
 source /opt/tripleo-patches/bin/activate
