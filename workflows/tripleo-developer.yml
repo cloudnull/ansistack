@@ -1,0 +1,11 @@
+---
+
+- name: Tripleo Developer Setup
+  hosts: "all"
+  any_errors_fatal: true
+  gather_facts: true
+  roles:
+    - role: tripleo_sdk
+      tripleo_sdk_developer_patches: "{{ tripleo_developer_patches | default([]) }}"
+      tripleo_sdk_developer_run_build: true
+      tripleo_sdk_developer_rebuild_rpms: true
