@@ -19,6 +19,7 @@
   when:
     - inventory_hostname in groups['provisioned_vms']
     - vm_bootable_iso is undefined
+    - hostvars[inventory_hostname]['vm_image_name'] in vm_image_data
   block:
     - name: Copy meta file
       template:
@@ -79,19 +80,65 @@
     - vm_passthrough_lookup_regex is defined
     - vm_pci_passthrough_devices is undefined
 
+- name: Clone additional boot disks
+  copy:
+    src: "{{ vm_iso_path }}/{{ item.name }}"
+    dest: "/var/lib/libvirt/images/{{ inventory_hostname }}/{{ item.name }}"
+    remote_src: true
+  loop: "{{ vm_bootable_disks | default([]) }}"
+
+- name: Clone additional disks
+  copy:
+    src: "{{ vm_iso_path }}/{{ item.name }}"
+    dest: "/var/lib/libvirt/images/{{ inventory_hostname }}/{{ item.name }}"
+    remote_src: true
+  loop: "{{ vm_extra_disks | default([]) }}"
+
+- name: Custom boot loaders
+  when:
+    - vm_boot_loader is defined
+  block:
+    - name: Clone boot loaders
+      copy:
+        src: "{{ vm_iso_path }}/{{ vm_boot_loader.loader }}"
+        dest: "/var/lib/libvirt/images/{{ inventory_hostname }}/{{ vm_boot_loader.loader }}"
+        remote_src: true
+
+    - name: Clone boot loaders
+      copy:
+        src: "{{ vm_iso_path }}/{{ vm_boot_loader.template }}"
+        dest: "/var/lib/libvirt/images/{{ inventory_hostname }}/{{ vm_boot_loader.template }}"
+        remote_src: true
+
 - name: Create virt xml
   command: >-
+    {% set boot_order = 0 %}
     virt-install
       --ram {{ vm_ram }}
       --vcpus={{ vm_cores }},sockets=1,cores={{ vm_cores }}
       --os-variant {{ vm_variant | default('rhel7') }}
-      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }},cache=none
+    {% if vm_bootable_disks is defined %}
+    {%   for bootable_disk in vm_bootable_disks %}
+    {%     set boot_order = boot_order + 1 %}
+      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/{{ bootable_disk.name }},device=disk,bus=sata,format={{ bootable_disk.format }},discard=unmap,cache=none,boot.order={{ boot_order }}
+    {%   endfor %}
+    {% endif %}
+    {% set boot_order = boot_order + 1 %}
+      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/root-disk.qcow2,device=disk,bus=virtio,format=qcow2,discard=unmap,size={{ vm_disk_size }},cache=none,boot.order={{ boot_order }}
+    {% if vm_extra_disks is defined %}
+    {%   for extra_disk in vm_extra_disks %}
+      --disk path=/var/lib/libvirt/images/{{ inventory_hostname }}/{{ extra_disk.name }},device=disk,bus=virtio,format={{ extra_disk.format }},discard=unmap,cache=none
+    {%   endfor %}
+    {% endif %}
     {% if vm_bootable_iso is defined %}
-      --disk {{ vm_iso_path }}/{{ vm_bootable_iso }},device=cdrom
-      --boot hd,cdrom,menu=on,useserial=on
-    {% elif inventory_hostname in groups['provisioned_vms'] %}
+    {%   set boot_order = boot_order + 1 %}
+      --disk {{ vm_iso_path }}/{{ vm_bootable_iso }},device=cdrom,boot.order={{ boot_order }}
+    {% elif inventory_hostname in groups['provisioned_vms'] and hostvars[inventory_hostname]['vm_image_name'] in vm_image_data %}
       --disk /var/lib/libvirt/images/{{ inventory_hostname }}/cidata.iso,device=cdrom
       --import
+    {% endif %}
+    {% if vm_boot_loader is defined %}
+      --boot menu=on,useserial=on,loader=/var/lib/libvirt/images/{{ inventory_hostname }}/{{ vm_boot_loader.loader }},loader.readonly=yes,loader.type=pflash,nvram.template=/var/lib/libvirt/images/{{ inventory_hostname }}/{{ vm_boot_loader.template }},loader_secure=no
     {% endif %}
     {% if vm_additional_isos is defined %}
     {%   for iso in vm_additional_isos %}
@@ -103,8 +150,10 @@
     {%     if (vm_image_data[vm_image_name]['arch'] is defined) %}
       --arch {{ vm_image_data[vm_image_name]['arch'] }}
     {%     else %}
+    {%       if vm_hvm_disabled | default(false) | bool %}
       --hvm
-      --cpu host-passthrough,cache.mode=passthrough
+      --cpu {{ vm_cpu_model | default('host-passthrough,cache.mode=passthrough') }}
+    {%       endif %}
     {%     endif %}
     {%   endif %}
     {% endif %}
@@ -124,6 +173,12 @@
       --dry-run
       --print-xml
       --check all=off
+    {% if vm_bios is defined %}
+      --sysinfo {{ vm_bios }}
+    {% endif %}
+    {% if vm_machine is defined %}
+      --machine {{ vm_machine }}
+    {% endif %}
       --noautoconsole
   changed_when: false
   register: vm_xml
@@ -211,6 +266,11 @@
     command: define
     xml: >-
       {{ vm_xml.stdout | replace('driver name="vhost" queues="3"', 'driver name="vhost" queues="3" txmode="iothread" ioeventfd="on" event_idx="off"') }}
+
+- name: Add qemu commandline args
+  shell: >-
+    virt-xml {{ inventory_hostname }} --edit --qemu-commandline '{{ item }}'
+  loop: "{{ vm_qemu_commandline }}"
 
 - name: Set vm created local fact
   ini_file:

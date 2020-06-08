@@ -1,7 +1,7 @@
 ---
 all:
   vars:
-    vm_instackenv_file: "{{ lookup('env','HOME') }}/vm-lab-preprovisioned-instackenv.yaml"
+    vm_instackenv_file: "{{ lookup('env','HOME') }}/WorkSpace/vm-lab-preprovisioned-instackenv.yaml"
     vm_vbmc_username: admin
     vm_vbmc_password: secrete
     vm_management_interface: eth1

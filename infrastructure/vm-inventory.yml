@@ -30,11 +30,12 @@
           VM {{ inventory_hostname }} is online. IP address {{ vm_ip_address }}
       when:
         - vm_bootable_iso is undefined
+        - hostvars[inventory_hostname]['vm_image_name'] in vm_image_data
 
   tasks:
     - name: Set inventory file path
       set_fact:
-        vm_job_user: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name'] | default('dummy')]['access_user'] }}"
+        vm_job_user: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name'] | default('dummy')]['access_user'] | default('null') }}"
       when:
         inventory_hostname in groups['provisioned_vms']
 
@@ -67,6 +68,7 @@
           delay: 5
           when:
             - vm_bootable_iso is undefined
+            - hostvars[inventory_hostname]['vm_image_name'] in vm_image_data
 
         - name: Set ip fact
           set_fact:
@@ -75,6 +77,7 @@
             ansible_python_interpreter: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name'] | default('dummy')]['python_interpreter'] }}"
           when:
             - vm_bootable_iso is undefined
+            - hostvars[inventory_hostname]['vm_image_name'] in vm_image_data
 
         - name: Get console address
           command: >-
@@ -147,9 +150,9 @@
               {%   if node in groups['provisioned_vms'] or hostvars[node]['tripleo_overcloud_novaless'] | default(false) | bool %}
               {%
                      set entry = {
-                       'ansible_user': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['access_user'],
-                       'ansible_python_interpreter': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['python_interpreter'],
-                       'vm_job_user': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['access_user'],
+                       'ansible_user': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['access_user'] | default('null'),
+                       'ansible_python_interpreter': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['python_interpreter'] | default('null'),
+                       'vm_job_user': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['access_user'] | default('null'),
                        'vm_job_target': node,
                        'vm_virt_host': hostvars[node]['vm_virt_host'],
                        'tripleo_deploy_type': hostvars[node]['tripleo_deploy_type'] | default('undefined'),

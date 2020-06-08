@@ -1,7 +1,7 @@
 ---
 
 - name: Tripleo Developer Setup
-  hosts: "undercloud"
+  hosts: "undercloud:minion"
   any_errors_fatal: true
   gather_facts: true
   roles:

@@ -1,12 +1,12 @@
 ---
 all:
   vars:
-    vm_instackenv_file: "{{ lookup('env','HOME') }}/vm-lab-novaless-instackenv.yaml"
+    vm_instackenv_file: "{{ lookup('env','HOME') }}/WorkSpace/vm-lab-novaless-instackenv.yaml"
     vm_vbmc_username: admin
     vm_vbmc_password: secrete
     vm_management_interface: eth1
     vm_management_net: "{{ vm_preprov_networks[vm_management_interface][0] }}"
-    vm_inventory_file: "{{ lookup('env','HOME') }}/vm-lab-novaless-inventory.yaml"
+    vm_inventory_file: "{{ lookup('env','HOME') }}/WorkSpace/vm-lab-novaless-inventory.yaml"
     tripleo_overcloud_novaless: true
   children:
     all_vms:

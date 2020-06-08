@@ -64,6 +64,9 @@
           failed_when: destroy is success
           ignore_errors: true
 
+        - name: nvclear vm
+          command: "virsh undefine --nvram {{ inventory_hostname }}"
+      rescue:
         - name: Undefine VM
           become: true
           virt:
