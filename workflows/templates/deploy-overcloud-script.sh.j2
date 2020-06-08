@@ -79,6 +79,7 @@ openstack --os-cloud undercloud overcloud node provision \
 {%     set _ = environments.append('$THT/environments/enable-swap.yaml') %}
 {%     set _ = cli_args.append('--overcloud-ssh-user {{ ansible_env.USER }}') %}
 {%     set _ = cli_args.append('--overcloud-ssh-key {{ ansible_env.HOME }}/.ssh/id_rsa') %}
+openstack --os-cloud undercloud overcloud admin authorize --stack {{ tripleo_stack_name | default('overcloud') }}
 {%   endif %}
 {%   set _ = environments.append('/tmp/templates/environments/podman.yaml') %}
 {%   set _ = environments_user.append(ansible_env.HOME ~ '/parameters.yaml') %}
