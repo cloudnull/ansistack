@@ -10,7 +10,7 @@
          }
        }
 %}
-{%     set details = ((compose_details is defined) and (compose_details.content is defined)) | ternary((compose_details.content | from_yaml), default_details) %}
+{%     set details = (compose_details is defined) | ternary(compose_details, default_details) %}
 {%     set _ = pd['parameter_defaults'].__setitem__(
         'ContainerImagePrepare',
         [

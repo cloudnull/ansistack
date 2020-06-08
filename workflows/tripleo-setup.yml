@@ -167,13 +167,20 @@
         - (ansible_distribution | lower) == 'redhat'
       block:
         - name: Fetch params
-          uri:
+          get_url:
             url: "{{ redhat_puddle_local_images_url }}"
             dest: "{{ ansible_env.HOME }}/container_image_prepare.yaml"
-            return_content: yes
-          register: compose_details
           when:
             - redhat_puddle_local_images_url is defined
+
+        - name: Read pre-provisioned parameter yaml
+          slurp:
+            src: "{{ ansible_env.HOME }}/container_image_prepare.yaml"
+          register: container_image_prepare
+
+        - name: Create compose details fact
+          set_fact:
+            compose_details: "{{ container_image_prepare['content'] | b64decode | from_yaml }}"
 
         - name: Install tripleo packages (py3)
           package:
