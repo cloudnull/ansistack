@@ -50,8 +50,8 @@ popd
 {%     include 'templates/template-preprovisioned.sh.j2' %}
 
 {%     set _ = roles.append('$THT/roles_data.yaml') %}
-{%     set _ = cli_args.append('--overcloud-ssh-user {{ ansible_env.USER }}') %}
-{%     set _ = cli_args.append('--overcloud-ssh-key {{ ansible_env.HOME }}/.ssh/id_rsa') %}
+{%     set _ = cli_args.append('--overcloud-ssh-user' ~ ansible_env.USER) %}
+{%     set _ = cli_args.append('--overcloud-ssh-key' ~ ansible_env.HOME ~ '/.ssh/id_rsa') %}
 {%   elif (tripleo_overcloud_novaless is defined) and (tripleo_overcloud_novaless | bool) %}
 #   pre-provisioned with metalsmith (novaless) nodes #
 {%     include 'templates/template-preprovisioned.sh.j2' %}
@@ -77,22 +77,22 @@ openstack --os-cloud undercloud overcloud node provision \
 
 {%     set _ = roles.append('$THT/roles_data.yaml') %}
 {%     set _ = environments.append('$THT/environments/enable-swap.yaml') %}
-{%     set _ = cli_args.append('--overcloud-ssh-user {{ ansible_env.USER }}') %}
-{%     set _ = cli_args.append('--overcloud-ssh-key {{ ansible_env.HOME }}/.ssh/id_rsa') %}
-openstack --os-cloud undercloud overcloud admin authorize --stack {{ tripleo_stack_name | default('overcloud') }}
 {%   endif %}
 {%   set _ = environments.append('/tmp/templates/environments/podman.yaml') %}
 {%   set _ = environments_user.append(ansible_env.HOME ~ '/parameters.yaml') %}
 {%   set sorted_base_env_files = (environments | sort | list) %}
 {%   set _ = sorted_base_env_files.extend(environments_user) %}
-openstack --os-cloud undercloud overcloud deploy \
-          --stack {{ tripleo_stack_name | default('overcloud') }} \
-          --templates $THT/ \
-          -e {{ sorted_base_env_files | join(' -e ') }} \
-          --log-file {{ ansible_env.HOME }}/deploy.log \
-          --config-download-timeout 1024 \
-          --timeout 1024 \
-          {{ cli_args | join(' ') }} {{ ((roles | length) > 0) | ternary(('-r ' ~ (roles | join(' -r '))), '') }}
+function deploy {
+    openstack --os-cloud undercloud overcloud deploy \
+            --stack {{ tripleo_stack_name | default('overcloud') }} \
+            --templates $THT/ \
+            -e {{ sorted_base_env_files | join(' -e ') }} \
+            --log-file {{ ansible_env.HOME }}/deploy.log \
+            --config-download-timeout 1024 \
+            --timeout 1024 \
+            {{ cli_args | join(' ') }} {{ ((roles | length) > 0) | ternary(('-r ' ~ (roles | join(' -r '))), '') }}
+}
+deploy || (openstack --os-cloud undercloud overcloud admin authorize --stack {{ tripleo_stack_name | default('overcloud') }} && deploy)
 {% else %}
 {#   Standalone #}
 {%   set _ = environments.append('$THT/environments/standalone/standalone-tripleo.yaml') %}

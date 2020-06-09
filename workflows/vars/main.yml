@@ -94,7 +94,6 @@ tripleo_undercloud_config:
     undercloud_ntp_servers: "{{ ((ansible_distribution | lower) == 'redhat') | ternary(redhat_ntp_servers, tripleo_ntp_servers) | join(',') }}"
     undercloud_enable_selinux: False
     mtu: 1500
-    undercloud_enable_paunch: False
   ctlplane-subnet:
     gateway: "{{ vm_management_net | ipaddr('ip') }}"
     cidr: "{{ vm_management_net | ipaddr('network/prefix') }}"
