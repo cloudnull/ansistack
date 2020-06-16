@@ -111,16 +111,17 @@ packages: {{ vm_packages }}
 {% endif %}
 {# Redhat developer setup #}
 {% if _image_data['base_os'] == 'rhel' %}
-{%   if redhat_package_url is defined %}
-{%     set _ = cmd_list.append(_image_data['pkgmgr'] ~ ' install -y ' ~ redhat_package_url) %}
-{%     set _ = cmd_list.append('rhos-release ' ~ redhat_rhos_release) %}
-{%     set _ = cmd_list.append('yum -y install "python*virtualenv"') %}
-{%   endif %}
-{%   set _ = cmd_list.append('update-ca-trust enable') %}
 {%   if redhat_ca_certs_url is defined %}
 {%     set _ = cmd_list.append('curl -k ' ~ redhat_ca_certs_url ~ ' -o /etc/pki/ca-trust/source/anchors/' ~ (redhat_ca_certs_url | basename)) %}
 {%     set _ = cmd_list.append('update-ca-trust extract') %}
 {%   endif %}
+{%   if redhat_package_url is defined %}
+{%     set _ = cmd_list.append('curl -k ' ~ redhat_package_url ~ ' -o /tmp/rhos-release.rpm' ~ (redhat_ca_certs_url | basename)) %}
+{%     set _ = cmd_list.append(_image_data['pkgmgr'] ~ ' install -y /tmp/rhos-release.rpm') %}
+{%     set _ = cmd_list.append('rhos-release ' ~ redhat_rhos_release) %}
+{%     set _ = cmd_list.append(_image_data['pkgmgr'] ~ 'install -y "python*virtualenv"') %}
+{%   endif %}
+{%   set _ = cmd_list.append('update-ca-trust enable') %}
 {% endif %}
 {# Timezone info #}
 {% set _ = cmd_list.append('timedatectl set-timezone UTC') %}

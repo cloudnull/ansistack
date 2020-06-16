@@ -16,7 +16,7 @@
 
 
 - name: Run tripleo deployment
-  hosts: "undercloud"
+  hosts: "undercloud:standalone"
   any_errors_fatal: true
   gather_facts: true
 
@@ -96,5 +96,5 @@
       debug:
         msg: >-
           Stack creation has started. Connect to the system `{{ ansible_host }}`
-          as `{{ vm_job_user }}`. When ready, you can monitor the installation
+          as `{{ ansible_user }}`. When ready, you can monitor the installation
           progress via the `standalone` tmux session.

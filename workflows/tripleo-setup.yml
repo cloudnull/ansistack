@@ -17,7 +17,7 @@
 
 
 - name: Run tripleo setup
-  hosts: "undercloud:minion"
+  hosts: "undercloud:minion:standalone"
   any_errors_fatal: true
   gather_facts: true
   vars_files:
@@ -297,7 +297,7 @@
 
     - name: Undercloud config block
       when:
-        - inventory_hostname in groups['undercloud']
+        - inventory_hostname in (groups['undercloud'] | union(groups['standalone']))
       block:
         - name: Create undercloud config
           copy:
@@ -452,7 +452,7 @@
         - deploy-minion-script.sh
         - deploy-build-images.sh
       when:
-        - inventory_hostname in groups['undercloud']
+        - inventory_hostname in (groups['undercloud'] | union(groups['standalone']))
 
     - name: NFS block
       when:

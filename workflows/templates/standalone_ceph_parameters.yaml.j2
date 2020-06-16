@@ -2,15 +2,15 @@
 {% set pd = {'parameter_defaults': {}} %}
 {% set _ = pd['parameter_defaults'].__setitem__(
     'CephAnsibleDisksConfig', {
-      'osd_scenario': 'lvm'
-      'osd_objectstore': 'bluestore'
+      'osd_scenario': 'lvm',
+      'osd_objectstore': 'bluestore',
       'lvm_volumes': [
         {
-          'data': 'data-lv2'
-          'data_vg': 'vg2'
-          'db': 'db-lv2'
-          'db_vg': 'vg2'
-          'wal': 'wal-lv2'
+          'data': 'data-lv2',
+          'data_vg': 'vg2',
+          'db': 'db-lv2',
+          'db_vg': 'vg2',
+          'wal': 'wal-lv2',
           'wal_vg': 'vg2'
         }
       ]

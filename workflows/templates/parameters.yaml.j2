@@ -114,5 +114,25 @@
 {% set _ = pd['parameter_defaults'].__setitem__('NtpServer', tripleo_ntp_servers) %}
 {% set _ = pd['parameter_defaults'].__setitem__('NovaComputeLibvirtType', 'kvm') %}
 {% set _ = pd['parameter_defaults'].__setitem__('ContainerHealthcheckDisabled', true) %}
+{% set _ = pd['parameter_defaults'].__setitem__('SkipRhelEnforcement', true) %}
+{% if not (hostvars[inventory_hostname]['tripleo_ceph_enabled'] | default(false) | bool) %}
+{%   set _ = pd.__setitem__(
+       'resource_registry',
+       {
+          "OS::TripleO::Services::CephExternal": "OS::Heat::None",
+          "OS::TripleO::Services::CephGrafana": "OS::Heat::None",
+          "OS::TripleO::Services::CephMds": "OS::Heat::None",
+          "OS::TripleO::Services::CephMgr": "OS::Heat::None",
+          "OS::TripleO::Services::CephMon": "OS::Heat::None",
+          "OS::TripleO::Services::CephOsd": "OS::Heat::None",
+          "OS::TripleO::Services::CephRbdMirror": "OS::Heat::None",
+          "OS::TripleO::Services::CephRgw": "OS::Heat::None",
+          "OS::TripleO::Services::ManilaBackendCephFs": "OS::Heat::None",
+          "OS::TripleO::Services::CephClient": "OS::Heat::None",
+          "OS::TripleO::Services::CephExternal": "OS::Heat::None"
+        }
+     )
+%}
+{% endif %}
 ---
 {{ pd | to_nice_yaml }}

@@ -1,3 +1,7 @@
+{% set image_excludes = [] %}
+{% if not hostvars[inventory_hostname]['tripleo_ceph_enabled'] | default(false) | bool %}
+{%   set _ = image_excludes.extend(['ceph', 'prometheus']) %}
+{% endif %}
 {% set pd = {'parameter_defaults': {}} %}
 {% set _ = pd['parameter_defaults'].__setitem__('NeutronMechanismDrivers', 'ovn') %}
 {% if (ansible_distribution | lower) == 'redhat' %}
@@ -16,6 +20,7 @@
         [
           {
             'push_destination': true,
+            'excludes': image_excludes,
             'set': {
               'name_prefix': details['container-image-prepare']['prefix'],
               'namespace': details['container-image-prepare']['namespace'],

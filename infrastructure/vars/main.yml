@@ -247,9 +247,6 @@ vm_image_data:
 # Enable image downloads
 vm_image_get: true
 
-# Set the vm job user, by default this obtained from the image details
-vm_job_user: "{{ vm_image_data[vm_image_name]['access_user'] }}"
-
 # Management network address
 #
 # Example network setup in inventory

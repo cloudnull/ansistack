@@ -17,7 +17,7 @@
 
 
 - name: Run tripleo standalone setup
-  hosts: "undercloud"
+  hosts: "standalone"
   any_errors_fatal: true
   gather_facts: true
   become: true
@@ -27,7 +27,7 @@
   tasks:
     - name: Ceph block
       when:
-        - tripleo_ceph_enabled | bool
+        - hostvars[inventory_hostname]['tripleo_ceph_enabled'] | default(false) | bool
       block:
         - name: Install tripleo ceph packages
           package:

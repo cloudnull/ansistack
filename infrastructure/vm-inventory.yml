@@ -35,12 +35,6 @@
   tasks:
     - name: Set inventory file path
       set_fact:
-        vm_job_user: "{{ vm_image_data[hostvars[inventory_hostname]['vm_image_name'] | default('dummy')]['access_user'] | default('null') }}"
-      when:
-        inventory_hostname in groups['provisioned_vms']
-
-    - name: Set inventory file path
-      set_fact:
         vm_job_target: "{{ inventory_hostname }}"
       when:
         inventory_hostname in groups['provisioned_vms']
@@ -152,10 +146,10 @@
                      set entry = {
                        'ansible_user': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['access_user'] | default('null'),
                        'ansible_python_interpreter': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['python_interpreter'] | default('null'),
-                       'vm_job_user': vm_image_data[hostvars[node]['vm_image_name'] | default('dummy')]['access_user'] | default('null'),
                        'vm_job_target': node,
                        'vm_virt_host': hostvars[node]['vm_virt_host'],
                        'tripleo_deploy_type': hostvars[node]['tripleo_deploy_type'] | default('undefined'),
+                       'tripleo_ceph_enabled': hostvars[node]['tripleo_ceph_enabled'] | default(false) | bool,
                        'vm_disk_size': hostvars[node]['vm_disk_size'] | default('8'),
                      }
               %}
@@ -181,6 +175,9 @@
               {%     if (hostvars[node]['tripleo_deploy_type'] | default('undefined')) == 'minion' %}
               {%       set _ = inventory['vms']['children']['minion']['hosts'].__setitem__(node, {}) %}
               {%     endif %}
+              {%     if (hostvars[node]['tripleo_deploy_type'] | default('undefined')) == 'standalone' %}
+              {%       set _ = inventory['vms']['children']['standalone']['hosts'].__setitem__(node, {}) %}
+              {%     endif %}
               {%   endif %}
               {% endfor %}
               {{ (existing_vm_inventory_file | default({})) | combine(inventory, recursive=True) | to_nice_yaml }}
@@ -198,6 +195,8 @@
                   undercloud:
                     hosts: {}
                   minion:
+                    hosts: {}
+                  standalone:
                     hosts: {}
 
     - name: Display vm ip

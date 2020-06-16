@@ -26,6 +26,7 @@ source /opt/tripleo-patches/bin/activate
 {% if inventory_hostname in groups['undercloud'] %}
 {#   multi-node #}
 source ~/stackrc
+{%   set _ = environments.append(ansible_env.HOME ~ '/local_images.yaml') %}
 {%   if (ansible_distribution | lower) == 'redhat' %}
 {#
     NOTE(cloudnull): Remove image prepare, this is not required, though
@@ -97,7 +98,7 @@ deploy || (openstack --os-cloud undercloud overcloud admin authorize --stack {{ 
 {#   Standalone #}
 {%   set _ = environments.append('$THT/environments/standalone/standalone-tripleo.yaml') %}
 {%   set _ = roles.append('$THT/roles/Standalone.yaml') %}
-{% if tripleo_ceph_enabled | bool %}
+{% if hostvars[inventory_hostname]['tripleo_ceph_enabled'] | default(false) | bool %}
 {%   set _ = environments.extend(tripleo_ceph_standalone_templates) %}
 {% endif %}
 {%   set sorted_base_env_files = (environments | sort | list) %}
