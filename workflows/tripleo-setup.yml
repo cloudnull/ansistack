@@ -182,6 +182,23 @@
           set_fact:
             compose_details: "{{ container_image_prepare['content'] | b64decode | from_yaml }}"
 
+        - name: Install tripleo packages (py2)
+          package:
+            name:
+              - python-tripleoclient
+              - vim
+              - patch
+              - git
+              - patchutils
+              - iptables-services
+              - rhosp-director-images
+              - rhosp-director-images-ipa
+            allow_downgrade: true
+            state: latest
+          become: true
+          when:
+            - ansible_facts['python_version'] is version('3.0', 'lt', strict=True)
+
         - name: Install tripleo packages (py3)
           package:
             name:
@@ -197,6 +214,8 @@
             allow_downgrade: true
             state: latest
           become: true
+          when:
+            - ansible_facts['python_version'] is version('3.0', 'gt', strict=False)
 
       rescue:
         - name: Notice
