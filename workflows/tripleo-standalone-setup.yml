@@ -97,7 +97,18 @@
             path: /root/ceph_ansible_fetch
             state: directory
 
-        - name: Setup basic standalone deployment
-          template:
-            src: "standalone_ceph_parameters.yaml.j2"
-            dest: "{{ ansible_env.HOME }}/standalone_ceph_parameters.yaml"
+
+- name: Run tripleo standalone ceph setup config
+  hosts: "standalone"
+  any_errors_fatal: true
+  gather_facts: true
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Setup basic standalone deployment
+      template:
+        src: "standalone_ceph_parameters.yaml.j2"
+        dest: "{{ ansible_env.HOME }}/standalone_ceph_parameters.yaml"
+      when:
+        - hostvars[inventory_hostname]['tripleo_ceph_enabled'] | default(false) | bool

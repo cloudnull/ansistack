@@ -116,7 +116,7 @@ packages: {{ vm_packages }}
 {%     set _ = cmd_list.append('update-ca-trust extract') %}
 {%   endif %}
 {%   if redhat_package_url is defined %}
-{%     set _ = cmd_list.append('curl -k ' ~ redhat_package_url ~ ' -o /tmp/rhos-release.rpm' ~ (redhat_ca_certs_url | basename)) %}
+{%     set _ = cmd_list.append('curl -k ' ~ redhat_package_url ~ ' -o /tmp/rhos-release.rpm') %}
 {%     set _ = cmd_list.append(_image_data['pkgmgr'] ~ ' install -y /tmp/rhos-release.rpm') %}
 {%     set _ = cmd_list.append('rhos-release ' ~ redhat_rhos_release) %}
 {%     set _ = cmd_list.append(_image_data['pkgmgr'] ~ 'install -y "python*virtualenv"') %}
